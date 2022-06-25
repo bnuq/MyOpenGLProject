@@ -15,10 +15,10 @@ ContextUPtr Context::Create()
     return std::move(context);
 }
 
-// 화면을 그리는 데 필요한 모든 요소들을 초기화
+// ?��면을 그리?�� ?�� ?��?��?�� 모든 ?��?��?��?�� 초기?��
 bool Context::Init()
 {
-    // 기본 배경색인 Color Buffer 초기화
+    // 기본 배경?��?�� Color Buffer 초기?��fgfg����������������
     glClearColor(0.1f, 0.2f, 0.3f, 0.0f);
 
     // Programs
@@ -27,7 +27,7 @@ bool Context::Init()
         return false;
 
 
-    // Player Mesh, Material 설정
+    // Player Mesh, Material ?��?��
     player.meshPtr = Mesh::CreateBox();
     player.matPtr = Material::Create();
     player.matPtr->diffuse = Texture::CreateFromImage(Image::Load("./image/container2.png").get());
@@ -70,7 +70,7 @@ void Context::PlayerGround()
 
 
 
-// 키보드를 통해 입력된 키 처리
+// ?��보드�? ?��?�� ?��?��?�� ?�� 처리
 void Context::ProcessInput(GLFWwindow* window)
 {
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
@@ -98,55 +98,55 @@ void Context::ProcessInput(GLFWwindow* window)
     
 }
 
-// 윈도우 크기가 변할 때
+// ?��?��?�� ?��기�?? �??�� ?��
 void Context::Reshape(int width, int height)
 {
     m_width = width;
     m_height = height;
 
-    // 뷰 포트의 크기를 윈도우 크기와 동일하게 재조정
+    // �? ?��?��?�� ?��기�?? ?��?��?�� ?��기�?? ?��?��?���? ?��조정
     glViewport(0, 0, m_width, m_height);
 
     m_framebuffer = Framebuffer::Create(Texture::Create(m_width, m_height, GL_RGBA));
 }
 
-// 마우스 입력에 따른 카메라 회전각을 세팅
+// 마우?�� ?��?��?�� ?���? 카메?�� ?��?��각을 ?��?��
 void Context::MouseMove(double x, double y)
 {
-    // 마우스 오른 쪽 키가 눌러져 있지 않다면, 변화를 주지 않는다
+    // 마우?�� ?���? �? ?���? ?��?��?�� ?���? ?��?���?, �??���? 주�?? ?��?��?��
     if(!m_cameraControl) return;
 
-    // 현재 마우스 커서 위치 => 스크린 공간에서
+    // ?��?�� 마우?�� 커서 ?���? => ?��?���? 공간?��?��
     auto pos = glm::vec2((float)x, (float)y);
 
-    // 마우스의 움직임 계산
-    // Context 멤버 변수를 통해서, 이전 마우스 커서의 위치를 기억해 놓는다
+    // 마우?��?�� ???직임 계산
+    // Context 멤버 �??���? ?��?��?��, ?��?�� 마우?�� 커서?�� ?��치�?? 기억?�� ?��?��?��
     auto deltaPos = pos - m_prevMousePos;
 
-    // 화면에서 x 축 이동 => 카메라는 y 축 기준 회전
+    // ?��면에?�� x �? ?��?�� => 카메?��?�� y �? 기�?? ?��?��
     m_cameraYaw -= deltaPos.x * m_cameraRotSpeed;
-    // 화면에서 y 축 이동 => 카메라는 x 축 기준 회전
+    // ?��면에?�� y �? ?��?�� => 카메?��?�� x �? 기�?? ?��?��
     m_cameraPitch -= deltaPos.y * m_cameraRotSpeed;
 
-    // 카메라의 회전 각도를 조정
+    // 카메?��?�� ?��?�� 각도�? 조정
     if (m_cameraYaw < 0.0f)   m_cameraYaw += 360.0f;
     if (m_cameraYaw > 360.0f) m_cameraYaw -= 360.0f;
 
     if (m_cameraPitch > 89.0f)  m_cameraPitch = 89.0f;
     if (m_cameraPitch < -89.0f) m_cameraPitch = -89.0f;
 
-    // 위치 갱신
+    // ?���? 갱신
     m_prevMousePos = pos;
 }
 
-// 마우스 클릭을 처리
+// 마우?�� ?���??�� 처리
 void Context::MouseButton(int button, int action, double x, double y)
 {
-    if (button == GLFW_MOUSE_BUTTON_RIGHT)  // 우측 키 클릭
+    if (button == GLFW_MOUSE_BUTTON_RIGHT)  // ?���? ?�� ?���?
     {
         if (action == GLFW_PRESS)
         {
-            // 마우스 조작 시작 시점에 현재 마우스 커서 위치 저장
+            // 마우?�� 조작 ?��?�� ?��?��?�� ?��?�� 마우?�� 커서 ?���? ????��
             m_prevMousePos = glm::vec2((float)x, (float)y);
             m_cameraControl = true;
         }
@@ -158,42 +158,42 @@ void Context::MouseButton(int button, int action, double x, double y)
 }
 
 /*
-    화면에 그리는 작업을 진행하는 함수
-    매 프레임마다 호출된다
-    Draw Call 을 호출
+    ?��면에 그리?�� ?��?��?�� 진행?��?�� ?��?��
+    �? ?��?��?��마다 ?��출된?��
+    Draw Call ?�� ?���?
  */
 void Context::Render()
 {
  
     /*
-        픽셀을 출력하는 Frame Buffer 에서
+        ?��????�� 출력?��?�� Frame Buffer ?��?��
 
-        Color Buffer 초기화 <- 설정해둔 Clear Color 로 초기화
-        Depth Buffer 초기화
+        Color Buffer 초기?�� <- ?��?��?��?�� Clear Color �? 초기?��
+        Depth Buffer 초기?��
      */
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-    // 깊이 테스트, 깊이 체크를 진행하겠다
+    // 깊이 ?��?��?��, 깊이 체크�? 진행?��겠다
     glEnable(GL_DEPTH_TEST);
-    //glDisable(GL_DEPTH_TEST); // => UI 를 그릴 때 사용
+    //glDisable(GL_DEPTH_TEST); // => UI �? 그릴 ?�� ?��?��
 
     /*
-        마우스 입력 => 카메라 회전각이 달라짐
-            지금까지 입력받은 Camera Parameter 를 바탕으로
-            Camera Front 벡터를 다시 게산
+        마우?�� ?��?�� => 카메?�� ?��?��각이 ?��?���?
+            �?금까�? ?��?��받�?? Camera Parameter �? 바탕?���?
+            Camera Front 벡터�? ?��?�� 게산
      */
     m_cameraFront =
-        // y 축 회전
+        // y �? ?��?��
         glm::rotate(glm::mat4(1.0f),
             glm::radians(m_cameraYaw), glm::vec3(0.0f, 1.0f, 0.0f)) *
-        // x 축 회전
+        // x �? ?��?��
         glm::rotate(glm::mat4(1.0f),
             glm::radians(m_cameraPitch), glm::vec3(1.0f, 0.0f, 0.0f)) *
-        // 기본적으로는 (0, 0, -1) 을 바라보는 벡터였다 -
+        // 기본?��?��로는 (0, 0, -1) ?�� 바라보는 벡터????�� -
         glm::vec4(0.0f, 0.0f, -1.0f, 0.0f);
 
     /*
-        투영 변환 다시 구하고
+        ?��?�� �??�� ?��?�� 구하�?
      */
     auto projection = glm::perspective
     (
@@ -202,12 +202,12 @@ void Context::Render()
         0.01f, 100.0f
     );
 
-    // lookAt 함수를 이용해서, 뷰 변환을 구한다
+    // lookAt ?��?���? ?��?��?��?��, �? �??��?�� 구한?��
     auto view = glm::lookAt
     (
-        m_cameraPos,                 // 현재 카메라 위치
-        m_cameraPos + m_cameraFront, // 위치에 벡터를 더해서, 바라보는 좌표를 구한다
-        m_cameraUp                   // 카메라의 UP 위치 좌표
+        m_cameraPos,                 // ?��?�� 카메?�� ?���?
+        m_cameraPos + m_cameraFront, // ?��치에 벡터�? ?��?��?��, 바라보는 좌표�? 구한?��
+        m_cameraUp                   // 카메?��?�� UP ?���? 좌표
     );
 
 
