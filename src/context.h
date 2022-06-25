@@ -1,17 +1,13 @@
 #ifndef __CONTEXT_H__
 #define __CONTEXT_H__
 
-/* 
-    ?›?˜ ?™¸ë¶? ?¼?´ë¸ŒëŸ¬ë¦¬ëŠ” common.h ?— ?¬?•¨ ?‹œì¼°ë‹¤
-    ?•˜ì§?ë§? imgui ?˜ ê²½ìš°, GL ?„ ?´?š©?•´?„œ ê·¸ë¦¬?Š” ê³¼ì •?—?„œë§? ?‚¬?š©?•˜ë¯?ë¡?
-    context ?—ë§? ì¶”ê??ë¥? ?‹œ?‚¨?‹¤
- */
 #include <imgui.h>
 
 #include "common.h"
 #include "program.h"
 #include "mesh.h"
 #include "framebuffer.h"
+#include "Player.h"
 
 CLASS_PTR(Context)
 class Context
@@ -20,19 +16,17 @@ public:
     static ContextUPtr Create();
     void Render();
 
-    // ?‚¤ë³´ë“œë¥? ?†µ?•´ ?…? ¥?œ ê°’ë“¤?„ ì²˜ë¦¬, ????‘
     void ProcessInput(GLFWwindow* window);
 
-    // ?™”ë©? ?¬ê¸°ê?? ë³??•  ?•Œ, ????‘
     void Reshape(int, int);
 
-    // ë§ˆìš°?Š¤ ?´?™ ë°? ?…? ¥ ì²˜ë¦¬
     void MouseMove(double, double);
     void MouseButton(int button, int action, double x, double y);
 
-    // Space ?ˆŒ????„ ?•Œ ?˜?„ ì£¼ëŠ” ?•¨?ˆ˜
-    void PlayerJump();
-    void PlayerGround();
+    void MakeJump() { 
+        MainBox->Jump();
+        MainBox->JumpReleased = false;
+    }
 
 private:
     Context() {}
@@ -66,27 +60,7 @@ private:
     Camera Cam;
 
 
-    struct Character
-    {
-        glm::vec3 position { 0.0f, 5.0f, 0.0f };
-        glm::vec3 frontDir { glm::vec3(0.0f, 0.0f, -1.0f) };
-        glm::vec3 rightDir { glm::vec3(1.0f, 0.0f, 0.0f) };
-        
-        
-        const float acc = -0.01f;
-        float velocity = 0.0f;
-
-        bool jumping = false;
-        bool onGround = false;
-
-        float moveSpeed { 0.05f };
-        float rotSpeed { 0.01f };
-
-        MeshUPtr meshPtr;
-        MaterialPtr matPtr;
-    };
-    Character player;
-
+    PlayerUPtr MainBox;
 
     MeshUPtr floorPtr;
     MaterialPtr floorMat;

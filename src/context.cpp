@@ -4,21 +4,14 @@
 ContextUPtr Context::Create()
 {
     auto context = ContextUPtr(new Context());
-
-    SPDLOG_INFO("Start Initialization");
-
     if (!context->Init())
         return nullptr;
-
-    SPDLOG_INFO("Finish Initialization");
-
     return std::move(context);
 }
 
-// ?™”ë©´ì„ ê·¸ë¦¬?Š” ?° ?•„?š”?•œ ëª¨ë“  ?š”?†Œ?“¤?„ ì´ˆê¸°?™”
+
 bool Context::Init()
 {
-    // ê¸°ë³¸ ë°°ê²½?ƒ‰?¸ Color Buffer ì´ˆê¸°?™”fgfg¤©¤·¤©¤·¤©¤·¤¤¤©
     glClearColor(0.1f, 0.2f, 0.3f, 0.0f);
 
     // Programs
@@ -26,15 +19,15 @@ bool Context::Init()
     if(!m_program)
         return false;
 
+    MainBox = Player::Create();
+    MainBox->m_mesh = Mesh::CreateBox();
+    
+    auto TempMat = Material::Create();
+    TempMat->diffuse = Texture::CreateFromImage(Image::Load("./image/container2.png").get());
+    TempMat->specular = Texture::CreateFromImage(Image::Load("./image/container2_specular.png").get());
+    TempMat->shininess = 64.0f;
+    MainBox->m_mesh->SetMaterial(std::move(TempMat));
 
-    // Player Mesh, Material ?„¤? •
-    player.meshPtr = Mesh::CreateBox();
-    player.matPtr = Material::Create();
-    player.matPtr->diffuse = Texture::CreateFromImage(Image::Load("./image/container2.png").get());
-    player.matPtr->specular = Texture::CreateFromImage(Image::Load("./image/container2_specular.png").get());
-    player.matPtr->shininess = 64.0f;
- 
-    player.meshPtr->SetMaterial(player.matPtr);
 
     floorPtr = Mesh::CreatePlane();
     floorMat = Material::Create();
@@ -48,63 +41,33 @@ bool Context::Init()
     return true;
 }
 
-void Context::PlayerJump()
-{
-    SPDLOG_INFO("Context :: Playjump");
-    if(!player.jumping)
-    {
-        player.velocity += 0.2f;
-        player.jumping = true;
-    }
-}
-
-void Context::PlayerGround()
-{
-    SPDLOG_INFO("Context :: Playground");
-    player.jumping = false;
-}
 
 
 
 
 
 
-
-// ?‚¤ë³´ë“œë¥? ?†µ?•´ ?ž…? ¥?œ ?‚¤ ì²˜ë¦¬
 void Context::ProcessInput(GLFWwindow* window)
 {
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        player.position += player.moveSpeed * player.frontDir;
+        MainBox->MoveXZ(GLFW_KEY_W);
 
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        player.position -= player.moveSpeed * player.frontDir;
-    
-    
+        MainBox->MoveXZ(GLFW_KEY_S);
+        
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        player.position += player.moveSpeed * player.rightDir;
+        MainBox->MoveXZ(GLFW_KEY_D);
 
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        player.position -= player.moveSpeed * player.rightDir;
-
-
-    // if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS
-    //     && !player.jumping && !player.falling)
-    // {
-    //     SPDLOG_INFO("SPACE KEY pressed {} {}", player.jumping, player.falling);
-    //     player.netForce += 10.0f;
-    //     player.jumping = true;
-    // }
-    //glfwSetKeyCallback(window, key_callback);
-    
+        MainBox->MoveXZ(GLFW_KEY_A);
 }
 
-// ?œˆ?„?š° ?¬ê¸°ê?? ë³??•  ?•Œ
+
 void Context::Reshape(int width, int height)
 {
     m_width = width;
     m_height = height;
 
-    // ë·? ?¬?Š¸?˜ ?¬ê¸°ë?? ?œˆ?„?š° ?¬ê¸°ì?? ?™?¼?•˜ê²? ?ž¬ì¡°ì •
     glViewport(0, 0, m_width, m_height);
 
     m_framebuffer = Framebuffer::Create(Texture::Create(m_width, m_height, GL_RGBA));
@@ -228,43 +191,16 @@ void Context::Render()
 
 
         
-    player.velocity += ((player.onGround) ? 0.0f : player.acc);
-    auto tempPos = player.position + glm::vec3(0.0f, 1.0f, 0.0f) * player.velocity;
-    if(tempPos.y > -2.0f)
-    {
-        player.onGround = false;
-        player.position = tempPos;
-    }
-    else
-    { 
-        player.onGround = true;
-        player.velocity = 0.0f;
-
-        player.position.y = -2.0f;
-        player.jumping = false;
-    }
+    MainBox->MoveY(-2.0f);
     
-    
-
-    
-
-    
-        
-    
-
-
-
-
-
-    
-    auto modelTransform = glm::translate(glm::mat4(1.0f), player.position);
+    auto modelTransform = glm::translate(glm::mat4(1.0f), MainBox->Position);
     auto transform = projection * view * modelTransform;
 
     m_program->SetUniform("transform", transform);
     m_program->SetUniform("modelTransform", modelTransform);
 //    player.matPtr->SetToProgram(m_program.get());
 
-    player.meshPtr->Draw(m_program.get());
+    MainBox->m_mesh->Draw(m_program.get());
 
 
 
