@@ -1,5 +1,11 @@
+#include <string>
+
 #include "common.h"
 #include "mesh.h"
+#include "texture.h"
+#include "image.h"
+
+
 
 CLASS_PTR(Player)
 class Player
@@ -27,6 +33,9 @@ public:
     float MoveSpeed = 0.1f;
     float RotSpeed;
 
+
+    void CreateSetMaterial(const std::string& diffusePath, const std::string& specPath, 
+                            float shine, bool diffuseFlip = true, bool specFlip = true);
 
     void MoveXZ(int key);
     void MoveY(float HEIGHT);

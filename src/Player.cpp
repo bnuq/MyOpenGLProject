@@ -6,6 +6,18 @@ PlayerUPtr Player::Create()
     return std::move(player);
 }
 
+void Player::CreateSetMaterial(const std::string& diffusePath, const std::string& specPath, float shine, bool diffuseFlip, bool specFlip)
+{
+    auto TempMat = Material::Create();
+    TempMat->diffuse = Texture::CreateFromImage(Image::Load(diffusePath, diffuseFlip).get());
+    TempMat->specular = Texture::CreateFromImage(Image::Load(specPath, specFlip).get());
+    TempMat->shininess = shine;
+
+    m_mesh->SetMaterial(std::move(TempMat));
+}
+
+
+
 void Player::MoveXZ(int key)
 {
     switch (key)

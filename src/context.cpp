@@ -19,14 +19,12 @@ bool Context::Init()
     if(!m_program)
         return false;
 
+    
+
     MainBox = Player::Create();
     MainBox->m_mesh = Mesh::CreateBox();
-    
-    auto TempMat = Material::Create();
-    TempMat->diffuse = Texture::CreateFromImage(Image::Load("./image/container2.png").get());
-    TempMat->specular = Texture::CreateFromImage(Image::Load("./image/container2_specular.png").get());
-    TempMat->shininess = 64.0f;
-    MainBox->m_mesh->SetMaterial(std::move(TempMat));
+    MainBox->CreateSetMaterial("./image/container2.png", "./image/container2_specular.png", 64.0f);    
+
 
 
     floorPtr = Mesh::CreatePlane();
@@ -73,7 +71,8 @@ void Context::Reshape(int width, int height)
     m_framebuffer = Framebuffer::Create(Texture::Create(m_width, m_height, GL_RGBA));
 }
 
-// ë§ˆìš°?Š¤ ?…? ¥?— ?”°ë¥? ì¹´ë©”?¼ ?šŒ? „ê°ì„ ?„¸?Œ…
+
+
 void Context::MouseMove(double x, double y)
 {
     // ë§ˆìš°?Š¤ ?˜¤ë¥? ìª? ?‚¤ê°? ?ˆŒ?Ÿ¬? ¸ ?ˆì§? ?•Š?‹¤ë©?, ë³??™”ë¥? ì£¼ì?? ?•Š?Š”?‹¤
@@ -120,44 +119,30 @@ void Context::MouseButton(int button, int action, double x, double y)
     }
 }
 
-/*
-    ?™”ë©´ì— ê·¸ë¦¬?Š” ?‘?—…?„ ì§„í–‰?•˜?Š” ?•¨?ˆ˜
-    ë§? ?”„? ˆ?„ë§ˆë‹¤ ?˜¸ì¶œëœ?‹¤
-    Draw Call ?„ ?˜¸ì¶?
- */
+
+
 void Context::Render()
 {
- 
-    /*
-        ?”½????„ ì¶œë ¥?•˜?Š” Frame Buffer ?—?„œ
-
-        Color Buffer ì´ˆê¸°?™” <- ?„¤? •?•´?‘” Clear Color ë¡? ì´ˆê¸°?™”
-        Depth Buffer ì´ˆê¸°?™”
-     */
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-    // ê¹Šì´ ?…Œ?Š¤?Š¸, ê¹Šì´ ì²´í¬ë¥? ì§„í–‰?•˜ê² ë‹¤
+ 
     glEnable(GL_DEPTH_TEST);
-    //glDisable(GL_DEPTH_TEST); // => UI ë¥? ê·¸ë¦´ ?•Œ ?‚¬?š©
+ 
 
-    /*
-        ë§ˆìš°?Š¤ ?…? ¥ => ì¹´ë©”?¼ ?šŒ? „ê°ì´ ?‹¬?¼ì§?
-            ì§?ê¸ˆê¹Œì§? ?…? ¥ë°›ì?? Camera Parameter ë¥? ë°”íƒ•?œ¼ë¡?
-            Camera Front ë²¡í„°ë¥? ?‹¤?‹œ ê²Œì‚°
-     */
+
+    auto CameraPos = MainBox->Position + Cam.RelativePos;
+    CameraPos.y = 3.0f;
+
+
+ 
     m_cameraFront =
-        // y ì¶? ?šŒ? „
         glm::rotate(glm::mat4(1.0f),
             glm::radians(m_cameraYaw), glm::vec3(0.0f, 1.0f, 0.0f)) *
-        // x ì¶? ?šŒ? „
         glm::rotate(glm::mat4(1.0f),
             glm::radians(m_cameraPitch), glm::vec3(1.0f, 0.0f, 0.0f)) *
-        // ê¸°ë³¸? ?œ¼ë¡œëŠ” (0, 0, -1) ?„ ë°”ë¼ë³´ëŠ” ë²¡í„°????‹¤ -
         glm::vec4(0.0f, 0.0f, -1.0f, 0.0f);
 
-    /*
-        ?ˆ¬?˜ ë³??™˜ ?‹¤?‹œ êµ¬í•˜ê³?
-     */
+    
     auto projection = glm::perspective
     (
         glm::radians(45.0f),
@@ -165,12 +150,12 @@ void Context::Render()
         0.01f, 100.0f
     );
 
-    // lookAt ?•¨?ˆ˜ë¥? ?´?š©?•´?„œ, ë·? ë³??™˜?„ êµ¬í•œ?‹¤
+    
     auto view = glm::lookAt
     (
-        m_cameraPos,                 // ?˜„?¬ ì¹´ë©”?¼ ?œ„ì¹?
-        m_cameraPos + m_cameraFront, // ?œ„ì¹˜ì— ë²¡í„°ë¥? ?”?•´?„œ, ë°”ë¼ë³´ëŠ” ì¢Œí‘œë¥? êµ¬í•œ?‹¤
-        m_cameraUp                   // ì¹´ë©”?¼?˜ UP ?œ„ì¹? ì¢Œí‘œ
+        CameraPos,
+        CameraPos + m_cameraFront,
+        m_cameraUp
     );
 
 
