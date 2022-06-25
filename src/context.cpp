@@ -48,16 +48,21 @@ bool Context::Init()
     return true;
 }
 
-
-
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+void Context::PlayerJump()
 {
-    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+    SPDLOG_INFO("Context :: Playjump");
+    if(!player.jumping)
     {
-        SPDLOG_INFO("Space Key Pressed");
+        player.velocity += 0.2f;
+        player.jumping = true;
     }
 }
 
+void Context::PlayerGround()
+{
+    SPDLOG_INFO("Context :: Playground");
+    player.jumping = false;
+}
 
 
 
@@ -222,45 +227,21 @@ void Context::Render()
 
 
 
-    if(player.position.y < 5.0f)
+        
+    player.velocity += ((player.onGround) ? 0.0f : player.acc);
+    auto tempPos = player.position + glm::vec3(0.0f, 1.0f, 0.0f) * player.velocity;
+    if(tempPos.y > -2.0f)
     {
-        if(player.falling)
-        {
-            player.jumping = false;
+        player.onGround = false;
+        player.position = tempPos;
+    }
+    else
+    { 
+        player.onGround = true;
+        player.velocity = 0.0f;
 
-            player.acc = player.netForce / player.mass;
-            player.downSpeed += player.acc;
-            auto tempPos = player.position + glm::vec3(0.0f, 1.0f, 0.0f) * player.downSpeed;
-
-            if(tempPos.y > -2.0f)
-            {
-                player.position = tempPos;
-                player.falling = true;
-            }
-            else
-            {
-                player.position.y = -2.0f;
-                player.falling = false;
-            }
-        }
-        else if(player.jumping)
-        {
-            player.falling = false;
-
-            player.acc = player.netForce / player.mass;
-            player.downSpeed += player.acc;
-            
-            if(player.downSpeed > 0)
-            {
-                player.position += glm::vec3(0.0f, 1.0f, 0.0f) * player.downSpeed;
-                player.jumping = true;
-            }
-            else
-            {
-                player.falling = true;
-                player.jumping = false;
-            }
-        }
+        player.position.y = -2.0f;
+        player.jumping = false;
     }
     
     

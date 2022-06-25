@@ -30,6 +30,10 @@ public:
     void MouseMove(double, double);
     void MouseButton(int button, int action, double x, double y);
 
+    // Space 눌렀을 때 힘을 주는 함수
+    void PlayerJump();
+    void PlayerGround();
+
 private:
     Context() {}
     bool Init();
@@ -49,7 +53,7 @@ private:
 
     struct Camera
     {
-        glm::vec3 position { glm::vec3(0.0f, 0.0f, 0.0f) };
+        glm::vec3 position { glm::vec3(0.0f, 5.0f, 0.0f) };
         glm::vec3 frontDir { glm::vec3(0.0f, 0.0f, -1.0f) };
         glm::vec3 upDir { glm::vec3(0.0f, 1.0f, 0.0f) };
 
@@ -64,17 +68,16 @@ private:
 
     struct Character
     {
-        glm::vec3 position { 0.0f, 0.0f, 0.0f };
+        glm::vec3 position { 0.0f, 5.0f, 0.0f };
         glm::vec3 frontDir { glm::vec3(0.0f, 0.0f, -1.0f) };
         glm::vec3 rightDir { glm::vec3(1.0f, 0.0f, 0.0f) };
         
-        float netForce = -10.0f;
-        float mass = 10000.0f;
-        float acc = -1.0f;
-        float downSpeed = 0.0f;
+        
+        const float acc = -0.01f;
+        float velocity = 0.0f;
 
         bool jumping = false;
-        bool falling = true;
+        bool onGround = false;
 
         float moveSpeed { 0.05f };
         float rotSpeed { 0.01f };

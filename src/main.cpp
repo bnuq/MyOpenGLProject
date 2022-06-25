@@ -63,10 +63,14 @@ void OnKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods)
     if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
     {
         SPDLOG_INFO("Space Key Pressed");
+        auto context = reinterpret_cast<Context*>(glfwGetWindowUserPointer(window));
+        context->PlayerJump();
     }
     if (key == GLFW_KEY_SPACE && action == GLFW_RELEASE)
     {
-        SPDLOG_INFO("Space Key Released");
+        //SPDLOG_INFO("Space Key Released");
+        //auto context = reinterpret_cast<Context*>(glfwGetWindowUserPointer(window));
+        //context->PlayerGround();
     }
 
 
