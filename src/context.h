@@ -45,21 +45,6 @@ private:
     
 
 
-    struct Camera
-    {
-        glm::vec3 RelativePos { glm::vec3(0.0f, 2.0f, 2.0f) };
-
-        glm::vec3 frontDir { glm::vec3(0.0f, 0.0f, -1.0f) };
-        glm::vec3 upDir { glm::vec3(0.0f, 1.0f, 0.0f) };
-
-        float pitch { -20.0f };
-        float yaw { 0.0f };
-
-        float moveSpeed { 0.01f };
-        float rotSpeed { 0.01f };
-    };
-    Camera Cam;
-
 
     PlayerUPtr MainBox;
 

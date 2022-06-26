@@ -16,7 +16,7 @@ public:
     glm::vec3 Position          = glm::vec3(0.0f, 3.0f, 0.0f);
     glm::vec3 Velocity          = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 Acceleration      = glm::vec3(0.0f, -0.02f, 0.0f);
-    float Mass = 10000;
+
     
     glm::vec3 FrontVec          = glm::vec3(0.0f, 0.0f, -1.0f);
     glm::vec3 RightVec          = glm::vec3(1.0f, 0.0f, 0.0f);
@@ -39,11 +39,11 @@ public:
 
     void MoveXZ(int key);
     void MoveY(float HEIGHT);
+    void Jump();
 
 
     void Rotate();
-    void Jump();
-
+    
 private:
     Player() { }
 };
