@@ -8,6 +8,8 @@
 #include "mesh.h"
 #include "framebuffer.h"
 #include "Player.h"
+#include "Camera.h"
+
 
 CLASS_PTR(Context)
 class Context
@@ -46,12 +48,13 @@ private:
 
 
 
-    PlayerUPtr MainBox;
+    PlayerPtr MainBox;
 
     MeshUPtr floorPtr;
     MaterialPtr floorMat;
 
 
+    CameraPtr MainCam;
 
 
     // camera parameter => ?›”?“œ ì¢Œí‘œê³? ê¸°ì?? ì¢Œí‘œ ê°’ë“¤

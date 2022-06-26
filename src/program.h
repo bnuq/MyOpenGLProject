@@ -5,14 +5,14 @@
 #include "shader.h"
 
 /* 
-    Program í´ë˜ìŠ¤
-        GL program object ë¥¼ ê´€ë¦¬
+    Program ?´?˜?Š¤
+        GL program object ë¥? ê´?ë¦?
     
     GL program
-        ì—¬ëŸ¬ ê°œì˜ ì»´íŒŒì¼ ëœ shader ë“¤ì„ í•©ì³ë†“ì€ ê²ƒ
-        programmable, ë‚´ê°€ ìˆ˜ì •í•  ìˆ˜ ìˆëŠ” ì…°ì´ë”ë“¤ì„ ëª¨ì•„ë†“ì•˜ë‹¤
-        ì–´ë–¤ ì…°ì´ë”ë¥¼ ì‚¬ìš©í•  ì§€ ê²°ì •í•  ìˆ˜ ìˆë‹¤
-        ì…°ì´ë”ë“¤ì— ë“¤ì–´ê°€ëŠ” Uniform ê´€ë¦¬
+        ?—¬?Ÿ¬ ê°œì˜ ì»´íŒŒ?¼ ?œ shader ?“¤?„ ?•©ì³ë†“??? ê²?
+        programmable, ?‚´ê°? ?ˆ˜? •?•  ?ˆ˜ ?ˆ?Š” ?…°?´?”?“¤?„ ëª¨ì•„?†“?•˜?‹¤
+        ?–´?–¤ ?…°?´?”ë¥? ?‚¬?š©?•  ì§? ê²°ì •?•  ?ˆ˜ ?ˆ?‹¤
+        ?…°?´?”?“¤?— ?“¤?–´ê°??Š” Uniform ê´?ë¦?
  */
 CLASS_PTR(Program)
 class Program
@@ -22,19 +22,19 @@ public:
     static ProgramUPtr Create(const std::string& vertShaderFilename, const std::string& fragShaderFilename);
     ~Program();
     /* 
-        ê´€ë¦¬í•˜ê³  ìˆëŠ” GL program ì„ ì‚¬ìš©í•˜ê³  ì‹¶ì„ ë•Œ ì‚¬ìš©
-            GL program ì´ë¼ëŠ” ê²ƒì€, ì»´íŒŒì¼ ëœ ì…°ì´ë”ë“¤ì„ ëª¨ì•„ë†“ì€ ê²ƒ
-            ì¦‰, ë‚´ê°€ ì‘ì„±í•œ ì–´ë–¤ ì…°ì´ë”ë“¤ì„ ì‚¬ìš©í•˜ê³  ì‹¶ì„ ë•Œ í˜¸ì¶œ
+        ê´?ë¦¬í•˜ê³? ?ˆ?Š” GL program ?„ ?‚¬?š©?•˜ê³? ?‹¶?„ ?•Œ ?‚¬?š©
+            GL program ?´?¼?Š” ê²ƒì??, ì»´íŒŒ?¼ ?œ ?…°?´?”?“¤?„ ëª¨ì•„?†“??? ê²?
+            ì¦?, ?‚´ê°? ?‘?„±?•œ ?–´?–¤ ?…°?´?”?“¤?„ ?‚¬?š©?•˜ê³? ?‹¶?„ ?•Œ ?˜¸ì¶?
      */    
     void Use() const;
 
     // Return GL program handle id
     uint32_t Get() const { return m_program; }
     /* 
-        shader ì— uniform ë³€ìˆ˜ë¥¼ ë„˜ê¸°ëŠ” í•¨ìˆ˜ë“¤
-        ë„˜ê¸°ëŠ” Uniform ë³€ìˆ˜ì— ë§ê²Œ function overloading
+        shader ?— uniform ë³??ˆ˜ë¥? ?„˜ê¸°ëŠ” ?•¨?ˆ˜?“¤
+        ?„˜ê¸°ëŠ” Uniform ë³??ˆ˜?— ë§ê²Œ function overloading
 
-        Uniform ë³€ìˆ˜ì˜ ì´ë¦„ ë¬¸ìì—´ì„ í†µí•´ì„œ ì ‘ê·¼í•œë‹¤
+        Uniform ë³??ˆ˜?˜ ?´ë¦? ë¬¸ì?—´?„ ?†µ?•´?„œ ? ‘ê·¼í•œ?‹¤
      */
     void SetUniform(const std::string& name, int value) const;
     void SetUniform(const std::string& name, float value) const;
@@ -47,7 +47,7 @@ public:
 
 private:
     Program() {}
-    // compile í•œ GL shader ë“¤ì„ Link => ì˜¨ì „í•œ GL program ì„ ë§Œë“ ë‹¤
+    // compile ?•œ GL shader ?“¤?„ Link => ?˜¨? „?•œ GL program ?„ ë§Œë“ ?‹¤
     bool Link(const std::vector<ShaderPtr>& shaders);
 
     // Program Object id

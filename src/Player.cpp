@@ -1,6 +1,6 @@
 #include "Player.h"
 
-PlayerUPtr Player::Create()
+PlayerPtr Player::Create()
 {
     auto player = PlayerUPtr(new Player());
     return std::move(player);
@@ -31,11 +31,11 @@ void Player::MoveXZ(int key)
         break;
 
     case GLFW_KEY_D:
-        Position += MoveSpeed * RightVec;
+        Position -= MoveSpeed * LeftVec;
         break;
 
     case GLFW_KEY_A:
-        Position -= MoveSpeed * RightVec;
+        Position += MoveSpeed * LeftVec;
         break;
 
     default:
@@ -75,6 +75,27 @@ void Player::Jump()
     JumpingCount++;
 
     
-    Velocity += glm::vec3(0.0f, 0.3f, 0.0f);
+    //Velocity += glm::vec3(0.0f, 0.3f, 0.0f);
+    Velocity += JumpPower * UpVec;
     SPDLOG_INFO("Velocity {} {} {}", Velocity.x, Velocity.y, Velocity.z);
+}
+
+
+void Player::Rotate(glm::vec2 deltaPos)
+{
+    float DeltaVal = deltaPos.x * RotSpeed;
+
+    SPDLOG_INFO("DeltaPos x is {}", deltaPos.x);
+    SPDLOG_INFO("DeltaVal is {}", DeltaVal);
+
+    
+    if (DeltaVal < 0.0f)   DeltaVal += 360.0f;
+    if (DeltaVal > 360.0f) DeltaVal -= 360.0f;
+
+
+    auto YawRot = glm::rotate(glm::mat4(1.0f), glm::radians(DeltaVal), glm::vec3(0.0f, 1.0f, 0.0f));
+    FrontVec = glm::vec3(YawRot * glm::vec4(FrontVec, 0.0f));
+    LeftVec = glm::vec3(YawRot * glm::vec4(LeftVec, 0.0f));
+
+    
 }

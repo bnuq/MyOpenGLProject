@@ -20,9 +20,9 @@ public:
 
 private:
     Image() {};
-    // stb library ì´ìš© => ì´ë¯¸ì§€ ë¡œë“œ
+    // stb library ?´?š© => ?´ë¯¸ì?? ë¡œë“œ
     bool LoadWithStb(const std::string& filepath, bool flipVertical);
-    // ì§ì ‘ ë©”ëª¨ë¦¬ì— ì´ë¯¸ì§€ ë°ì´í„°ë¥¼ í• ë‹¹ => ì´ë¯¸ì§€ íŒŒì¼ì„ ì§ì ‘ ë§Œë“ ë‹¤
+    // ì§ì ‘ ë©”ëª¨ë¦¬ì— ?´ë¯¸ì?? ?°?´?„°ë¥? ?• ?‹¹ => ?´ë¯¸ì?? ?ŒŒ?¼?„ ì§ì ‘ ë§Œë“ ?‹¤
     bool Allocate(int width, int height, int channelCount);
 
     int m_width { 0 };

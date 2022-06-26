@@ -1,48 +1,45 @@
-#pragma warning(disable: 4819)
-
-
 
 /* 
-    í™”ë©´ì— ê·¸ë ¤ë‚´ëŠ” ìž‘ì—… ê´€ë ¨ëœ ê²ƒë“¤ì„
-        GL í•¨ìˆ˜, GL ê°ì²´
-    main í•¨ìˆ˜ì— ì½”ë“œë¥¼ ë“œëŸ¬ë‚´ì§€ ì•Šê³ 
-    Context Class ë¥¼ ì´ìš©í•´ì„œ ê´€ë¦¬í•œë‹¤
+    ?™”ë©´ì— ê·¸ë ¤?‚´?Š” ?ž‘?—… ê´?? ¨?œ ê²ƒë“¤?„
+        GL ?•¨?ˆ˜, GL ê°ì²´
+    main ?•¨?ˆ˜?— ì½”ë“œë¥? ?“œ?Ÿ¬?‚´ì§? ?•Šê³?
+    Context Class ë¥? ?´?š©?•´?„œ ê´?ë¦¬í•œ?‹¤
 */
 #include "context.h"
 
-// imgui í—¤ë”íŒŒì¼ ì¶”ê°€
+// imgui ?—¤?”?ŒŒ?¼ ì¶”ê??
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
 
 
-// ì™¸ë¶€ ë¼ì´ë¸ŒëŸ¬ë¦¬
+// ?™¸ë¶? ?¼?´ë¸ŒëŸ¬ë¦?
 #include <spdlog/spdlog.h>
-// glad ë¼ì´ë¸ŒëŸ¬ë¦¬, GLFW ì´ì „ì— ì¶”ê°€
+// glad ?¼?´ë¸ŒëŸ¬ë¦?, GLFW ?´? „?— ì¶”ê??
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 
 
-/* GLFW ê°€ CallBack ìœ¼ë¡œ ì‚¬ìš©í•  í•¨ìˆ˜ë“¤ì„ ì •ì˜ */
-// ìœˆë„ìš° ì‚¬ì´ì¦ˆ ë³€ê²½ ì‹œ, ë·° í¬íŠ¸ í¬ê¸°ë¥¼ ìž¬ì •ì˜í•˜ëŠ” í•¨ìˆ˜
+/* GLFW ê°? CallBack ?œ¼ë¡? ?‚¬?š©?•  ?•¨?ˆ˜?“¤?„ ? •?˜ */
+// ?œˆ?„?š° ?‚¬?´ì¦? ë³?ê²? ?‹œ, ë·? ?¬?Š¸ ?¬ê¸°ë?? ?ž¬? •?˜?•˜?Š” ?•¨?ˆ˜
 void OnFramebufferSizeChange(GLFWwindow* window, int width, int height) {
     SPDLOG_INFO("framebuffer size changed: ({} x {})", width, height);
     /* 
         glViewport
 
-        OpenGL ì´ ê·¸ë¦¼ì„ ê·¸ë¦´ í™”ë©´ì˜ ìœ„ì¹˜ ë° í¬ê¸° ì„¤ì •
-        ë§Œë“¤ì–´ì§„ ìœˆë„ìš° ë‚´ì—ì„œ ì„¤ì •
+        OpenGL ?´ ê·¸ë¦¼?„ ê·¸ë¦´ ?™”ë©´ì˜ ?œ„ì¹? ë°? ?¬ê¸? ?„¤? •
+        ë§Œë“¤?–´ì§? ?œˆ?„?š° ?‚´?—?„œ ?„¤? •
      */
     
     //glViewport(0, 0, width, height);
 
-    // ìœ ì € í¬ì¸í„°ë¥¼ í†µí•´ì„œ, ìœˆë„ìš°ì— ì†í•œ ì»¨íƒìŠ¤íŠ¸ ì— ì ‘ê·¼í•œë‹¤
+    // ?œ ??? ?¬?¸?„°ë¥? ?†µ?•´?„œ, ?œˆ?„?š°?— ?†?•œ ì»¨íƒ?Š¤?Š¸ ?— ? ‘ê·¼í•œ?‹¤
     auto context = reinterpret_cast<Context*>(glfwGetWindowUserPointer(window));
-    // ë·° í¬íŠ¸ ì‚¬ì´ì¦ˆë¥¼ ìž¬ì¡°ì •í•˜ë©´ì„œ, í”„ë¡œì ì…˜ì˜ ì¢…íš¡ë¹„ë„ ìž¬ì¡°ì •
+    // ë·? ?¬?Š¸ ?‚¬?´ì¦ˆë?? ?ž¬ì¡°ì •?•˜ë©´ì„œ, ?”„ë¡œì ?…˜?˜ ì¢…íš¡ë¹„ë„ ?ž¬ì¡°ì •
     context->Reshape(width, height);
 }
-// í‚¤ë³´ë“œ ìž…ë ¥ì„ ì²˜ë¦¬í•˜ëŠ” í•¨ìˆ˜
+// ?‚¤ë³´ë“œ ?ž…? ¥?„ ì²˜ë¦¬?•˜?Š” ?•¨?ˆ˜
 void OnKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods) {
 
     ImGui_ImplGlfw_KeyCallback(window, key, scancode, action, mods);
@@ -80,7 +77,7 @@ void OnKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods)
 }
 
 void OnCursorPos(GLFWwindow* window, double x, double y) {
-    // ìœ ì € í¬ì¸í„° ì‚¬ìš© => ìœˆë„ìš°ì˜ context ì— ì ‘ê·¼
+    // ?œ ??? ?¬?¸?„° ?‚¬?š© => ?œˆ?„?š°?˜ context ?— ? ‘ê·?
     auto context = (Context*)glfwGetWindowUserPointer(window);
     context->MouseMove(x, y);
 }
@@ -92,7 +89,7 @@ void OnMouseButton(GLFWwindow* window, int button, int action, int modifier) {
     auto context = (Context*)glfwGetWindowUserPointer(window);
     double x, y;
 
-    // ì»¤ì„œì˜ ìœ„ì¹˜ ê°€ì ¸ì˜´
+    // ì»¤ì„œ?˜ ?œ„ì¹? ê°?? ¸?˜´
     glfwGetCursorPos(window, &x, &y);
     context->MouseButton(button, action, x, y);
 }
@@ -107,26 +104,26 @@ void OnScroll(GLFWwindow* window, double xoffset, double yoffset) {
 
 int main(int argc, const char** argv) {
     /*
-        ìƒˆë¡­ê²Œ speed log ë¥¼ ì´ìš©
-        ì‹œê°„ ì¶œë ¥
-        ë¼ì¸ ë²ˆí˜¸ ì¶œë ¥
+        ?ƒˆë¡?ê²? speed log ë¥? ?´?š©
+        ?‹œê°? ì¶œë ¥
+        ?¼?¸ ë²ˆí˜¸ ì¶œë ¥
     */    
     SPDLOG_INFO("Start Program");
 
 
     SPDLOG_INFO("Initialize glfw");
     /*
-        glfwInit() => glfw ë¼ì´ë¸ŒëŸ¬ë¦¬ ìžì²´ë¥¼ ì´ˆê¸°í™”
+        glfwInit() => glfw ?¼?´ë¸ŒëŸ¬ë¦? ?žì²´ë?? ì´ˆê¸°?™”
 
-        ë¯¸ë¦¬ glfw ë¼ì´ë¸ŒëŸ¬ë¦¬ì— ì •ì˜ë˜ì–´ ìžˆëŠ” ë³€ìˆ˜ë“¤ì„ ë§Œë“¤ê³ , ì´ˆê¸°í™” í•œë‹¤
-        glfw ë¼ì´ë¸ŒëŸ¬ë¦¬ê°€ ì‚¬ìš©í•˜ëŠ” ë¦¬ì†ŒìŠ¤ê°€ ì¡´ìž¬í•˜ê¸° ë•Œë¬¸ì—, ì´ë“¤ì„ í• ë‹¹í•˜ê³  ìƒì„±í•˜ëŠ” ë‹¨ê³„
-            ë¦¬ì†ŒìŠ¤ë‹ˆê¹Œ, glfw functions, glfw variables ë¥¼ ì‚¬ìš©í•˜ê¸° ìœ„í•´ì„œ
-            ë°˜ë“œì‹œ í•„ìš”
+        ë¯¸ë¦¬ glfw ?¼?´ë¸ŒëŸ¬ë¦¬ì— ? •?˜?˜?–´ ?žˆ?Š” ë³??ˆ˜?“¤?„ ë§Œë“¤ê³?, ì´ˆê¸°?™” ?•œ?‹¤
+        glfw ?¼?´ë¸ŒëŸ¬ë¦¬ê?? ?‚¬?š©?•˜?Š” ë¦¬ì†Œ?Š¤ê°? ì¡´ìž¬?•˜ê¸? ?•Œë¬¸ì—, ?´?“¤?„ ?• ?‹¹?•˜ê³? ?ƒ?„±?•˜?Š” ?‹¨ê³?
+            ë¦¬ì†Œ?Š¤?‹ˆê¹?, glfw functions, glfw variables ë¥? ?‚¬?š©?•˜ê¸? ?œ„?•´?„œ
+            ë°˜ë“œ?‹œ ?•„?š”
 
-        ë¦¬ì†ŒìŠ¤ë¥¼ í• ë‹¹í•˜ê¸° ë•Œë¬¸ì—, ë°˜ë“œì‹œ ì¢…ë£Œ ì „ ë¦¬ì†ŒìŠ¤ë¥¼ í•´ì œí•˜ëŠ” ìž‘ì—…ë„ í•„ìš”í•˜ë‹¤
+        ë¦¬ì†Œ?Š¤ë¥? ?• ?‹¹?•˜ê¸? ?•Œë¬¸ì—, ë°˜ë“œ?‹œ ì¢…ë£Œ ? „ ë¦¬ì†Œ?Š¤ë¥? ?•´? œ?•˜?Š” ?ž‘?—…?„ ?•„?š”?•˜?‹¤
             glfwTerminate()
     */
-    if (!glfwInit()) {    // glfw ë¼ì´ë¸ŒëŸ¬ë¦¬ ì´ˆê¸°í™”, ì‹¤íŒ¨í•˜ë©´ ì—ëŸ¬ ì¶œë ¥í›„ ì¢…ë£Œ
+    if (!glfwInit()) {    // glfw ?¼?´ë¸ŒëŸ¬ë¦? ì´ˆê¸°?™”, ?‹¤?Œ¨?•˜ë©? ?—?Ÿ¬ ì¶œë ¥?›„ ì¢…ë£Œ
         const char* description = nullptr;
         glfwGetError(&description);
         SPDLOG_ERROR("failed to initialize glfw: {}", description);
@@ -137,16 +134,16 @@ int main(int argc, const char** argv) {
 
 
     /* 
-        OpenGL ì´ˆê¸°í™”
-            1. GLFW ìœˆë„ìš° ìƒì„± ì „ í¬ë§í•˜ëŠ” opengl ë²„ì „ ì¶”ê°€
-            ì‚¬ìš©í•˜ë ¤ëŠ” ë²„ì „ ížŒíŠ¸
+        OpenGL ì´ˆê¸°?™”
+            1. GLFW ?œˆ?„?š° ?ƒ?„± ? „ ?¬ë§í•˜?Š” opengl ë²„ì „ ì¶”ê??
+            ?‚¬?š©?•˜? ¤?Š” ë²„ì „ ?žŒ?Š¸
      */
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);  //3.3 version
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 
-    // glfw ìœˆë„ìš° ìƒì„±
+    // glfw ?œˆ?„?š° ?ƒ?„±
     SPDLOG_INFO("Create glfw window");
     auto window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_NAME, nullptr, nullptr);
     if (!window) {
@@ -157,38 +154,38 @@ int main(int argc, const char** argv) {
 
 
     /* 
-        OpenGL ì´ˆê¸°í™”
-            2. ìœˆë„ìš° ìƒì„± í›„, í•´ë‹¹ ìœˆë„ìš°ì—ëŠ” OpenGL Context ë¼ëŠ” ê²Œ ìƒì„±ëœë‹¤
-            ë§Œë“¤ì–´ì§„ ìœˆë„ìš°ì˜ Context ë¥¼ ì‚¬ìš©í•˜ê² ë‹¤, í•´ë‹¹ ìœˆë„ìš°ì—ì„œ ê·¸ë¦¬ê² ë‹¤ ë¼ëŠ” ê²ƒì„ ì•Œë ¤ì•¼ í•œë‹¤
+        OpenGL ì´ˆê¸°?™”
+            2. ?œˆ?„?š° ?ƒ?„± ?›„, ?•´?‹¹ ?œˆ?„?š°?—?Š” OpenGL Context ?¼?Š” ê²? ?ƒ?„±?œ?‹¤
+            ë§Œë“¤?–´ì§? ?œˆ?„?š°?˜ Context ë¥? ?‚¬?š©?•˜ê² ë‹¤, ?•´?‹¹ ?œˆ?„?š°?—?„œ ê·¸ë¦¬ê² ë‹¤ ?¼?Š” ê²ƒì„ ?•Œ? ¤?•¼ ?•œ?‹¤
      */
     glfwMakeContextCurrent(window);
 
 
     /* 
-        OpenGL ì´ˆê¸°í™”
-            3. glad ë¼ì´ë¸ŒëŸ¬ë¦¬ë¥¼ í†µí•´ì„œ -> ê° ê·¸ëž˜í”½ ì¹´ë“œì— ë§žëŠ” OpenGL í•¨ìˆ˜ë¥¼ ë¡œë”©
-            OpenGL Context ìƒì„± ì´í›„ ì‹¤í–‰
-            ìœˆë„ìš°ë¥¼ í†µí•´ ë§Œë“¤ì–´ì§„ OpenGL Context ë¥¼ ì‚¬ìš©í•œë‹¤
+        OpenGL ì´ˆê¸°?™”
+            3. glad ?¼?´ë¸ŒëŸ¬ë¦¬ë?? ?†µ?•´?„œ -> ê°? ê·¸ëž˜?”½ ì¹´ë“œ?— ë§žëŠ” OpenGL ?•¨?ˆ˜ë¥? ë¡œë”©
+            OpenGL Context ?ƒ?„± ?´?›„ ?‹¤?–‰
+            ?œˆ?„?š°ë¥? ?†µ?•´ ë§Œë“¤?–´ì§? OpenGL Context ë¥? ?‚¬?š©?•œ?‹¤
      */
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         SPDLOG_ERROR("failed to initialize glad");
         glfwTerminate();
         return -1;
     }
-    //------ ì´ì œ ì´ ë°‘ì—ì„œë¶€í„°, OpenGL í•¨ìˆ˜ë¥¼ ì‚¬ìš©í•  ìˆ˜ ìžˆë‹¤ ------//
+    //------ ?´? œ ?´ ë°‘ì—?„œë¶??„°, OpenGL ?•¨?ˆ˜ë¥? ?‚¬?š©?•  ?ˆ˜ ?žˆ?‹¤ ------//
 
 
 
-    auto glVersion = glGetString(GL_VERSION); //ìƒì„±ëœ OpenGL Context ì‹¤ì œ ë²„ì „
+    auto glVersion = glGetString(GL_VERSION); //?ƒ?„±?œ OpenGL Context ?‹¤? œ ë²„ì „
     SPDLOG_INFO("OpenGL context version: {}", glVersion);
 
 
     // imgui initialization
-    // OpenGL context ë¥¼ ì´ˆê¸°í™” í•œ í›„, ImGUI ë„ ì´ˆê¸°í™”ë¥¼ í•œë‹¤
+    // OpenGL context ë¥? ì´ˆê¸°?™” ?•œ ?›„, ImGUI ?„ ì´ˆê¸°?™”ë¥? ?•œ?‹¤
     auto imguiContext = ImGui::CreateContext();     // imgui context
-    ImGui::SetCurrentContext(imguiContext);         // current ë¡œ ì„¤ì •
+    ImGui::SetCurrentContext(imguiContext);         // current ë¡? ?„¤? •
 
-    ImGui_ImplGlfw_InitForOpenGL(window, false);    // callback ì— ëŒ€í•œ ì„¤ì •ì€ false => ì§ì ‘í•˜ê² ë‹¤
+    ImGui_ImplGlfw_InitForOpenGL(window, false);    // callback ?— ????•œ ?„¤? •??? false => ì§ì ‘?•˜ê² ë‹¤
     ImGui_ImplOpenGL3_Init();
     ImGui_ImplOpenGL3_CreateFontsTexture();
     ImGui_ImplOpenGL3_CreateDeviceObjects();
@@ -198,8 +195,8 @@ int main(int argc, const char** argv) {
 
 
 
-    // ë‚´ê°€ ë§Œë“œëŠ”, ê·¸ë¦¬ê¸° ìœ„í•œ Context
-    // í™”ë©´ì„ ê·¸ë¦¬ëŠ” ìž‘ì—…ì„ ì§„í–‰í•˜ëŠ” Context obj ìƒì„±
+    // ?‚´ê°? ë§Œë“œ?Š”, ê·¸ë¦¬ê¸? ?œ„?•œ Context
+    // ?™”ë©´ì„ ê·¸ë¦¬?Š” ?ž‘?—…?„ ì§„í–‰?•˜?Š” Context obj ?ƒ?„±
     auto context = Context::Create();
     if (!context) {
         SPDLOG_ERROR("failed to create context");
@@ -207,23 +204,23 @@ int main(int argc, const char** argv) {
         return -1;
     }
 
-    // ìœ ì € í¬ì¸í„° ì‚¬ìš©
-    // íŠ¹ì • ìœˆë„ìš°ì— ë¶™ì—ˆëŠ” í¬ì¸í„°ë¥¼ ê°€ì ¸ë‹¤ ì“¸ ìˆ˜ ìžˆë‹¤
+    // ?œ ??? ?¬?¸?„° ?‚¬?š©
+    // ?Š¹? • ?œˆ?„?š°?— ë¶™ì—ˆ?Š” ?¬?¸?„°ë¥? ê°?? ¸?‹¤ ?“¸ ?ˆ˜ ?žˆ?‹¤
     glfwSetWindowUserPointer(window, context.get());
 
 
 
-    // ë·° í¬íŠ¸ ìƒì„±ì˜ ê²½ìš°, ì²˜ìŒ ìœˆë„ìš° ìƒì„± ë•Œ ì‚¬ì´ì¦ˆê°€ ë³€í•˜ëŠ” => ì´ë²¤íŠ¸ê°€ ë°œìƒí•˜ì§€ ì•Šìœ¼ë¯€ë¡œ
-    // ì²« í˜¸ì¶œì€ ì§ì ‘ í•œë‹¤
+    // ë·? ?¬?Š¸ ?ƒ?„±?˜ ê²½ìš°, ì²˜ìŒ ?œˆ?„?š° ?ƒ?„± ?•Œ ?‚¬?´ì¦ˆê?? ë³??•˜?Š” => ?´ë²¤íŠ¸ê°? ë°œìƒ?•˜ì§? ?•Š?œ¼ë¯?ë¡?
+    // ì²? ?˜¸ì¶œì?? ì§ì ‘ ?•œ?‹¤
     OnFramebufferSizeChange(window, WINDOW_WIDTH, WINDOW_HEIGHT);
 
 
-    /* GLFW CallBack ì„ ìœˆë„ìš°ì— ë“±ë¡ */
+    /* GLFW CallBack ?„ ?œˆ?„?š°?— ?“±ë¡? */
 
-    // í”„ë ˆìž„ ë²„í¼ë¥¼ ìž¬ì„¤ì •í•˜ëŠ” GLFW ì˜ ì½œë°±ì„ ì„¤ì • => ì•žìœ¼ë¡œ GL ì´ ì•Œì•„ì„œ í˜¸ì¶œí•˜ê²Œ ëœë‹¤
+    // ?”„? ˆ?ž„ ë²„í¼ë¥? ?ž¬?„¤? •?•˜?Š” GLFW ?˜ ì½œë°±?„ ?„¤? • => ?•ž?œ¼ë¡? GL ?´ ?•Œ?•„?„œ ?˜¸ì¶œí•˜ê²? ?œ?‹¤
     glfwSetFramebufferSizeCallback(window, OnFramebufferSizeChange);
 
-    // í‚¤ ìž…ë ¥ì„ ì²˜ë¦¬í•˜ëŠ” GLFW ì½œë°± ì„¤ì •
+    // ?‚¤ ?ž…? ¥?„ ì²˜ë¦¬?•˜?Š” GLFW ì½œë°± ?„¤? •
     glfwSetKeyCallback(window, OnKeyEvent);
     	
     glfwSetCharCallback(window, OnCharEvent);
@@ -234,52 +231,52 @@ int main(int argc, const char** argv) {
 
     glfwSetScrollCallback(window, OnScroll);
 
-    // glfw ë©”ì¸ ë£¨í”„ ì‹¤í–‰, ìœˆë„ìš° close ë²„íŠ¼ì„ ëˆ„ë¥´ë©´ ì •ìƒ ì¢…ë£Œ
+    // glfw ë©”ì¸ ë£¨í”„ ?‹¤?–‰, ?œˆ?„?š° close ë²„íŠ¼?„ ?ˆ„ë¥´ë©´ ? •?ƒ ì¢…ë£Œ
     SPDLOG_INFO("Start main loop");
     while (!glfwWindowShouldClose(window)) {
         
-        // window ì—ì„œ ë°œìƒí•˜ëŠ” ì´ë²¤íŠ¸ë¥¼ ìˆ˜ì§‘
-        // ì´ë²¤íŠ¸ ë°œìƒ ì‹œì—, ìžë™ìœ¼ë¡œ ê·¸ì— ë§žëŠ” ì½œë°± í•¨ìˆ˜ë¥¼ í˜¸ì¶œí•´ì¤€ë‹¤
+        // window ?—?„œ ë°œìƒ?•˜?Š” ?´ë²¤íŠ¸ë¥? ?ˆ˜ì§?
+        // ?´ë²¤íŠ¸ ë°œìƒ ?‹œ?—, ?ž?™?œ¼ë¡? ê·¸ì— ë§žëŠ” ì½œë°± ?•¨?ˆ˜ë¥? ?˜¸ì¶œí•´ì¤??‹¤
         glfwPollEvents();
 
 
-        // UI ë¥¼ ë§¤ í”„ë ˆìž„ë§ˆë‹¤ ê·¸ë¦°ë‹¤
+        // UI ë¥? ë§? ?”„? ˆ?ž„ë§ˆë‹¤ ê·¸ë¦°?‹¤
         ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame(); // ì§€ê¸ˆë¶€í„° ìƒˆ ë Œë”ë§ í”„ë ˆìž„ì´ë‹¤
+        ImGui::NewFrame(); // ì§?ê¸ˆë???„° ?ƒˆ ? Œ?”ë§? ?”„? ˆ?ž„?´?‹¤
 
        
-        // ìœˆë„ìš°ì— ë“¤ì–´ì˜¤ëŠ” ì¸í’‹ì„ ì²˜ë¦¬
+        // ?œˆ?„?š°?— ?“¤?–´?˜¤?Š” ?¸?’‹?„ ì²˜ë¦¬
         context->ProcessInput(window);
 
 
-        // Context Object ì´ìš© => í™”ë©´ì— ê·¸ë¦¬ëŠ” ìž‘ì—…ì„ ì§„í–‰í•œë‹¤
+        // Context Object ?´?š© => ?™”ë©´ì— ê·¸ë¦¬?Š” ?ž‘?—…?„ ì§„í–‰?•œ?‹¤
         context->Render();
 
 
-        // ì”¬ì„ ë Œë”ë§ í•œ í›„, UI ë¥¼ ë Œë”ë§í•œë‹¤
-        ImGui::Render();    // ê·¸ë ¤ì•¼ í•˜ëŠ” ì •ë³´ë¥¼ ê°€ì ¸ì˜¤ê³ 
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData()); // ê·¸ë¦°ë‹¤
+        // ?”¬?„ ? Œ?”ë§? ?•œ ?›„, UI ë¥? ? Œ?”ë§í•œ?‹¤
+        ImGui::Render();    // ê·¸ë ¤?•¼ ?•˜?Š” ? •ë³´ë?? ê°?? ¸?˜¤ê³?
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData()); // ê·¸ë¦°?‹¤
 
 
         /* 
             Double Buffering, Frame Buffer Swap
 
-            Front buffer ì™€ Back Buffer ë¥¼ ë”°ë£¨ êµ¬í˜„, ë¨¼ì € back buffer ì— ê·¸ë¦° ë‹¤ìŒì—
-            Front Buffer ì™€ Back Buffer ë¥¼ ë°”ê¾¼ë‹¤
+            Front buffer ??? Back Buffer ë¥? ?”°ë£? êµ¬í˜„, ë¨¼ì?? back buffer ?— ê·¸ë¦° ?‹¤?Œ?—
+            Front Buffer ??? Back Buffer ë¥? ë°”ê¾¼?‹¤
          */
-        glfwSwapBuffers(window);    // í”„ë ˆìž„ ë²„í¼ ìŠ¤ì™‘ ì½”ë“œ
+        glfwSwapBuffers(window);    // ?”„? ˆ?ž„ ë²„í¼ ?Š¤?™‘ ì½”ë“œ
     }
 
 
 
-    // ìœˆë„ìš°ê°€ ì¢…ë£Œê°€ ë˜ë©´, ì´ì œê¹Œì§€ ì‚¬ìš©í–ˆë˜ GL ë¦¬ì†ŒìŠ¤ë¥¼ ëª¨ë‘ ì •ë¦¬í•´ì•¼ í•œë‹¤
-    // main í•¨ìˆ˜ ì¢…ë£Œ ì „ì—, ë¨¼ì € GL ë¦¬ì†ŒìŠ¤ ì •ë¦¬ë¥¼ ëª…ì‹œí•œë‹¤
-    //context.reset();  => Context obj ë¥¼ ê°€ë¦¬í‚¤ë˜ ìŠ¤ë§ˆíŠ¸ í¬ì¸í„° ì´ìš© => í• ë‹¹í•œ ë¦¬ì†ŒìŠ¤ ì •ë¦¬
-    context = nullptr; // nullptr ëŒ€ìž…í•˜ë©´ ìŠ¤ë§ˆíŠ¸ í¬ì¸í„°ê°€ ì•Œì•„ì„œ ì •ë¦¬í•œë‹¤
+    // ?œˆ?„?š°ê°? ì¢…ë£Œê°? ?˜ë©?, ?´? œê¹Œì?? ?‚¬?š©?–ˆ?˜ GL ë¦¬ì†Œ?Š¤ë¥? ëª¨ë‘ ? •ë¦¬í•´?•¼ ?•œ?‹¤
+    // main ?•¨?ˆ˜ ì¢…ë£Œ ? „?—, ë¨¼ì?? GL ë¦¬ì†Œ?Š¤ ? •ë¦¬ë?? ëª…ì‹œ?•œ?‹¤
+    //context.reset();  => Context obj ë¥? ê°?ë¦¬í‚¤?˜ ?Š¤ë§ˆíŠ¸ ?¬?¸?„° ?´?š© => ?• ?‹¹?•œ ë¦¬ì†Œ?Š¤ ? •ë¦?
+    context = nullptr; // nullptr ????ž…?•˜ë©? ?Š¤ë§ˆíŠ¸ ?¬?¸?„°ê°? ?•Œ?•„?„œ ? •ë¦¬í•œ?‹¤
 
 
 
-    // ì¢…ë£Œ ì „, ImGui ì— í• ë‹¹í•œ ë¦¬ì†ŒìŠ¤ë¥¼ ë°˜í™˜
+    // ì¢…ë£Œ ? „, ImGui ?— ?• ?‹¹?•œ ë¦¬ì†Œ?Š¤ë¥? ë°˜í™˜
     ImGui_ImplOpenGL3_DestroyFontsTexture();
     ImGui_ImplOpenGL3_DestroyDeviceObjects();
     ImGui_ImplOpenGL3_Shutdown();
@@ -288,7 +285,7 @@ int main(int argc, const char** argv) {
 
 
 
-    // glfw ë¦¬ì†ŒìŠ¤ ì •ë¦¬
+    // glfw ë¦¬ì†Œ?Š¤ ? •ë¦?
     glfwTerminate();
 
     return 0;
@@ -298,12 +295,12 @@ int main(int argc, const char** argv) {
     OpenGL Function ì¢…ë¥˜
     
     1. State Setting function
-        OpenGL Context ì— ê°’ì„ ì €ìž¥í•˜ëŠ” í•¨ìˆ˜
+        OpenGL Context ?— ê°’ì„ ????ž¥?•˜?Š” ?•¨?ˆ˜
         glViewport(+)
         glClearColor(+)
         
     2. State Using function
-        Context ì— ì €ìž¥ëœ State ë¥¼ ì´ìš©í•˜ëŠ” í•¨ìˆ˜
-        ì‹¤ì œë¡œ ê·¸ë¦¬ê±°ë‚˜ ë‚˜íƒ€ë‚¸ë‹¤
+        Context ?— ????ž¥?œ State ë¥? ?´?š©?•˜?Š” ?•¨?ˆ˜
+        ?‹¤? œë¡? ê·¸ë¦¬ê±°ë‚˜ ?‚˜????‚¸?‹¤
         glClear(+)
 */

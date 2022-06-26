@@ -26,7 +26,7 @@ bool Context::Init()
     MainBox->CreateSetMaterial("./image/container2.png", "./image/container2_specular.png", 64.0f);    
 
 
-
+    // ¹Ù´Ú
     floorPtr = Mesh::CreatePlane();
     floorMat = Material::Create();
     floorMat->diffuse = Texture::CreateFromImage(Image::Load("./image/container.jpg").get());
@@ -35,6 +35,11 @@ bool Context::Init()
     );
     floorMat->shininess = 64.0f;
     floorPtr->SetMaterial(floorMat);
+
+
+    // ¸ÞÀÎ Ä«¸Þ¶ó
+    MainCam = Camera::Create(MainBox);
+
 
     return true;
 }
@@ -79,12 +84,15 @@ void Context::Reshape(int width, int height)
 
 void Context::MouseMove(double x, double y)
 {
-    if(!m_cameraControl) return;
+    //if(!m_cameraControl) return;
 
     auto pos = glm::vec2((float)x, (float)y);
     auto deltaPos = pos - m_prevMousePos;
 
-  
+    MainBox->Rotate(deltaPos);
+    //MainCam->Rotate(deltaPos);
+
+
     m_cameraYaw -= deltaPos.x * m_cameraRotSpeed;
     m_cameraPitch -= deltaPos.y * m_cameraRotSpeed;
 
@@ -99,14 +107,13 @@ void Context::MouseMove(double x, double y)
     m_prevMousePos = pos;
 }
 
-// ë§ˆìš°?Š¤ ?´ë¦??„ ì²˜ë¦¬
+
 void Context::MouseButton(int button, int action, double x, double y)
 {
     if (button == GLFW_MOUSE_BUTTON_RIGHT)  // ?š°ì¸? ?‚¤ ?´ë¦?
     {
         if (action == GLFW_PRESS)
         {
-            // ë§ˆìš°?Š¤ ì¡°ìž‘ ?‹œ?ž‘ ?‹œ? ?— ?˜„?ž¬ ë§ˆìš°?Š¤ ì»¤ì„œ ?œ„ì¹? ????ž¥
             m_prevMousePos = glm::vec2((float)x, (float)y);
             m_cameraControl = true;
         }
@@ -122,16 +129,8 @@ void Context::MouseButton(int button, int action, double x, double y)
 void Context::Render()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
- 
     glEnable(GL_DEPTH_TEST);
  
-
-
-    auto CameraPos = MainBox->Position + Cam.RelativePos;
-    CameraPos.y = 3.0f;
-
-
  
     m_cameraFront =
         glm::rotate(glm::mat4(1.0f),
@@ -148,13 +147,16 @@ void Context::Render()
         0.01f, 100.0f
     );
 
+
+//    MainCam->Attach();
+    // auto view = glm::lookAt
+    // (
+    //     MainCam->Position,
+    //     MainBox->Position,
+    //     m_cameraUp
+    // );
+
     
-    auto view = glm::lookAt
-    (
-        CameraPos,
-        CameraPos + m_cameraFront,
-        m_cameraUp
-    );
 
 
 
@@ -175,8 +177,26 @@ void Context::Render()
 
         
     MainBox->MoveY(-2.0f);
+    MainCam->GetPosition();
+
+
     
-    auto modelTransform = glm::translate(glm::mat4(1.0f), MainBox->Position);
+    auto modelTransform = glm::translate(glm::mat4(1.0f), MainBox->Position) *
+                          glm::mat4(glm::vec4(MainBox->LeftVec, 0.0f), 
+                                    glm::vec4(MainBox->UpVec, 0.0f),
+                                    glm::vec4(MainBox->FrontVec, 0.0f), 
+                                    glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+
+
+    //auto CameraPos = glm::vec3(modelTransform * glm::vec4(MainCam->Position, 1.0f));
+    
+    auto view = glm::lookAt
+    (
+        MainCam->Position,
+        MainBox->Position, //MainCam->Position + MainBox->FrontVec, //CameraPos + m_cameraFront,
+        m_cameraUp
+    );
+
     auto transform = projection * view * modelTransform;
 
     m_program->SetUniform("transform", transform);
