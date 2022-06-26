@@ -20,7 +20,7 @@ bool Context::Init()
         return false;
 
     
-
+    // Main Player
     MainBox = Player::Create();
     MainBox->m_mesh = Mesh::CreateBox();
     MainBox->CreateSetMaterial("./image/container2.png", "./image/container2_specular.png", 64.0f);    
@@ -61,6 +61,8 @@ void Context::ProcessInput(GLFWwindow* window)
 }
 
 
+
+
 void Context::Reshape(int width, int height)
 {
     m_width = width;
@@ -73,31 +75,27 @@ void Context::Reshape(int width, int height)
 
 
 
+
+
 void Context::MouseMove(double x, double y)
 {
-    // ë§ˆìš°?Š¤ ?˜¤ë¥? ìª? ?‚¤ê°? ?ˆŒ?Ÿ¬? ¸ ?ˆì§? ?•Š?‹¤ë©?, ë³??™”ë¥? ì£¼ì?? ?•Š?Š”?‹¤
     if(!m_cameraControl) return;
 
-    // ?˜„?¬ ë§ˆìš°?Š¤ ì»¤ì„œ ?œ„ì¹? => ?Š¤?¬ë¦? ê³µê°„?—?„œ
     auto pos = glm::vec2((float)x, (float)y);
-
-    // ë§ˆìš°?Š¤?˜ ???ì§ì„ ê³„ì‚°
-    // Context ë©¤ë²„ ë³??ˆ˜ë¥? ?†µ?•´?„œ, ?´? „ ë§ˆìš°?Š¤ ì»¤ì„œ?˜ ?œ„ì¹˜ë?? ê¸°ì–µ?•´ ?†“?Š”?‹¤
     auto deltaPos = pos - m_prevMousePos;
 
-    // ?™”ë©´ì—?„œ x ì¶? ?´?™ => ì¹´ë©”?¼?Š” y ì¶? ê¸°ì?? ?šŒ? „
+  
     m_cameraYaw -= deltaPos.x * m_cameraRotSpeed;
-    // ?™”ë©´ì—?„œ y ì¶? ?´?™ => ì¹´ë©”?¼?Š” x ì¶? ê¸°ì?? ?šŒ? „
     m_cameraPitch -= deltaPos.y * m_cameraRotSpeed;
 
-    // ì¹´ë©”?¼?˜ ?šŒ? „ ê°ë„ë¥? ì¡°ì •
+
     if (m_cameraYaw < 0.0f)   m_cameraYaw += 360.0f;
     if (m_cameraYaw > 360.0f) m_cameraYaw -= 360.0f;
 
     if (m_cameraPitch > 89.0f)  m_cameraPitch = 89.0f;
     if (m_cameraPitch < -89.0f) m_cameraPitch = -89.0f;
 
-    // ?œ„ì¹? ê°±ì‹ 
+
     m_prevMousePos = pos;
 }
 
