@@ -65,9 +65,6 @@ void Context::ProcessInput(GLFWwindow* window)
         MainBox->MoveXZ(GLFW_KEY_A);
 }
 
-
-
-
 void Context::Reshape(int width, int height)
 {
     m_width = width;
@@ -84,25 +81,14 @@ void Context::Reshape(int width, int height)
 
 void Context::MouseMove(double x, double y)
 {
-    //if(!m_cameraControl) return;
+    if(!m_cameraControl) return;
 
     auto pos = glm::vec2((float)x, (float)y);
     auto deltaPos = pos - m_prevMousePos;
 
-    MainBox->Rotate(deltaPos);
-    //MainCam->Rotate(deltaPos);
 
-
-    m_cameraYaw -= deltaPos.x * m_cameraRotSpeed;
-    m_cameraPitch -= deltaPos.y * m_cameraRotSpeed;
-
-
-    if (m_cameraYaw < 0.0f)   m_cameraYaw += 360.0f;
-    if (m_cameraYaw > 360.0f) m_cameraYaw -= 360.0f;
-
-    if (m_cameraPitch > 89.0f)  m_cameraPitch = 89.0f;
-    if (m_cameraPitch < -89.0f) m_cameraPitch = -89.0f;
-
+    MainBox->Rotate(deltaPos.x);
+    MainCam->Rotate(deltaPos.y);
 
     m_prevMousePos = pos;
 }
@@ -110,7 +96,7 @@ void Context::MouseMove(double x, double y)
 
 void Context::MouseButton(int button, int action, double x, double y)
 {
-    if (button == GLFW_MOUSE_BUTTON_RIGHT)  // ?슦痢? ?궎 ?겢由?
+    if (button == GLFW_MOUSE_BUTTON_RIGHT)
     {
         if (action == GLFW_PRESS)
         {
@@ -128,38 +114,52 @@ void Context::MouseButton(int button, int action, double x, double y)
 
 void Context::Render()
 {
+    /****************************************************************/
+    
+
+    if(ImGui::Begin("ImGui"))
+    {
+        if(ImGui::CollapsingHeader("Player Setting", ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            ImGui::DragFloat("Gravity", &(MainBox->Acceleration.y), 0.001f, -5.0f, -0.001f);
+            ImGui::DragFloat("Jump Power", &(MainBox->JumpPower), 0.01f, 0.0f, 2.0f);
+            ImGui::DragFloat("Move Speed", &(MainBox->MoveSpeed), 0.01f, 0.0f, 1.0f);
+            ImGui::DragFloat("Rot Speed", &(MainBox->RotSpeed), 0.01f, 0.0f, 1.0f);
+        }
+
+        if(ImGui::CollapsingHeader("Camera Setting", ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            ImGui::DragFloat("XZ Distance", &(MainCam->xzDist), 0.1f);
+            ImGui::DragFloat("Y Distance", &(MainCam->yDist), 0.1f);
+            ImGui::DragFloat("Cam Rot Speed", &(MainCam->rotSpeed), 0.1f, 0.0f, 1.0f);
+            ImGui::DragFloat2("Cam Rot Limit", glm::value_ptr(MainCam->rotLimit), 0.1f);
+        }
+        
+
+        ImGui::Checkbox("Camera Control", &(m_cameraControl));
+    }
+    
+
+
+
+
+
+
+
+
+
+
+    ImGui::End();
+
+    /****************************************************************/
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
  
  
-    m_cameraFront =
-        glm::rotate(glm::mat4(1.0f),
-            glm::radians(m_cameraYaw), glm::vec3(0.0f, 1.0f, 0.0f)) *
-        glm::rotate(glm::mat4(1.0f),
-            glm::radians(m_cameraPitch), glm::vec3(1.0f, 0.0f, 0.0f)) *
-        glm::vec4(0.0f, 0.0f, -1.0f, 0.0f);
 
     
-    auto projection = glm::perspective
-    (
-        glm::radians(45.0f),
-        (float)m_width / (float)m_height,
-        0.01f, 100.0f
-    );
-
-
-//    MainCam->Attach();
-    // auto view = glm::lookAt
-    // (
-    //     MainCam->Position,
-    //     MainBox->Position,
-    //     m_cameraUp
-    // );
-
     
-
-
-
+    // Light Setting
     m_program->Use();
     m_program->SetUniform("viewPos", m_cameraPos);
 
@@ -175,42 +175,56 @@ void Context::Render()
 
 
 
-        
-    MainBox->MoveY(-2.0f);
-    MainCam->GetPosition();
-
-
+    // 상자를 낙하 시키고
+    MainBox->MoveY(0.0f);           // y = 0 높이에서 정지
     
+    // 카메라가 상자를 따라가게 한다
+    MainCam->SetPosition(0.0f);     // y = 0 높이에서 정지한다는 걸 알려준다
+    // 카메라 방향 설정
+    MainCam->SetDirection();
+
+
+
+
+
+    auto projection = glm::perspective
+    (
+        glm::radians(45.0f),
+        (float)m_width / (float)m_height,
+        0.01f, 100.0f
+    );
+
+    auto view = glm::lookAt
+    (
+        MainCam->Position,
+        MainCam->Position + MainCam->Direction,
+        m_cameraUp
+    );
+
+
+
+    // Main Player Draw
     auto modelTransform = glm::translate(glm::mat4(1.0f), MainBox->Position) *
                           glm::mat4(glm::vec4(MainBox->LeftVec, 0.0f), 
                                     glm::vec4(MainBox->UpVec, 0.0f),
                                     glm::vec4(MainBox->FrontVec, 0.0f), 
                                     glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
-
-
-    //auto CameraPos = glm::vec3(modelTransform * glm::vec4(MainCam->Position, 1.0f));
     
-    auto view = glm::lookAt
-    (
-        MainCam->Position,
-        MainBox->Position, //MainCam->Position + MainBox->FrontVec, //CameraPos + m_cameraFront,
-        m_cameraUp
-    );
-
     auto transform = projection * view * modelTransform;
 
     m_program->SetUniform("transform", transform);
     m_program->SetUniform("modelTransform", modelTransform);
-//    player.matPtr->SetToProgram(m_program.get());
 
     MainBox->m_mesh->Draw(m_program.get());
 
 
 
+
+    // 바닥 Draw
     modelTransform =
         glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -2.0f, 0.0f)) *
         glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)) *
-        glm::scale(glm::mat4(1.0f), glm::vec3(3.0f, 3.0f, 3.0f));
+        glm::scale(glm::mat4(1.0f), glm::vec3(10.0f, 10.0f, 10.0f));
     transform = projection * view * modelTransform;
 
     m_program->SetUniform("transform", transform);

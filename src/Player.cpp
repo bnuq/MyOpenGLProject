@@ -81,21 +81,11 @@ void Player::Jump()
 }
 
 
-void Player::Rotate(glm::vec2 deltaPos)
+void Player::Rotate(float angle)
 {
-    float DeltaVal = deltaPos.x * RotSpeed;
-
-    SPDLOG_INFO("DeltaPos x is {}", deltaPos.x);
-    SPDLOG_INFO("DeltaVal is {}", DeltaVal);
-
+    float DeltaVal = -angle * RotSpeed;
     
-    if (DeltaVal < 0.0f)   DeltaVal += 360.0f;
-    if (DeltaVal > 360.0f) DeltaVal -= 360.0f;
-
-
     auto YawRot = glm::rotate(glm::mat4(1.0f), glm::radians(DeltaVal), glm::vec3(0.0f, 1.0f, 0.0f));
     FrontVec = glm::vec3(YawRot * glm::vec4(FrontVec, 0.0f));
     LeftVec = glm::vec3(YawRot * glm::vec4(LeftVec, 0.0f));
-
-    
 }

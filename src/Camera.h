@@ -9,19 +9,18 @@ CLASS_PTR(Camera)
 class Camera
 {
 public:
-    float xzDist = 10.0f;
-    float yDist = 5.0f;
 
     glm::vec3 Position;
-    glm::vec3 SeeingPoint;
+    glm::vec3 Direction;
 
+    float pitch { 0.0f };         // x 축 기준 회전
+    
 
-    float pitch { -20.0f };         // x 축 기준 회전
-    float yaw { 0.0f };             // y 축 기준 회전
-
-
-    float moveSpeed { 0.01f };
-    float rotSpeed { 0.01f };
+/* Setting Value */
+    float xzDist = 10.0f;
+    float yDist = 5.0f;
+    float rotSpeed { 1.0f };
+    glm::vec2 rotLimit { glm::vec2{-10.0f, 30.0f} };
 
 
     // 카메라가 따라다니는 플레이어
@@ -32,11 +31,11 @@ public:
     static CameraPtr Create(PlayerPtr player);
     
 
-    void GetPosition();
-    void Rotate(glm::vec2);
+    void SetPosition(float);
+    void SetDirection();
 
-    // 카메라의 위치를 구하는 함수
-    void SetCameraPos();
+
+    void Rotate(float);
 
 
 private:
