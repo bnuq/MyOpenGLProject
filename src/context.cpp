@@ -28,7 +28,7 @@ bool Context::Init()
     MainBox->CreateSetMaterial("./image/container2.png", "./image/container2_specular.png", 64.0f);    
 
 
-    // 바닥
+    // 바닥 메쉬, 머터리얼
     floorPtr = Mesh::CreatePlane();
     floorMat = Material::Create();
     floorMat->diffuse = Texture::CreateFromImage(Image::Load("./image/container.jpg").get());
@@ -38,12 +38,15 @@ bool Context::Init()
     floorMat->shininess = 64.0f;
     floorPtr->SetMaterial(floorMat);
 
-    //Floor::m_mesh = std::move(floorPtr);
-    FloorArr.push_back(Floor(glm::vec3(0.0f, -2.0f, 0.0f)));
-    FloorArr.push_back(Floor(glm::vec3(0.0f, -4.0f, 0.0f)));
 
-    FloorHeight.push(-2.0f);
-    FloorHeight.push(-4.0f);
+
+    // 맵 정보
+    curGroundHeight = MainBox->Position.y;
+
+    MapInfo[glm::vec2(0.0f, 0.0f)].push(-2.0f);
+    MapInfo[glm::vec2(0.0f, 0.0f)].push(-4.0f);
+
+
 
 
     // 메인 카메라
@@ -84,10 +87,6 @@ void Context::Reshape(int width, int height)
     m_framebuffer = Framebuffer::Create(Texture::Create(m_width, m_height, GL_RGBA));
 }
 
-
-
-
-
 void Context::MouseMove(double x, double y)
 {
     if(!m_cameraControl) return;
@@ -101,7 +100,6 @@ void Context::MouseMove(double x, double y)
 
     m_prevMousePos = pos;
 }
-
 
 void Context::MouseButton(int button, int action, double x, double y)
 {
@@ -149,18 +147,11 @@ void Context::Render()
     }
     
 
-
-
-
-
-
-
-
-
-
     ImGui::End();
 
     /****************************************************************/
+    
+    
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
  
@@ -169,42 +160,57 @@ void Context::Render()
     
     
     // Light Setting
-    m_program->SetUniform("viewPos", m_cameraPos);
+    {
+        m_program->SetUniform("viewPos", m_cameraPos);
 
-    m_program->SetUniform("light.position", m_light.position);
-    m_program->SetUniform("light.direction", m_light.direction);
-    m_program->SetUniform("light.cutoff", glm::vec2(
-                                        cosf(glm::radians(m_light.cutoff[0])),
-                                        cosf(glm::radians(m_light.cutoff[0] + m_light.cutoff[1]))));
-    m_program->SetUniform("light.attenuation", GetAttenuationCoeff(m_light.distance));
-    m_program->SetUniform("light.ambient", m_light.ambient);
-    m_program->SetUniform("light.diffuse", m_light.diffuse);
-    m_program->SetUniform("light.specular", m_light.specular);
-
-
-    MapProgram->SetUniform("viewPos", m_cameraPos);
-
-    MapProgram->SetUniform("light.position", m_light.position);
-    MapProgram->SetUniform("light.direction", m_light.direction);
-    MapProgram->SetUniform("light.cutoff", glm::vec2(
-                                        cosf(glm::radians(m_light.cutoff[0])),
-                                        cosf(glm::radians(m_light.cutoff[0] + m_light.cutoff[1]))));
-    MapProgram->SetUniform("light.attenuation", GetAttenuationCoeff(m_light.distance));
-    MapProgram->SetUniform("light.ambient", m_light.ambient);
-    MapProgram->SetUniform("light.diffuse", m_light.diffuse);
-    MapProgram->SetUniform("light.specular", m_light.specular);
+        m_program->SetUniform("light.position", m_light.position);
+        m_program->SetUniform("light.direction", m_light.direction);
+        m_program->SetUniform("light.cutoff", glm::vec2(
+                                            cosf(glm::radians(m_light.cutoff[0])),
+                                            cosf(glm::radians(m_light.cutoff[0] + m_light.cutoff[1]))));
+        m_program->SetUniform("light.attenuation", GetAttenuationCoeff(m_light.distance));
+        m_program->SetUniform("light.ambient", m_light.ambient);
+        m_program->SetUniform("light.diffuse", m_light.diffuse);
+        m_program->SetUniform("light.specular", m_light.specular);
 
 
+        MapProgram->SetUniform("viewPos", m_cameraPos);
+
+        MapProgram->SetUniform("light.position", m_light.position);
+        MapProgram->SetUniform("light.direction", m_light.direction);
+        MapProgram->SetUniform("light.cutoff", glm::vec2(
+                                            cosf(glm::radians(m_light.cutoff[0])),
+                                            cosf(glm::radians(m_light.cutoff[0] + m_light.cutoff[1]))));
+        MapProgram->SetUniform("light.attenuation", GetAttenuationCoeff(m_light.distance));
+        MapProgram->SetUniform("light.ambient", m_light.ambient);
+        MapProgram->SetUniform("light.diffuse", m_light.diffuse);
+        MapProgram->SetUniform("light.specular", m_light.specular);
+    }
 
 
 
+
+    // 상자의 현재 위치 => 대응되는 바닥을 찾아야 한다
+    glm::vec2 MatchedFloorPos { ((int)MainBox->Position.x) / 10, ((int)MainBox->Position.z) / 10 };
+    float groundPos = (MapInfo[MatchedFloorPos].empty()) ? -10.0f : MapInfo[MatchedFloorPos].front();
+
+    if(groundPos < curGroundHeight)
+        curGroundHeight = groundPos;
+    else
+    {
+        while (!MapInfo[MatchedFloorPos].empty()
+                && MapInfo[MatchedFloorPos].front() > curGroundHeight)
+        {
+            MapInfo[MatchedFloorPos].pop();
+        }
+    }
 
 
     // 상자를 낙하 시키고
-    MainBox->MoveY(FloorHeight.front());           // y = 0 높이에서 정지
+    MainBox->MoveY(curGroundHeight);           // y = 0 높이에서 정지
     
     // 카메라가 상자를 따라가게 한다
-    MainCam->SetPosition(FloorHeight.front());     // y = 0 높이에서 정지한다는 걸 알려준다
+    MainCam->SetPosition(curGroundHeight);     // y = 0 높이에서 정지한다는 걸 알려준다
     // 카메라 방향 설정
     MainCam->SetDirection();
 
@@ -251,7 +257,7 @@ void Context::Render()
 
         // 바닥 1 Draw
         modelTransform =
-            glm::translate(glm::mat4(1.0f), FloorArr[0].Position) *
+            glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -2.0f, 0.0f)) *
             glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)) *
             glm::scale(glm::mat4(1.0f), glm::vec3(10.0f, 10.0f, 10.0f));
         transform = projection * view * modelTransform;
@@ -267,7 +273,7 @@ void Context::Render()
 
         // 바닥 2 Draw
         modelTransform =
-            glm::translate(glm::mat4(1.0f), FloorArr[1].Position) *
+            glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -4.0f, 0.0f)) *
             glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)) *
             glm::scale(glm::mat4(1.0f), glm::vec3(10.0f, 10.0f, 10.0f));
         transform = projection * view * modelTransform;

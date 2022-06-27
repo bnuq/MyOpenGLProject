@@ -4,6 +4,7 @@
 #include <imgui.h>
 #include <vector>
 #include <queue>
+#include <unordered_map>
 
 #include "common.h"
 #include "program.h"
@@ -58,8 +59,28 @@ private:
     MaterialPtr floorMat;
 
 
-    std::vector<Floor> FloorArr {};
-    std::queue<float> FloorHeight{};
+
+
+
+    struct Vec2HashFunc
+    {
+        size_t operator()(const glm::vec2& k)const
+        {
+            /* 
+                [1,2] 와 [2,1] 이 같은 해쉬 값을 가지는 것을 피하게 하기 위해서
+                shift operator 를 사용
+             */
+            return std::hash<float>()(k.x) ^ (std::hash<float >()(k.y) << 1);
+        }
+
+        bool operator()(const glm::vec2& a, const glm::vec2& b)const
+        {
+                return a.x == b.x && a.y == b.y;
+        }
+    };
+    std::unordered_map<glm::vec2, std::queue<float>, Vec2HashFunc, Vec2HashFunc> MapInfo{}; 
+    float curGroundHeight;
+
 
 
     

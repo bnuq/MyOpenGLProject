@@ -10,8 +10,9 @@ class Floor
 {
 public:
     glm::vec3 Position;
-
     static MeshPtr m_mesh;
+
+    
 
     Floor(glm::vec3 pos) : Position(pos) {}
 };
