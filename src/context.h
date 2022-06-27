@@ -2,6 +2,8 @@
 #define __CONTEXT_H__
 
 #include <imgui.h>
+#include <vector>
+#include <queue>
 
 #include "common.h"
 #include "program.h"
@@ -9,6 +11,7 @@
 #include "framebuffer.h"
 #include "Player.h"
 #include "Camera.h"
+#include "Floor.h"
 
 
 CLASS_PTR(Context)
@@ -43,50 +46,30 @@ private:
     glm::vec2 m_prevMousePos { glm::vec2(0.0f) };
 
     // Programs
-    ProgramUPtr m_program;          // phone lighting êµ¬í˜„ ?”„ë¡œê·¸?¨
+    ProgramUPtr m_program;
+    ProgramUPtr MapProgram;
     
 
-
-
     PlayerPtr MainBox;
-
-    MeshUPtr floorPtr;
-    MaterialPtr floorMat;
-
-
     CameraPtr MainCam;
 
 
-    // camera parameter => ?›”?“œ ì¢Œí‘œê³? ê¸°ì?? ì¢Œí‘œ ê°’ë“¤
-    glm::vec3 m_cameraPos { glm::vec3(0.0f, 2.5f, 8.0f) };      // ì¹´ë©”?¼?˜ ?œ„ì¹?
-        /* 
-            ì¹´ë©”?¼ê°? ë°”ë¼ë³´ëŠ” ????ƒ?˜ ì¢Œí‘œ, Target
-            ì¹´ë©”?¼ê°? ????ƒ?„ ë°”ë¼ë³´ëŠ” ë°©í–¥ ë²¡í„°, Front
-        
-            z ì¶? +3 ?— ?œ„?”¼?•´?„œ ?›?  ë°©í–¥?„ ë°”ë¼ë³´ê³  ?ˆ?œ¼ë¯?ë¡?, (0, 0, -1) ë²¡í„°ë¥? camera front ë¡? ê°?ì§„ë‹¤
-        */
-    glm::vec3 m_cameraFront { glm::vec3(0.0f, 0.0f, -1.0f) };   // ì¹´ë©”?¼ê°? ë°”ë¼ë³´ëŠ” ë°©í–¥ ë²¡í„°
-    glm::vec3 m_cameraUp { glm::vec3(0.0f, 1.0f, 0.0f) };       // ì¹´ë©”?¼ UP vector
-    // ì¹´ë©”?¼?˜ ?šŒ? „ ê°ë„ => ì¹´ë©”?¼ ì¢Œí‘œê³„ë?? ê¸°ì???œ¼ë¡? ?šŒ? „?•œ?‹¤
-    // ì¹´ë©”?¼ê°? ë°”ë¼ë³´ëŠ” ë°©í–¥?´ ì¹´ë©”?¼ ì¢Œí‘œê³„ì˜ Z ì¶?
-    float m_cameraPitch { -20.0f };   // ì¹´ë©”?¼ ì¢Œí‘œê³? X ì¶? ê¸°ì?? ?šŒ? „
-    float m_cameraYaw { 0.0f };     // ì¹´ë©”?¼ ì¢Œí‘œê³? Y ì¶? ê¸°ì?? ?šŒ? „
-    float m_cameraRotSpeed = 0.1f;
-    float cameraSpeed = 0.1f;
+    MeshPtr floorPtr;
+    MaterialPtr floorMat;
+
+
+    std::vector<Floor> FloorArr {};
+    std::queue<float> FloorHeight{};
+
+
+    
+    glm::vec3 m_cameraPos { glm::vec3(0.0f, 2.5f, 8.0f) };
     bool m_cameraControl { false };
 
     // Framebuffer
     FramebufferUPtr m_framebuffer;
 
-    // ê´‘ì›
-    /* 
-        ê´‘ì›?— ????•œ ? •ë³?
-            ê´‘ì›?˜ ?œ„ì¹?
-            ê´‘ì›?˜ Material
-
-        ?…°?´?”?— struct ë¥? ?™?¼?•œ êµ¬ì¡°ë¡? ?•Œ? ¤ì£¼ë©´
-        ?…°?´?”?—?„œ?„ ?•´?‹¹ struct ë¥? ë°›ì•„?„œ ?‚¬?š©?•  ?ˆ˜ ?ˆ?‹¤
-     */
+    
     struct Light
     {
         glm::vec3 position { glm::vec3(1.0f, 4.0f, 4.0f) };

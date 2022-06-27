@@ -19,6 +19,8 @@ bool Context::Init()
     if(!m_program)
         return false;
 
+    MapProgram = Program::Create("./shader/Map/map.vs", "./shader/Map/map.fs");
+
     
     // Main Player
     MainBox = Player::Create();
@@ -35,6 +37,13 @@ bool Context::Init()
     );
     floorMat->shininess = 64.0f;
     floorPtr->SetMaterial(floorMat);
+
+    //Floor::m_mesh = std::move(floorPtr);
+    FloorArr.push_back(Floor(glm::vec3(0.0f, -2.0f, 0.0f)));
+    FloorArr.push_back(Floor(glm::vec3(0.0f, -4.0f, 0.0f)));
+
+    FloorHeight.push(-2.0f);
+    FloorHeight.push(-4.0f);
 
 
     // 메인 카메라
@@ -160,7 +169,6 @@ void Context::Render()
     
     
     // Light Setting
-    m_program->Use();
     m_program->SetUniform("viewPos", m_cameraPos);
 
     m_program->SetUniform("light.position", m_light.position);
@@ -174,12 +182,29 @@ void Context::Render()
     m_program->SetUniform("light.specular", m_light.specular);
 
 
+    MapProgram->SetUniform("viewPos", m_cameraPos);
+
+    MapProgram->SetUniform("light.position", m_light.position);
+    MapProgram->SetUniform("light.direction", m_light.direction);
+    MapProgram->SetUniform("light.cutoff", glm::vec2(
+                                        cosf(glm::radians(m_light.cutoff[0])),
+                                        cosf(glm::radians(m_light.cutoff[0] + m_light.cutoff[1]))));
+    MapProgram->SetUniform("light.attenuation", GetAttenuationCoeff(m_light.distance));
+    MapProgram->SetUniform("light.ambient", m_light.ambient);
+    MapProgram->SetUniform("light.diffuse", m_light.diffuse);
+    MapProgram->SetUniform("light.specular", m_light.specular);
+
+
+
+
+
+
 
     // 상자를 낙하 시키고
-    MainBox->MoveY(0.0f);           // y = 0 높이에서 정지
+    MainBox->MoveY(FloorHeight.front());           // y = 0 높이에서 정지
     
     // 카메라가 상자를 따라가게 한다
-    MainCam->SetPosition(0.0f);     // y = 0 높이에서 정지한다는 걸 알려준다
+    MainCam->SetPosition(FloorHeight.front());     // y = 0 높이에서 정지한다는 걸 알려준다
     // 카메라 방향 설정
     MainCam->SetDirection();
 
@@ -198,7 +223,7 @@ void Context::Render()
     (
         MainCam->Position,
         MainCam->Position + MainCam->Direction,
-        m_cameraUp
+        glm::vec3(0.0f, 1.0f, 0.0f)
     );
 
 
@@ -212,6 +237,7 @@ void Context::Render()
     
     auto transform = projection * view * modelTransform;
 
+    m_program->Use();
     m_program->SetUniform("transform", transform);
     m_program->SetUniform("modelTransform", modelTransform);
 
@@ -220,17 +246,41 @@ void Context::Render()
 
 
 
-    // 바닥 Draw
-    modelTransform =
-        glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -2.0f, 0.0f)) *
-        glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)) *
-        glm::scale(glm::mat4(1.0f), glm::vec3(10.0f, 10.0f, 10.0f));
-    transform = projection * view * modelTransform;
+    MapProgram->Use();
 
-    m_program->SetUniform("transform", transform);
-    m_program->SetUniform("modelTransform", modelTransform);
-    
-    floorPtr->Draw(m_program.get());
+
+        // 바닥 1 Draw
+        modelTransform =
+            glm::translate(glm::mat4(1.0f), FloorArr[0].Position) *
+            glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)) *
+            glm::scale(glm::mat4(1.0f), glm::vec3(10.0f, 10.0f, 10.0f));
+        transform = projection * view * modelTransform;
+        if(MainBox->OnGround)
+            MapProgram->SetUniform("contact", true);
+        else
+            MapProgram->SetUniform("contact", false);
+
+        MapProgram->SetUniform("transform", transform);
+        MapProgram->SetUniform("modelTransform", modelTransform);
+
+        floorPtr->Draw(MapProgram.get());
+
+        // 바닥 2 Draw
+        modelTransform =
+            glm::translate(glm::mat4(1.0f), FloorArr[1].Position) *
+            glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)) *
+            glm::scale(glm::mat4(1.0f), glm::vec3(10.0f, 10.0f, 10.0f));
+        transform = projection * view * modelTransform;
+
+        if(MainBox->OnGround)
+            MapProgram->SetUniform("contact", true);
+        else
+            MapProgram->SetUniform("contact", false);
+
+        MapProgram->SetUniform("transform", transform);
+        MapProgram->SetUniform("modelTransform", modelTransform);
+        
+        floorPtr->Draw(MapProgram.get());
 
 
   

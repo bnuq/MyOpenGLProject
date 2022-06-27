@@ -10,10 +10,10 @@ ProgramUPtr Program::Create(const std::vector<ShaderPtr>& shaders)
 }
 
 /* 
-    Vertex Shader ÏôÄ Fragment Shader ÌååÏùº Ïù¥Î¶ÑÎßå Î∞õÍ≥†
-    Shader -> GL shader ÏÉùÏÑ±
-    Ïù¥ÌõÑ
-    Program -> GL program ÏÉùÏÑ±
+    Vertex Shader ??? Fragment Shader ?åå?ùº ?ù¥Î¶ÑÎßå Î∞õÍ≥†
+    Shader -> GL shader ?Éù?Ñ±
+    ?ù¥?õÑ
+    Program -> GL program ?Éù?Ñ±
  */
 ProgramUPtr Program::Create(const std::string& vertShaderFilename, const std::string& fragShaderFilename)
 {
@@ -39,22 +39,30 @@ void Program::Use() const
 }
 
 /* 
-    shader Ïùò uniform Î≥ÄÏàòÏóê Í∞íÏùÑ Ï†ÑÎã¨ÌïòÎäî Ìï®Ïàò
+    shader ?ùò uniform Î≥??àò?óê Í∞íÏùÑ ?†Ñ?ã¨?ïò?äî ?ï®?àò
 
-    Uniform Î≥ÄÏàòÎ•º ÎÑ£ÏùÑ Îïå, Ïñ¥Îñ§ ÏÖ∞Ïù¥Îçî ÌååÏùºÏóê ÎÑ£Îäî ÏßÄÎäî Ï§ëÏöîÌïòÏßÄ ÏïäÎã§
-    GL program Îã®ÏúÑÎ°ú Í¥ÄÎ¶¨ÎêòÍ∏∞ ÎïåÎ¨∏Ïóê, ÌîÑÎ°úÍ∑∏Îû® ÎÇ¥Ïóê ÏÖ∞Ïù¥ÎçîÍ∞Ä Ï°¥Ïû¨ÌïòÎäî ÏßÄÎ•º ÌååÏïÖÌï¥Ïïº ÌïúÎã§
+    Uniform Î≥??àòÎ•? ?Ñ£?ùÑ ?ïå, ?ñ¥?ñ§ ?Ö∞?ù¥?çî ?åå?ùº?óê ?Ñ£?äî Ïß??äî Ï§ëÏöî?ïòÏß? ?ïä?ã§
+    GL program ?ã®?úÑÎ°? Í¥?Î¶¨ÎêòÍ∏? ?ïåÎ¨∏Ïóê, ?îÑÎ°úÍ∑∏?û® ?Ç¥?óê ?Ö∞?ù¥?çîÍ∞? Ï°¥Ïû¨?ïò?äî Ïß?Î•? ?åå?ïÖ?ï¥?ïº ?ïú?ã§
 
-    GL program Ïóê ÏÇ¨Ïö©ÌïòÎ†§Îäî uniform Î≥ÄÏàòÏùò Ïù¥Î¶ÑÏúºÎ°ú Ï†ëÍ∑º
-    Ìï¥Îãπ uniform Ïùò ÏúÑÏπòÎ•º ÏïåÏïÑÎÇ¥Í≥†
-    ÏúÑÏπòÏóê Í∞íÏùÑ ÏßëÏñ¥ ÎÑ£ÎäîÎã§
+    GL program ?óê ?Ç¨?ö©?ïò?†§?äî uniform Î≥??àò?ùò ?ù¥Î¶ÑÏúºÎ°? ?†ëÍ∑?
+    ?ï¥?ãπ uniform ?ùò ?úÑÏπòÎ?? ?ïå?ïÑ?Ç¥Í≥?
+    ?úÑÏπòÏóê Í∞íÏùÑ ÏßëÏñ¥ ?Ñ£?äî?ã§
  */
 void Program::SetUniform(const std::string& name, int value) const
 {
-    // Ï£ºÏñ¥ÏßÑ Ïù¥Î¶ÑÏùÑ Í∞ÄÏßÄÎäî Uniform Î≥ÄÏàòÏùò ÏúÑÏπòÎ•º ÌååÏïÖÌïòÍ≥†
+    // Ï£ºÏñ¥Ïß? ?ù¥Î¶ÑÏùÑ Í∞?Ïß??äî Uniform Î≥??àò?ùò ?úÑÏπòÎ?? ?åå?ïÖ?ïòÍ≥?
     auto loc = glGetUniformLocation(m_program, name.c_str());
-    // Ìï¥Îãπ ÏúÑÏπòÏóê Í∞íÏùÑ ÏßëÏñ¥ ÎÑ£ÎäîÎã§
+    // ?ï¥?ãπ ?úÑÏπòÏóê Í∞íÏùÑ ÏßëÏñ¥ ?Ñ£?äî?ã§
     glUniform1i(loc, value);
 }
+
+void Program::SetUniform(const std::string& name, bool value) const
+{
+    auto loc = glGetUniformLocation(m_program, name.c_str());
+    glUniform1i(loc, value);
+}
+
+
 
 void Program::SetUniform(const std::string& name, float value) const
 {
@@ -72,7 +80,7 @@ void Program::SetUniform(const std::string& name, const glm::vec3& value) const
 {
     auto loc = glGetUniformLocation(m_program, name.c_str());
     
-    // Î≤°ÌÑ∞ÎÇò ÌñâÎ†¨ÏùÑ ÎÑ£ÏùÑ ÎïåÎäî Í∞íÏùÑ Î≥µÏÇ¨ÌïòÏßÄ ÏïäÍ≥† Ìè¨Ïù∏ÌÑ∞Î•º ÎÑòÍ∏¥Îã§ => value_ptr ÏÇ¨Ïö©
+    // Î≤°ÌÑ∞?Çò ?ñâ?†¨?ùÑ ?Ñ£?ùÑ ?ïå?äî Í∞íÏùÑ Î≥µÏÇ¨?ïòÏß? ?ïäÍ≥? ?è¨?ù∏?Ñ∞Î•? ?ÑòÍ∏¥Îã§ => value_ptr ?Ç¨?ö©
     glUniform3fv(loc, 1, glm::value_ptr(value));
 }
 
@@ -93,31 +101,31 @@ bool Program::Link( const std::vector<ShaderPtr>& shaders )
 {
     /* 
         glCreateProgram
-            OpenGL program object Î•º Î¶¨ÏÜåÏä§Ïóê Ìï†ÎãπÌï¥ÏÑú ÎßåÎì§Í≥†
-            Ìï∏Îì§ Î≤àÌò∏, Ï†ëÍ∑ºÌï† Ïàò ÏûàÎäî id Î•º Î¶¨ÌÑ¥ÌïúÎã§
+            OpenGL program object Î•? Î¶¨ÏÜå?ä§?óê ?ï†?ãπ?ï¥?Ñú ÎßåÎì§Í≥?
+            ?ï∏?ì§ Î≤àÌò∏, ?†ëÍ∑ºÌï† ?àò ?ûà?äî id Î•? Î¶¨ÌÑ¥?ïú?ã§
         
-        ÎßåÎì† GL program Ïóê Ïª¥ÌååÏùº Îêú ÏÖ∞Ïù¥ÎçîÎì§ÏùÑ Ìï©Ïπ† Í≤ÉÏù¥Îã§
+        ÎßåÎì† GL program ?óê Ïª¥Ìåå?ùº ?êú ?Ö∞?ù¥?çî?ì§?ùÑ ?ï©Ïπ? Í≤ÉÏù¥?ã§
      */
     m_program = glCreateProgram();
     
-    for (auto& shader: shaders) // ÏûÖÎ†•Î∞õÏùÄ Î™®Îì† gl shaders Ïóê ÎåÄÌï¥ÏÑú
+    for (auto& shader: shaders) // ?ûÖ?†•Î∞õÏ?? Î™®Îì† gl shaders ?óê ????ï¥?Ñú
         /* 
             glAttachShader
-                GL program object Ïóê Ïª¥ÌååÏùº Îêú Ïó¨Îü¨ Í∞úÏùò GL shader objects Î•º Î∂ôÏù∏Îã§
-                program = shader Ïó¨Îü¨ Í∞úÍ∞Ä Ïó∞Í≤∞Îêú ÌååÏù¥ÌîÑÎùºÏù∏
+                GL program object ?óê Ïª¥Ìåå?ùº ?êú ?ó¨?ü¨ Í∞úÏùò GL shader objects Î•? Î∂ôÏù∏?ã§
+                program = shader ?ó¨?ü¨ Í∞úÍ?? ?ó∞Í≤∞Îêú ?åå?ù¥?îÑ?ùº?ù∏
         */
         glAttachShader(m_program, shader->Get());
 
 
     /* 
         glLinkProgram
-            Ïª¥ÌååÏùº Îêú GL shader objects Î•º ÎßÅÌÅ¨
-            shader Îì§ÏùÑ ÏÑúÎ°ú Ïó∞Í≤∞ÌïúÎã§ => Ïò®Ï†ÑÌïú gl program ÏÉùÏÑ±
+            Ïª¥Ìåå?ùº ?êú GL shader objects Î•? ÎßÅÌÅ¨
+            shader ?ì§?ùÑ ?ÑúÎ°? ?ó∞Í≤∞Ìïú?ã§ => ?ò®?†Ñ?ïú gl program ?Éù?Ñ±
      */
     glLinkProgram(m_program);
 
 
-    // Link ÏÑ±Í≥µ Ïó¨Î∂Ä ÌôïÏù∏
+    // Link ?Ñ±Í≥? ?ó¨Î∂? ?ôï?ù∏
     int success = 0;
     glGetProgramiv(m_program, GL_LINK_STATUS, &success);
     if (!success) {
