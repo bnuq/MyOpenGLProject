@@ -15,27 +15,6 @@ void VertexLayout::Init()
 
 void VertexLayout::Bind() const
 {
-    /* 
-        glBindVertexArray
-            ì§€ê¸ˆë¶€í„° ì‚¬ìš©í•˜ê³ ì í•˜ëŠ” GL VAO ë¥¼ ì„¤ì •í•˜ëŠ” í•¨ìˆ˜
-            ë”°ë¡œ ë§í•˜ì§€ ì•Šì•„ë„ ì§€ê¸ˆë¶€í„°ëŠ” ì´ê²ƒì„ ì‚¬ìš©í•˜ê² ë‹¤ => Bind í•œë‹¤ê³  ë§í•œë‹¤
-
-        VertexLayout ê°ì²´ê°€ ê´€ë¦¬í•˜ëŠ” GL VAO ë¥¼ ì§€ê¸ˆë¶€í„° ì‚¬ìš© í•˜ê² ë‹¤
-        
-        ì‚¬ìš©í•  GL VAO ë¥¼ ë¨¼ì € ì •í•´ë†“ê³  ë‹¤ìŒ ê³¼ì •ì„ ì§„í–‰í•´ì•¼ í•œë‹¤
-        
-        ìì—°ìŠ¤ëŸ½ê²Œ ë‹¤ìŒì— ë“±ì¥í•˜ëŠ” GL VBO ëŠ”, ì´ GL VAO ì— ì˜í•´ì„œ í•´ì„ë˜ëŠ” ë²„í¼ê°€ ëœë‹¤
-            ë°˜ë“œì‹œ vao ë¥¼ ë¨¼ì € ì§€ì •í•œ í›„, vbo ë¥¼ ì§€ì •í•´ì•¼ í•œë‹¤
-
-        GL VBO = ë°”êµ¬ë‹ˆ, ë°ì´í„°ë¥¼ ì €ì¥
-                 ì •ì  í•˜ë‚˜ì— ëŒ€í•œ ë‹¤ì–‘í•œ ë°ì´í„°ë“¤ì´ ê·¸ëƒ¥ í•œêº¼ë²ˆì— ì €ì¥ë˜ì–´ ìˆë‹¤
-                 ê·¸ë¦¬ê³  ì •ì ë“¤ì— ëŒ€í•œ ë°ì´í„°ê°€ êµ¬ë¶„ì—†ì´, ì¼ë ¬ë¡œ ì €ì¥ë˜ì–´ ìˆë‹¤
-                 í•œ ì •ì ì— ì €ì¥ëœ ì—¬ëŸ¬ ë°ì´í„° ë“¤ = Attributes ë¡œ êµ¬ë¶„
-                 Vertex Attribute ë¼ í•œë‹¤
-
-        GL VAO = ì„¤ëª…ì„œ, ë°”êµ¬ë‹ˆì— ë‹´ê¸´ ë°ì´í„°ë¥¼ í•´ì„í•˜ëŠ” ë°©ë²•
-                 Attribute ë¥¼ ì½ëŠ” ë°©ë²•ì„ ì•Œë ¤ì¤€ë‹¤
-     */
     glBindVertexArray(m_vertexArrayObject);
 }
 
@@ -47,33 +26,29 @@ VertexLayout::~VertexLayout()
     }
 }
 
-/*
-    Attribute Format ì„ ì•Œë ¤ì£¼ëŠ” í•¨ìˆ˜
-    ì•Œë ¤ì¤€ Format ì€ GL VAO ì˜ Attribute Pointer ì— ì €ì¥í•˜ì—¬
-    ë²„í¼ì—ì„œ ê° vertex attribute ë¥¼ ì½ì„ ìˆ˜ ìˆë„ë¡ í•œë‹¤
- */
-void VertexLayout::SetAttrib // ì •ì  ë°ì´í„° ì¤‘ í•˜ë‚˜ì¸ Attribute ì— ëŒ€í•œ ì •ë³´ë¥¼ ì§€ì •
+
+void VertexLayout::SetAttrib // ? •?  ?°?´?„° ì¤? ?•˜?‚˜?¸ Attribute ?— ????•œ ? •ë³´ë?? ì§?? •
 (
-    uint32_t attribIndex,   // Attribute Index = GL VAO ì˜ ëª‡ ë²ˆì§¸ attribute pointer ì— ì €ì¥ì„ í•  ì§€
-    int count,              // í•´ë‹¹ attribute ê°€ ëª‡ ê°œì˜ ë°ì´í„°ë¡œ êµ¬ì„±ë˜ëŠ” ì§€
-    uint32_t type,          // ë°ì´í„°ì˜ íƒ€ì…ì€ ë¬´ì—‡ì¸ì§€
-    bool normalized,        // attribute ê°€ normalized ëëŠ” ì§€
-    size_t stride,          // ë‹¤ìŒ ì •ì ì˜ attribute ë¥¼ ì½ê¸° ìœ„í•´ì„œ, ì–¼ë§ˆë‚˜ ì´ë™í•´ì•¼ í•˜ëŠ” ì§€
-    uint64_t offset         // ì²˜ìŒ ì •ì ì˜ attribute ë¥¼ ì½ìœ¼ë ¤ë©´, ì–´ë””ì„œë¶€í„° ì½ì–´ì•¼ í•˜ëŠ” ì§€
+    uint32_t attribIndex,   // Attribute Index = GL VAO ?˜ ëª? ë²ˆì§¸ attribute pointer ?— ????¥?„ ?•  ì§?
+    int count,              // ?•´?‹¹ attribute ê°? ëª? ê°œì˜ ?°?´?„°ë¡? êµ¬ì„±?˜?Š” ì§?
+    uint32_t type,          // ?°?´?„°?˜ ????…??? ë¬´ì—‡?¸ì§?
+    bool normalized,        // attribute ê°? normalized ??Š” ì§?
+    size_t stride,          // ?‹¤?Œ ? •? ?˜ attribute ë¥? ?½ê¸? ?œ„?•´?„œ, ?–¼ë§ˆë‚˜ ?´?™?•´?•¼ ?•˜?Š” ì§?
+    uint64_t offset         // ì²˜ìŒ ? •? ?˜ attribute ë¥? ?½?œ¼? ¤ë©?, ?–´?””?„œë¶??„° ?½?–´?•¼ ?•˜?Š” ì§?
 ) const
 {
     /*
         glEnableVertexAttribArray
-            í˜„ì¬ bind í•œ GL VAO ì—ì„œ 
-            ëª‡ ë²ˆì§¸ attrubute pointer ë¥¼ ì‚¬ìš©í•˜ê² ë‹¤ëŠ” ê²ƒì„ ì•Œë¦°ë‹¤
+            ?˜„?¬ bind ?•œ GL VAO ?—?„œ 
+            ëª? ë²ˆì§¸ attrubute pointer ë¥? ?‚¬?š©?•˜ê² ë‹¤?Š” ê²ƒì„ ?•Œë¦°ë‹¤
 
-        ì„¸íŒ…í•˜ê³ ì í•˜ëŠ” attribute pointer ë²ˆí˜¸ë¥¼ ì§€ì •
-        í•´ë‹¹ attribute pointer ë¥¼ ì‚¬ìš©í•˜ê² ë‹¤ê³  ì•Œë¦¼
+        ?„¸?Œ…?•˜ê³ ì ?•˜?Š” attribute pointer ë²ˆí˜¸ë¥? ì§?? •
+        ?•´?‹¹ attribute pointer ë¥? ?‚¬?š©?•˜ê² ë‹¤ê³? ?•Œë¦?
      */
     glEnableVertexAttribArray(attribIndex);
     /* 
-        í•´ë‹¹ attribute pointer ì— vertex attribute ë¥¼ ì½ëŠ” ë°©ë²•ì„ ì„¤ì •
-        ì´ì œ ë²„í¼ì—ì„œ, ê° ì •ì ë“¤ë§ˆë‹¤ ê°€ì§€ê³  ìˆëŠ” vertex attribute ë¥¼ ì½ì–´ë‚¼ ìˆ˜ ìˆë‹¤
+        ?•´?‹¹ attribute pointer ?— vertex attribute ë¥? ?½?Š” ë°©ë²•?„ ?„¤? •
+        ?´? œ ë²„í¼?—?„œ, ê°? ? •? ?“¤ë§ˆë‹¤ ê°?ì§?ê³? ?ˆ?Š” vertex attribute ë¥? ?½?–´?‚¼ ?ˆ˜ ?ˆ?‹¤
      */
     glVertexAttribPointer(attribIndex, count, type, normalized, stride, (const void*)offset);
 }

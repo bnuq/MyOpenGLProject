@@ -289,5 +289,16 @@ void Context::Render()
         floorPtr->Draw(MapProgram.get());
 
 
-  
+
+    m_program->Use();
+        modelTransform =
+            glm::translate(glm::mat4(1.0f), b2.Position) *
+            glm::scale(glm::mat4(1.0f), glm::vec3(b2.xScale, b2.yScale, b2.zScale));
+        transform = projection * view * modelTransform;
+
+
+        m_program->SetUniform("transform", transform);
+        m_program->SetUniform("modelTransform", modelTransform);
+        
+        MainBox->m_mesh->Draw(m_program.get());
 }

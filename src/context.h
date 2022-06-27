@@ -14,6 +14,10 @@
 #include "Camera.h"
 #include "Floor.h"
 
+#include "Box.h"
+
+
+
 
 CLASS_PTR(Context)
 class Context
@@ -121,6 +125,15 @@ private:
 
     // cubemap
     CubeTextureUPtr m_cubeTexture;
+
+
+
+
+
+
+    Box b1 { 1.0f, 1.0f, 1.0f, glm::vec3(0.0f, 0.0f, 0.0f) };
+    Box b2 { 1.0f, 2.0f, 1.0f, glm::vec3(0.0f, 0.0f, 3.0f) };
+    // //MeshUPtr BoxMesh = Mesh::CreateBox();
 
 };
 

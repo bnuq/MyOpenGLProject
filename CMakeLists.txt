@@ -51,6 +51,7 @@ add_executable(
     src/Player.cpp              src/Player.h
     src/Camera.cpp              src/Camera.h
     src/Floor.cpp               src/Floor.h
+    src/Box.cpp                 src/Box.h
 )
 
 
