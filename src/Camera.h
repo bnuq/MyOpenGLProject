@@ -2,7 +2,7 @@
 #define __CAM_H__
 
 #include "common.h"
-#include "Player.h"
+#include "Character.h"
 
 
 CLASS_PTR(Camera)
@@ -24,11 +24,11 @@ public:
 
 
     // 카메라가 따라다니는 플레이어
-    PlayerPtr MainPlayer;    
+    CharacterPtr mainChar;
 
 
 
-    static CameraPtr Create(PlayerPtr player);
+    static CameraPtr Create(CharacterPtr player);
     
 
     void SetPosition(float);

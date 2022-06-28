@@ -5,11 +5,12 @@
 #include "common.h"
 
 
+CLASS_PTR(Character)
 class Character : public Box
 {
 public:
-    Character(float x, float y, float z, glm::vec3 pos)
-    : Box(x, y, z, pos)
+    Character(glm::vec3 pos, float x = 1.0f, float y = 1.0f, float z = 1.0f)
+    : Box(pos, x, y, z)
     {}
 
     glm::vec3 Velocity = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -31,9 +32,10 @@ public:
 
     void Move(int key);
     void Rotate(float);
-    
     void Jump();
+
     void Fall();
+    void Stay();
 };
 
 

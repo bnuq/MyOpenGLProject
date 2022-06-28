@@ -1,13 +1,11 @@
 #version 330 core
 
-// vertex shader out ?´?‘ ?¼ì¹˜í•´?•¼ ?•œ?‹¤
 in vec3 normal;
 in vec2 texCoord;
 in vec3 position;
 
-// ìµœì¢… ?ƒ‰ê¹?
-out vec4 fragColor;
 
+out vec4 fragColor;
 
 uniform bool contact;
 uniform vec3 viewPos;
@@ -15,7 +13,7 @@ uniform vec3 viewPos;
 
 struct Light
 {
-    vec3 position;      // ê´‘ì›?˜ ?›”?“œ ì¢Œí‘œê³? ?œ„ì¹?
+    vec3 position;
     //vec3 direction;
 
     vec3 direction;
@@ -23,7 +21,7 @@ struct Light
 
     vec3 attenuation;
     
-    vec3 ambient;       // ë¹? ?ì²´ì˜ ?ƒ‰ê¹?
+    vec3 ambient;
     vec3 diffuse;
     vec3 specular;
 };
@@ -32,10 +30,9 @@ uniform Light light;
 
 
 struct Material{
-    
-    // ?…?Š¤ì²? Binding ?„ ?†µ?•´?„œ ?„˜?–´?˜¨?‹¤
-    sampler2D diffuse;      // ?…?Š¤ì²?
-    sampler2D specular;     // ë°˜ì‚¬ ?ƒ‰ê¹”ë„, ?…?Š¤ì²˜ì—?„œ ê°’ì„ ?½?–´????„œ ? ?š©?•œ?‹¤
+   
+    sampler2D diffuse;
+    sampler2D specular;
     
     float shininess;
 };
@@ -46,10 +43,10 @@ uniform Material material;
 void main() {
     
     if(contact)
-        fragColor = glm::vec4(1.0, 0.0, 0.0, 1.0);
+        fragColor = vec4(1.0, 0.0, 0.0, 1.0);
     else
     {
-        fragColor = glm::vec4(0.0, 1.0, 0.0, 1.0);
+        fragColor = vec4(0.0, 1.0, 0.0, 1.0);
     }
 
 

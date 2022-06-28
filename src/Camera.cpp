@@ -1,27 +1,27 @@
 #include "Camera.h"
 
-CameraPtr Camera::Create(PlayerPtr player)
+CameraPtr Camera::Create(CharacterPtr player)
 {
     auto camera = CameraPtr(new Camera());
-    camera->MainPlayer = player;
-    return std::move(camera);
+    camera->mainChar = player;
+    return camera;
 }
 
 
 
 void Camera::SetPosition(float HEIGHT)
 {
-    auto MainPos = MainPlayer->Position;
+    auto MainPos = mainChar->Position;
     MainPos.y = HEIGHT;
-    Position = MainPos + (-MainPlayer->FrontVec) * xzDist + MainPlayer->UpVec * yDist;
+    Position = MainPos + (-mainChar->FrontVec) * xzDist + mainChar->UpVec * yDist;
 }
 
 
 
 void Camera::SetDirection()
 {
-    Direction = glm::vec3(glm::rotate(glm::mat4(1.0f), glm::radians(pitch), MainPlayer->LeftVec)
-                        * glm::vec4(MainPlayer->FrontVec, 0.0f));
+    Direction = glm::vec3(glm::rotate(glm::mat4(1.0f), glm::radians(pitch), mainChar->LeftVec)
+                        * glm::vec4(mainChar->FrontVec, 0.0f));
 }
 
 

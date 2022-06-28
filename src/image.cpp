@@ -23,7 +23,7 @@ ImageUPtr Image::Create(int width, int height, int channelCount)
 
 ImageUPtr Image::CreateSingleColorImage(int width, int height, const glm::vec4& color)
 {
-    glm::vec4 clamped = glm::clamp(color * 255.0f, 0.0f, 255.0f); // 0-1 Í∞íÏùÑ 0-255 Í∞íÏúºÎ°? Î≥?Í≤?
+    glm::vec4 clamped = glm::clamp(color * 255.0f, 0.0f, 255.0f);
     uint8_t rgba[4] =
     {
         (uint8_t)clamped.r,

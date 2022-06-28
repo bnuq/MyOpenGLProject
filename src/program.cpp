@@ -79,8 +79,6 @@ void Program::SetUniform(const std::string& name, const glm::vec2& value) const
 void Program::SetUniform(const std::string& name, const glm::vec3& value) const
 {
     auto loc = glGetUniformLocation(m_program, name.c_str());
-    
-    // ë²¡í„°?‚˜ ?–‰? ¬?„ ?„£?„ ?•Œ?Š” ê°’ì„ ë³µì‚¬?•˜ì§? ?•Šê³? ?¬?¸?„°ë¥? ?„˜ê¸´ë‹¤ => value_ptr ?‚¬?š©
     glUniform3fv(loc, 1, glm::value_ptr(value));
 }
 

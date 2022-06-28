@@ -19,28 +19,17 @@ public:
     uint32_t GetFormat() const { return m_format; }
 
     /* 
-        ?…?Š¤ì²˜ë?? ëª¨ë¸?— ? ?š©?•  ?•Œ
-        ?…?Š¤ì²˜ì?? ëª¨ë¸?˜ ?¬ê¸? ì°¨ì´ê°? ?„ˆë¬? ë§ì´ ?‚˜?Š” ê²½ìš° -> ?–´?–»ê²? ì²˜ë¦¬?•  ê²ƒì¸ê°?
-
-        ?´?•Œ ?‚¬?š©?•˜?Š” ê²? Texture Filtering
         Texture Filtering Setting
      */
     void SetFilter(uint32_t minFilter, uint32_t magFilter) const;
     /* 
-        ?…?Š¤ì²˜ë?? ëª¨ë¸?— ? ?š©?•  ?•Œ
-        ëª¨ë¸ ? •? ?˜ ?…?Š¤ì²? ì¢Œí‘œê°?, [0,1] ?„ ë²—ì–´?‚˜?Š” ê²½ìš°
-        ?…?Š¤ì²? ì¢Œí‘œ?— ????‘?˜?Š” ?…?Š¤ì²˜ê?? ?—†?‹¤ -> ?–´?–»ê²? ì²˜ë¦¬?•  ê²ƒì¸ê°?
-
-        ?´?•Œ ?‚¬?š©?•˜?Š” ê²? Texture Wrapping
         Texture Wrapping Setting
      */
     void SetWrap(uint32_t sWrap, uint32_t tWrap) const;
 
 private:
     Texture() {}
-    // ì´ˆê¸°?™” ?•¨?ˆ˜ => ë¬´ì¡°ê±? ?„±ê³?
     void CreateTexture();
-    // ?´ë¯¸ì?? ?°?´?„° => ?…?Š¤ì²˜ë?? ?ƒ?„±
     void SetTextureFromImage(const Image* image);
     
     uint32_t m_texture { 0 }; // gl texture obj id
