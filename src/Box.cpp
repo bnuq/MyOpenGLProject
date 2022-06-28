@@ -1,14 +1,13 @@
 #include "Box.h"
 #include <cmath>
 
-bool Box::Collide(const Box* a, const Box* b)
+bool Box::Collide(const Box& a)
 {
-    auto aPos = a->Position;
-    auto bPos = b->Position;
+    auto aPos = a.Position;
 
-    if(abs(aPos.x - bPos.x) > (a->xScale * 0.5f + b->xScale * 0.5f)) return false;
-    if(abs(aPos.y - bPos.y) > (a->yScale * 0.5f + b->yScale * 0.5f)) return false;
-    if(abs(aPos.z - bPos.z) > (a->zScale * 0.5f + b->zScale * 0.5f)) return false;
+    if(abs(aPos.x - Position.x) > (a.xScale * 0.5f + xScale * 0.5f)) return false;
+    if(abs(aPos.y - Position.y) > (a.yScale * 0.5f + yScale * 0.5f)) return false;
+    if(abs(aPos.z - Position.z) > (a.zScale * 0.5f + zScale * 0.5f)) return false;
 
     return true;
 }

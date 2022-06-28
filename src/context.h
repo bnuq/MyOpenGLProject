@@ -15,7 +15,7 @@
 #include "Floor.h"
 
 #include "Box.h"
-
+#include "Character.h"
 
 
 
@@ -130,8 +130,8 @@ private:
 
 
 
-
-    Box b1 { 1.0f, 1.0f, 1.0f, glm::vec3(0.0f, 0.0f, 0.0f) };
+    Character p1 { 1.0f, 1.0f, 1.0f, glm::vec3(0, 0, 0) };
+    Box b1 { 1.0f, 1.0f, 1.0f, glm::vec3(0.0f, 1.0f, 3.0f) };
     Box b2 { 1.0f, 2.0f, 1.0f, glm::vec3(0.0f, 0.0f, 3.0f) };
     // //MeshUPtr BoxMesh = Mesh::CreateBox();
 

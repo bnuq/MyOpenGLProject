@@ -4,21 +4,21 @@
 #include "common.h"
 
 
-CLASS_PTR(Box)
 class Box
 {
 public:
+    Box(float x, float y, float z, glm::vec3 pos)
+        : xScale(x), yScale(y), zScale(z), Position(pos) {}
+    
     float xScale;
     float yScale;
     float zScale;
 
     glm::vec3 Position;
 
-    Box(float x, float y, float z, glm::vec3 pos)
-    : xScale(x), yScale(y), zScale(z), Position(pos)
-    {}
+    
 
-    bool Collide(const Box* a, const Box* b);
+    bool Collide(const Box& a);
 };
 
 #endif // __BOX_H__

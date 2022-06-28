@@ -301,4 +301,20 @@ void Context::Render()
         m_program->SetUniform("modelTransform", modelTransform);
         
         MainBox->m_mesh->Draw(m_program.get());
+        modelTransform =
+            glm::translate(glm::mat4(1.0f), b1.Position) *
+            glm::scale(glm::mat4(1.0f), glm::vec3(b1.xScale, b1.yScale, b1.zScale));
+        transform = projection * view * modelTransform;
+
+
+        m_program->SetUniform("transform", transform);
+        m_program->SetUniform("modelTransform", modelTransform);
+        
+        MainBox->m_mesh->Draw(m_program.get());
+
+
+    if(b1.Collide(b2))
+        SPDLOG_INFO("Collision Work");
+    else
+        SPDLOG_INFO("No Collision");
 }
