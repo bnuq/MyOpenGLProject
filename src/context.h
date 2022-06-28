@@ -38,7 +38,8 @@ public:
 
     // 메인 플레이어 동작
     void MakeJump()
-    { 
+    {
+        mainChar->Jump();
     }
 
 private:
@@ -87,7 +88,7 @@ private:
     
 
     // 플레이할 메인 캐릭터
-    CharacterPtr mainChar = CharacterPtr(new Character(glm::vec3(0.0f, 1.0f, 0.0f)));
+    CharacterPtr mainChar = CharacterPtr(new Character(glm::vec3(0.0f, 5.0f, 0.0f)));
 
 
     
@@ -95,10 +96,6 @@ private:
     std::vector<FloorPtr> GameMap{};
 
 
-
-
-    /* 테스트를 위한 바닥 */
-    MeshPtr planeMesh;
     
 };
 

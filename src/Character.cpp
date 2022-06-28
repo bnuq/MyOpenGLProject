@@ -42,16 +42,26 @@ void Character::Rotate(float angle)
 
 void Character::Jump()
 {
+    SPDLOG_INFO("Jump Count is {}", JumpCount);
+
     if(JumpCount >= MaxJump) return;
     JumpCount++;
     
     // 점프를 한다 = 속도를 변화시킨다
     // 첫번째 점프는 위로
     if(JumpCount == 1)
+    {
+        SPDLOG_INFO("JumpCount is 1 and UpVec is {}, {}, {}", UpVec.x, UpVec.y, UpVec.z);
         Velocity += JumpPower * UpVec;
+    }
+        
     // 두번째 점프는 앞으로
     else
+    {
+        SPDLOG_INFO("JumpCount is 2 and FrontVec is {}, {}, {}", FrontVec.x, FrontVec.y, FrontVec.z);
         Velocity += JumpPower * FrontVec;
+    }
+        
 }
 
 
@@ -59,7 +69,7 @@ void Character::Jump()
 void Character::Fall()
 {
     // 일단 속도를 바꾼다
-    Velocity += Acceleration;    
+    Velocity += Acceleration * 0.1f;
     // 이후 이동 위치를 구한다
     Position += Velocity;
 }
@@ -68,7 +78,7 @@ void Character::Fall()
 // 충돌을 했을 경우, 처리해주어야 하는 내용
 void Character::Stay()
 {
-    Velocity.y = 0;
+    Velocity = glm::vec3(0.0f, 0.0f,0.0f);
     // 점프 횟수 초기화
     JumpCount = 0;
 }

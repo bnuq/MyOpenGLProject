@@ -50,20 +50,13 @@ bool Context::Init()
     GameMap.push_back(FloorPtr(new Floor(glm::vec3(0.0f, 1.0f, 3.0f))));
     GameMap.push_back(FloorPtr(new Floor(glm::vec3(3.0f, 1.0f, 3.0f))));
     GameMap.push_back(FloorPtr(new Floor(glm::vec3(0.0f, 0.0f, -3.0f), 1.0f, 2.0f, 1.0f)));
+    GameMap.push_back(FloorPtr(new Floor(glm::vec3(0.0f, -2.0f, 0.0f), 200.0f, 0.5f, 200.0f)));   // 바닥
     
 
 
 
 
-    /* 테스트를 위한 바닥 */
-    planeMesh = Mesh::CreatePlane();
-    MaterialPtr planeMat = Material::Create();
-    planeMat->diffuse = Texture::CreateFromImage(Image::Load("./image/container.jpg").get());
-    planeMat->specular = Texture::CreateFromImage(Image::CreateSingleColorImage(
-        planeMat->diffuse->GetWidth(), planeMat->diffuse->GetHeight(), glm::vec4(0.5f, 0.5f, 0.5f, 1.0f)).get()
-    );
-    planeMat->shininess = 64.0f;
-    planeMesh->SetMaterial(planeMat);
+    
 
 
     return true;
@@ -142,14 +135,14 @@ void Context::Render()
             ImGui::DragFloat("Gravity", &(mainChar->Acceleration.y), 0.0001f, -5.0f, -0.001f);
             ImGui::DragFloat("Jump Power", &(mainChar->JumpPower), 0.0001f, 0.0f, 2.0f);
             ImGui::DragFloat("Move Speed", &(mainChar->MoveSpeed), 0.0001f, 0.0f, 1.0f);
-            ImGui::DragFloat("Rot Speed", &(mainChar->RotSpeed), 0.0001f, 0.0f, 1.0f);
+            ImGui::DragFloat("Yaw Rot Speed", &(mainChar->RotSpeed), 0.0001f, 0.0f, 1.0f);
         }
 
         if(ImGui::CollapsingHeader("Camera Setting", ImGuiTreeNodeFlags_DefaultOpen))
         {
             ImGui::DragFloat("XZ Distance", &(MainCam->xzDist), 0.01f);
             ImGui::DragFloat("Y Distance", &(MainCam->yDist), 0.01f);
-            ImGui::DragFloat("Cam Rot Speed", &(MainCam->rotSpeed), 0.001f, 0.0f, 1.0f);
+            ImGui::DragFloat("Pitch Rot Speed", &(MainCam->rotSpeed), 0.001f, 0.0f, 1.0f);
             ImGui::DragFloat2("Cam Rot Limit", glm::value_ptr(MainCam->rotLimit), 0.001f);
         }
         
@@ -199,6 +192,16 @@ void Context::Render()
     }
 
 
+
+
+
+
+/***** 물리 연산 진행 *****/
+
+    // 일단 무조건 Y축 방향으로 움직인다
+    auto TempPos = mainChar->Position;
+    mainChar->Fall();
+
     // 하나라도 충돌이 있었는 지 확인한다
     bool AnyCollision = false;
     for(auto aFloor : GameMap)
@@ -207,19 +210,23 @@ void Context::Render()
         {
             AnyCollision = true;
             aFloor->collision = true;
+            break;
         }
     }
 
-    
-    // 일단 지금은 충돌이 없다고 생각
-    if(!AnyCollision)
+    // 충돌이 하나라도 있었다면, 초기화를 하고 위치를 되돌린다
+    if(AnyCollision)
     {
-        //mainChar->Fall();
-    }
-    else
         mainChar->Stay();
+        mainChar->Position = TempPos;
+    }
 
-        
+
+
+
+
+
+
     // 카메라가 상자를 따라가게 한다
     MainCam->SetPosition(mainChar->Position.y);
     // 카메라 방향 설정
@@ -244,6 +251,10 @@ void Context::Render()
     );
 
 
+
+
+
+/***** Draw Call *****/
 
     // Main Player Draw
     CharProgram->Use();
@@ -282,14 +293,5 @@ void Context::Render()
 
 
     // 테스트를 위한 바닥 그리기
-    modelTransform =
-            glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -2.0f, 0.0f)) *
-            glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)) *
-            glm::scale(glm::mat4(1.0f), glm::vec3(10.0f, 10.0f, 10.0f));
-    transform = projection * view * modelTransform;
-        
-    CharProgram->SetUniform("transform", transform);
-    CharProgram->SetUniform("modelTransform", modelTransform);
-
-    planeMesh->Draw(CharProgram.get());
+    
 }

@@ -1,8 +1,9 @@
 #ifndef __CHAR_H__
 #define __CHAR_H__
 
-#include "Box.h"
 #include "common.h"
+#include "Box.h"
+#include "Floor.h"
 
 
 CLASS_PTR(Character)
@@ -24,9 +25,9 @@ public:
 
 
 /* Setting Values */
-    glm::vec3 Acceleration      = glm::vec3(0.0f, -0.02f, 0.0f);
-    float JumpPower = 0.5f;
-    float MoveSpeed = 0.1f;
+    glm::vec3 Acceleration      = glm::vec3(0.0f, -0.001f, 0.0f);
+    float JumpPower = 0.05f;
+    float MoveSpeed = 0.001f;
     float RotSpeed = 0.1f;
 
 
