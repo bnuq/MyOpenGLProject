@@ -24,6 +24,12 @@ public:
     glm::vec3 UpVec             = glm::vec3(0.0f, 1.0f, 0.0f);
 
 
+    // 떨어지고 있는 지 체크
+    bool Falling = true;
+    // 떨어지고 있지 않을 때, 현재 땅의 높이
+    float groundHeight;
+
+
 /* Setting Values */
     glm::vec3 Acceleration      = glm::vec3(0.0f, -0.001f, 0.0f);
     float JumpPower = 0.05f;
@@ -36,7 +42,7 @@ public:
     void Jump();
 
     void Fall();
-    void Stay();
+    void Stay(glm::vec3 tempPos);
 };
 
 

@@ -41,10 +41,15 @@ bool Context::Init()
                         );
     FloorMesh->SetMaterial(FloorMat);
 
+
+
+    // 메인 캐릭터
+    mainChar = CharacterPtr(new Character(glm::vec3(0.0f, 10.0f, 0.0f), 2.0f, 1.0f, 4.0f));
+    
     // 메인 카메라
     MainCam = Camera::Create(mainChar);
 
-
+    
 
     // GameMap 을 만든다
     GameMap.push_back(FloorPtr(new Floor(glm::vec3(0.0f, 1.0f, 3.0f))));
@@ -99,8 +104,8 @@ void Context::MouseMove(double x, double y)
     auto pos = glm::vec2((float)x, (float)y);
     auto deltaPos = pos - m_prevMousePos;
 
-    mainChar->Rotate(deltaPos.x);
-    MainCam->Rotate(deltaPos.y);
+    //mainChar->Rotate(deltaPos.x);
+    MainCam->Rotate(deltaPos);
 
     m_prevMousePos = pos;
 }
@@ -135,15 +140,16 @@ void Context::Render()
             ImGui::DragFloat("Gravity", &(mainChar->Acceleration.y), 0.0001f, -5.0f, -0.001f);
             ImGui::DragFloat("Jump Power", &(mainChar->JumpPower), 0.0001f, 0.0f, 2.0f);
             ImGui::DragFloat("Move Speed", &(mainChar->MoveSpeed), 0.0001f, 0.0f, 1.0f);
-            ImGui::DragFloat("Yaw Rot Speed", &(mainChar->RotSpeed), 0.0001f, 0.0f, 1.0f);
+            ImGui::DragFloat("Char Yaw Rot Speed", &(mainChar->RotSpeed), 0.0001f, 0.0f, 1.0f);
         }
 
         if(ImGui::CollapsingHeader("Camera Setting", ImGuiTreeNodeFlags_DefaultOpen))
         {
             ImGui::DragFloat("XZ Distance", &(MainCam->xzDist), 0.01f);
             ImGui::DragFloat("Y Distance", &(MainCam->yDist), 0.01f);
-            ImGui::DragFloat("Pitch Rot Speed", &(MainCam->rotSpeed), 0.001f, 0.0f, 1.0f);
-            ImGui::DragFloat2("Cam Rot Limit", glm::value_ptr(MainCam->rotLimit), 0.001f);
+            ImGui::DragFloat("Yaw Rot Speed", &(MainCam->yawRotSpeed), 0.001f, 0.0f, 1.0f);
+            ImGui::DragFloat("Pitch Rot Speed", &(MainCam->pitchRotSpeed), 0.001f, 0.0f, 1.0f);
+            ImGui::DragFloat2("Pitch Rot Limit", glm::value_ptr(MainCam->pitchRotLimit), 0.001f);
         }
         
 
@@ -209,6 +215,7 @@ void Context::Render()
         if(mainChar->Collide(aFloor))
         {
             AnyCollision = true;
+            
             aFloor->collision = true;
             break;
         }
@@ -217,20 +224,13 @@ void Context::Render()
     // 충돌이 하나라도 있었다면, 초기화를 하고 위치를 되돌린다
     if(AnyCollision)
     {
-        mainChar->Stay();
-        mainChar->Position = TempPos;
+        mainChar->Stay(TempPos);
     }
 
 
-
-
-
-
-
     // 카메라가 상자를 따라가게 한다
-    MainCam->SetPosition(mainChar->Position.y);
-    // 카메라 방향 설정
-    MainCam->SetDirection();
+    MainCam->SetPosition();
+    
 
 
 
@@ -262,7 +262,8 @@ void Context::Render()
                           glm::mat4(glm::vec4(mainChar->LeftVec, 0.0f), 
                                     glm::vec4(mainChar->UpVec, 0.0f),
                                     glm::vec4(mainChar->FrontVec, 0.0f), 
-                                    glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+                                    glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)) *
+                          glm::scale(glm::mat4(1.0f), glm::vec3(mainChar->xScale, mainChar->yScale, mainChar->zScale));
     
     auto transform = projection * view * modelTransform;
     CharProgram->SetUniform("transform", transform);

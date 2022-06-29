@@ -69,16 +69,27 @@ void Character::Jump()
 void Character::Fall()
 {
     // 일단 속도를 바꾼다
-    Velocity += Acceleration * 0.1f;
+    Velocity += Acceleration * 0.05f;
     // 이후 이동 위치를 구한다
     Position += Velocity;
+
+    // 만약 기존 떨어지던 위치보다 더 내려가면, 기존 발판이 사라졌다는 뜻 or 다른 레벨로 가고있다
+    // 떨어지고 있는 상태로 업데이트 한다
+    if(Position.y < groundHeight)
+        Falling = true;
 }
 
 
 // 충돌을 했을 경우, 처리해주어야 하는 내용
-void Character::Stay()
+void Character::Stay(glm::vec3 tempPos)
 {
     Velocity = glm::vec3(0.0f, 0.0f,0.0f);
+    Position = tempPos;
+
     // 점프 횟수 초기화
     JumpCount = 0;
+    // 더이상 떨어지지 않을 것이다
+    Falling = false;
+    // 이전 위치가 groundHeight
+    groundHeight = tempPos.y;
 }

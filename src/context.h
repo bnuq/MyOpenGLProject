@@ -88,7 +88,7 @@ private:
     
 
     // 플레이할 메인 캐릭터
-    CharacterPtr mainChar = CharacterPtr(new Character(glm::vec3(0.0f, 5.0f, 0.0f)));
+    CharacterPtr mainChar;
 
 
     
