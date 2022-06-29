@@ -1,14 +1,6 @@
 #include "model.h"
 
 /* PUBLIC */
-/* 
-    ??„¸?•˜ê²ŒëŠ” ?˜ ëª¨ë¥´ê² ì??ë§?, assimp library ë¥? ?´?š©
-    ëª¨ë¸ ?ŒŒ?¼ 
-        => ? •?  ë°°ì—´ê³? ?¸?±?Š¤ ë°°ì—´?„ ?½?–´?˜¤ê³?
-        => Mesh ë¥? ë§Œë“ ?‹¤
-        => VBO, EBO ë¥? ì±„ìš´?‹¤
-        => ?—°ê²°ëœ Material ?´ ?ˆ?œ¼ë©? Material ê¹Œì?? ?½?–´?˜¨?‹¤
- */
 ModelUPtr Model::Load(const std::string& filename)
 {
     auto model = ModelUPtr(new Model());

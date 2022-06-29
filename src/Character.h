@@ -33,12 +33,16 @@ public:
 /* Setting Values */
     glm::vec3 Acceleration      = glm::vec3(0.0f, -0.001f, 0.0f);
     float JumpPower = 0.05f;
-    float MoveSpeed = 0.001f;
-    float RotSpeed = 0.1f;
+
+    float MoveSpeed = 0.01f;
+    
+    float YawAngle      = 0.0f;
+    float YawAngleTick  = 0.4f;
+    const float YAW_ERROR = 0.001f;
 
 
-    void Move(int key);
-    void Rotate(float);
+    void Move(glm::vec3 camVec);           
+    void Rotate(glm::vec3 camVec);
     void Jump();
 
     void Fall();

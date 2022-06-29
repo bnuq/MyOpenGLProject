@@ -75,16 +75,29 @@ bool Context::Init()
 void Context::ProcessInput(GLFWwindow* window)
 {
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        mainChar->Move(GLFW_KEY_W);
+    {
+        // 회전하면서 이동한다
+        mainChar->Rotate(MainCam->FrontVec);
+        mainChar->Move(MainCam->FrontVec);
+    }
 
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        mainChar->Move(GLFW_KEY_S);
+    {
+        mainChar->Rotate(-MainCam->FrontVec);
+        mainChar->Move(-MainCam->FrontVec);
+    }
         
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        mainChar->Move(GLFW_KEY_D);
+    {
+        mainChar->Rotate(-MainCam->LeftVec);
+        mainChar->Move(-MainCam->LeftVec);
+    }
 
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        mainChar->Move(GLFW_KEY_A);
+    {
+        mainChar->Rotate(MainCam->LeftVec);
+        mainChar->Move(MainCam->LeftVec);
+    }        
 }
 
 void Context::Reshape(int width, int height)
@@ -137,10 +150,10 @@ void Context::Render()
     {
         if(ImGui::CollapsingHeader("Character Setting", ImGuiTreeNodeFlags_DefaultOpen))
         {
-            ImGui::DragFloat("Gravity", &(mainChar->Acceleration.y), 0.0001f, -5.0f, -0.001f);
-            ImGui::DragFloat("Jump Power", &(mainChar->JumpPower), 0.0001f, 0.0f, 2.0f);
-            ImGui::DragFloat("Move Speed", &(mainChar->MoveSpeed), 0.0001f, 0.0f, 1.0f);
-            ImGui::DragFloat("Char Yaw Rot Speed", &(mainChar->RotSpeed), 0.0001f, 0.0f, 1.0f);
+            ImGui::DragFloat("Gravity", &(mainChar->Acceleration.y), 0.001f, -5.0f, -0.001f);
+            ImGui::DragFloat("Jump Power", &(mainChar->JumpPower), 0.001f, 0.0f, 2.0f);
+            ImGui::DragFloat("Move Speed", &(mainChar->MoveSpeed), 0.001f, 0.0f, 1.0f);
+            ImGui::DragFloat("Yaw Angle Tick", &(mainChar->YawAngleTick), 0.001f, 0.0f, 1.0f);
         }
 
         if(ImGui::CollapsingHeader("Camera Setting", ImGuiTreeNodeFlags_DefaultOpen))
