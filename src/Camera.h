@@ -26,8 +26,8 @@ public:
     
 
 /* Setting Value */
-    float xzDist = 10.0f;
-    float yDist = 5.0f;
+    float xzDist = 20.0f;
+    float yDist = 10.0f;
 
     float yawRotSpeed { 0.1f };
     float pitchRotSpeed { 0.1f };

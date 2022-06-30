@@ -10,8 +10,5 @@ bool Box::Collide(BoxPtr a)
     if(abs(aPos.y - Position.y) > (a->yScale * 0.5f + yScale * 0.5f)) return false;
     if(abs(aPos.z - Position.z) > (a->zScale * 0.5f + zScale * 0.5f)) return false;
 
-
-    SPDLOG_INFO("Collision has happen");
-
     return true;
 }

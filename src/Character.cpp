@@ -78,7 +78,16 @@ void Character::Jump()
 void Character::Fall()
 {
     // 일단 속도를 바꾼다
-    Velocity += Acceleration * 0.05f;
+    Velocity += Acceleration;
+    // 혹시 xz 평면 위 속도가 있다면 그 속도도 줄인다
+    if(glm::dot(Velocity, FrontVec) != 0)
+    {
+        Velocity -= FrontVec * DashResist;
+        if(Velocity.x < 0) Velocity.x = 0;
+        if(Velocity.z < 0) Velocity.z = 0;
+    }
+
+
     // 이후 이동 위치를 구한다
     Position += Velocity;
 
@@ -92,12 +101,12 @@ void Character::Fall()
 // 충돌을 했을 경우, 처리해주어야 하는 내용
 void Character::Stay(glm::vec3 tempPos)
 {
-    //Velocity = glm::vec3(0.0f, 0.0f, 0.0f);
-    //Position = tempPos;
+    Velocity = glm::vec3(0.0f, 0.0f, 0.0f);
+    Position = tempPos;
 
     // y 축으로 떨어지는 속도와 위치만 제자리로 돌린다
-    Velocity.y = 0.0f;
-    Position.y = tempPos.y;
+    // Velocity.y = 0.0f;
+    // Position.y = tempPos.y;
 
     // 점프 횟수 초기화
     JumpCount = 0;

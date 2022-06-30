@@ -15,11 +15,11 @@ bool Context::Init()
     glClearColor(0.1f, 0.2f, 0.3f, 0.0f);
 
     // Programs
-    CharProgram = Program::Create("./shader/lighting.vs", "./shader/lighting.fs");
-    if(!CharProgram)
-        return false;
+    CharProgram = Program::Create("./shader/Character/character.vs", "./shader/Character/character.fs");
+    if(!CharProgram) return false;
 
     MapProgram = Program::Create("./shader/Map/map.vs", "./shader/Map/map.fs");
+    if(!MapProgram) return false;
 
     
     // Meshes
@@ -48,6 +48,7 @@ bool Context::Init()
     
     // 메인 카메라
     MainCam = Camera::Create(mainChar);
+    m_cameraControl = false;
 
     
 
@@ -74,30 +75,46 @@ bool Context::Init()
 
 void Context::ProcessInput(GLFWwindow* window)
 {
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
     {
         // 회전하면서 이동한다
         mainChar->Rotate(MainCam->FrontVec);
         mainChar->Move(MainCam->FrontVec);
     }
 
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
     {
         mainChar->Rotate(-MainCam->FrontVec);
         mainChar->Move(-MainCam->FrontVec);
     }
         
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
     {
         mainChar->Rotate(-MainCam->LeftVec);
         mainChar->Move(-MainCam->LeftVec);
     }
 
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
     {
         mainChar->Rotate(MainCam->LeftVec);
         mainChar->Move(MainCam->LeftVec);
-    }        
+    }
+
+    // Q, E로 카메라 조종을 컨트롤하자
+    if(glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+    {
+        m_cameraControl = true;
+
+        double xpos, ypos;
+        glfwGetCursorPos(window, &xpos, &ypos);
+        m_prevMousePos.x = (float)xpos;
+        m_prevMousePos.y = (float)ypos;
+    }
+    if(glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+    {
+        m_cameraControl = false;
+    }
+
 }
 
 void Context::Reshape(int width, int height)
@@ -125,18 +142,8 @@ void Context::MouseMove(double x, double y)
 
 void Context::MouseButton(int button, int action, double x, double y)
 {
-    if (button == GLFW_MOUSE_BUTTON_RIGHT)
-    {
-        if (action == GLFW_PRESS)
-        {
-            m_prevMousePos = glm::vec2((float)x, (float)y);
-            m_cameraControl = true;
-        }
-        else if (action == GLFW_RELEASE)
-        {
-            m_cameraControl = false;
-        }
-    }
+    if(m_cameraControl)
+        m_prevMousePos = glm::vec2((float) x, (float) y);
 }
 
 
@@ -148,9 +155,12 @@ void Context::Render()
 
     if(ImGui::Begin("ImGui"))
     {
+        ImGui::Checkbox("Camera Control", &(m_cameraControl));
+
         if(ImGui::CollapsingHeader("Character Setting", ImGuiTreeNodeFlags_DefaultOpen))
         {
             ImGui::DragFloat("Gravity", &(mainChar->Acceleration.y), 0.001f, -5.0f, -0.001f);
+            ImGui::DragFloat("Dash Resist", &(mainChar->DashResist), 0.001f, 0.0f, mainChar->JumpPower / 10.0f);
             ImGui::DragFloat("Jump Power", &(mainChar->JumpPower), 0.001f, 0.0f, 2.0f);
             ImGui::DragFloat("Move Speed", &(mainChar->MoveSpeed), 0.001f, 0.0f, 1.0f);
             ImGui::DragFloat("Yaw Angle Tick", &(mainChar->YawAngleTick), 0.001f, 0.0f, 1.0f);
@@ -165,8 +175,17 @@ void Context::Render()
             ImGui::DragFloat2("Pitch Rot Limit", glm::value_ptr(MainCam->pitchRotLimit), 0.001f);
         }
         
+        if (ImGui::CollapsingHeader("light", ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            ImGui::DragFloat3("l.position", glm::value_ptr(m_light.position), 0.01f);
+            ImGui::DragFloat3("l.direction", glm::value_ptr(m_light.direction), 0.01f);
+            ImGui::DragFloat2("l.cutoff", glm::value_ptr(m_light.cutoff), 0.5f, 0.0f, 90.0f);
+            ImGui::ColorEdit3("l.ambient", glm::value_ptr(m_light.ambient));
+            ImGui::ColorEdit3("l.diffuse", glm::value_ptr(m_light.diffuse));
+            ImGui::ColorEdit3("l.specular", glm::value_ptr(m_light.specular));
+            ImGui::DragFloat("l.distance", &m_light.distance, 0.5f, 0.0f, 3000.0f);
+        }
 
-        ImGui::Checkbox("Camera Control", &(m_cameraControl));
     }
     
 
@@ -189,12 +208,14 @@ void Context::Render()
         CharProgram->SetUniform("light.position", m_light.position);
         CharProgram->SetUniform("light.direction", m_light.direction);
         CharProgram->SetUniform("light.cutoff", glm::vec2(
-                                            cosf(glm::radians(m_light.cutoff[0])),
-                                            cosf(glm::radians(m_light.cutoff[0] + m_light.cutoff[1]))));
-        CharProgram->SetUniform("light.attenuation", GetAttenuationCoeff(m_light.distance));
+                                                // Intensity 가 100% 인 각도
+                                                cosf(glm::radians(m_light.cutoff[0])),
+                                                // 약하더라도 조금 빛을 받을 수 있는 각도 범위
+                                                cosf(glm::radians(m_light.cutoff[0] + m_light.cutoff[1]))));
         CharProgram->SetUniform("light.ambient", m_light.ambient);
         CharProgram->SetUniform("light.diffuse", m_light.diffuse);
         CharProgram->SetUniform("light.specular", m_light.specular);
+        CharProgram->SetUniform("light.attenuation", GetAttenuationCoeff(m_light.distance));
 
 
         MapProgram->SetUniform("viewPos", m_cameraPos);
@@ -204,10 +225,10 @@ void Context::Render()
         MapProgram->SetUniform("light.cutoff", glm::vec2(
                                             cosf(glm::radians(m_light.cutoff[0])),
                                             cosf(glm::radians(m_light.cutoff[0] + m_light.cutoff[1]))));
-        MapProgram->SetUniform("light.attenuation", GetAttenuationCoeff(m_light.distance));
         MapProgram->SetUniform("light.ambient", m_light.ambient);
         MapProgram->SetUniform("light.diffuse", m_light.diffuse);
         MapProgram->SetUniform("light.specular", m_light.specular);
+        //MapProgram->SetUniform("light.attenuation", GetAttenuationCoeff(m_light.distance));
     }
 
 

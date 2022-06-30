@@ -32,6 +32,8 @@ public:
 
 /* Setting Values */
     glm::vec3 Acceleration      = glm::vec3(0.0f, -0.001f, 0.0f);
+    float DashResist = 0.02f;
+
     float JumpPower = 0.05f;
 
     float MoveSpeed = 0.01f;
