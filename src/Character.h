@@ -16,8 +16,6 @@ public:
 
     
 
-    int JumpCount = 0;
-    const int MaxJump = 2;
 
     glm::vec3 FrontVec          = glm::vec3(0.0f, 0.0f, 1.0f);
     glm::vec3 LeftVec          = glm::vec3(1.0f, 0.0f, 0.0f);
@@ -31,22 +29,31 @@ public:
     
     float DashResist = 0.02f;
 
-    float JumpPower = 0.05f;
-
-    float MoveSpeed = 0.1f;
     
-    float YawAngle      = 0.0f;
-    float YawAngleTick  = 10.0f;
-    const float YAW_ERROR = 0.001f;
+
+    
+    
+    
 
 
 /* XZ 평면 이동 관련 */
     glm::vec3 xzDir{};
     bool xzMoving = false;
+    float MoveSpeed = 0.1f;
+
+    float YawAngleTick  = 10.0f;
+
+    void GetXZDir(glm::vec3 dir);
+    void Rotate();
 
 /* Y 축 이동 관련 */
-    glm::vec3 yVel = glm::vec3(0.0f, 0.0f, 0.0f);
-    glm::vec3 Acceleration = glm::vec3(0.0f, -0.001f, 0.0f);
+    float ySpeed = 0.0f;
+    float gravity = -0.001f;
+
+    float JumpPower = 0.05f;
+    int JumpCount = 0;
+    const int MaxJump = 2;
+
     // 떨어지고 있는 지 체크
     bool Falling = true;
     // 떨어지고 있지 않을 때, 현재 땅의 높이
@@ -63,11 +70,7 @@ public:
     void Stay(glm::vec3 tempPos);
 
 
-/* XZ 평면 이동 관련 */
-    void GetXZDir(glm::vec3 dir);
-    
 
-    void Rotate();
     void Move();
     
 };

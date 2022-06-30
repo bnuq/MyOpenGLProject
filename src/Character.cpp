@@ -3,14 +3,7 @@
 
 void Character::Move()
 {
-    //camVec.y = 0; // 혹시 모르니까
-    //Velocity += camVec * MoveSpeed;
-    // 속도 증가 => 등속도 운동 => 멈추질 않는다
-    // 위치 이동으로 변경
-    //Position += camVec * MoveSpeed;
-
-    // 가지고 있는 속도의 방향으로 움직인다
-    Position += Velocity * MoveSpeed;
+    
 }
 
 
@@ -86,36 +79,39 @@ void Character::Stay(glm::vec3 tempPos)
 
 
 
-void Character::GetXZDir(glm::vec3 dir)
-{
-    xzDir = glm::normalize(xzDir + dir);
-    xzMoving = true;
-}
+
+/* XZ 평면 이동 */
+
+    void Character::GetXZDir(glm::vec3 dir)
+    {
+        xzDir = glm::normalize(xzDir + dir);
+        xzMoving = true;
+    }
 
 
-// 앞을 바라보는 방향인 front vec 의 방향을 xzDir 방향과 일치시킨다
-void Character::Rotate()             
-{
-    // 혹시 모르니까 정규화 한번 더
-    FrontVec.y = 0;
-    FrontVec = glm::normalize(FrontVec);
+    // 앞을 바라보는 방향인 front vec 의 방향을 xzDir 방향과 일치시킨다
+    void Character::Rotate()             
+    {
+        // 혹시 모르니까 정규화 한번 더
+        FrontVec.y = 0;
+        FrontVec = glm::normalize(FrontVec);
 
-    LeftVec.y = 0;
-    LeftVec = glm::normalize(LeftVec);
-    
-    xzDir.y = 0;
-    xzDir = glm::normalize(xzDir);
+        LeftVec.y = 0;
+        LeftVec = glm::normalize(LeftVec);
+        
+        xzDir.y = 0;
+        xzDir = glm::normalize(xzDir);
 
 
-    auto CrossRes = glm::cross(FrontVec, xzDir);
-    
-    // 양수 ==> 반시계방향 회전 ==> + 방향으로 회전
-    // 음수 ==> 시계방향 회전 ==> - 방향으로 회전
-    float ClockOrNot = (CrossRes.y >= 0) ? (+1) : (-1);
+        auto CrossRes = glm::cross(FrontVec, xzDir);
+        
+        // 양수 ==> 반시계방향 회전 ==> + 방향으로 회전
+        // 음수 ==> 시계방향 회전 ==> - 방향으로 회전
+        float ClockOrNot = (CrossRes.y >= 0) ? (+1) : (-1);
 
-    // 벡터를 회전시킬 것이므로, 회전 변환을 그대로 바로 적용해도 괜찮다
-    auto YawRot = glm::rotate(glm::mat4(1.0f), glm::radians(ClockOrNot * YawAngleTick), glm::vec3(0.0f, 1.0f, 0.0f));
+        // 벡터를 회전시킬 것이므로, 회전 변환을 그대로 바로 적용해도 괜찮다
+        auto YawRot = glm::rotate(glm::mat4(1.0f), glm::radians(ClockOrNot * YawAngleTick), glm::vec3(0.0f, 1.0f, 0.0f));
 
-    FrontVec  = glm::vec3(YawRot * glm::vec4(FrontVec, 0.0f));
-    LeftVec   = glm::vec3(YawRot * glm::vec4(LeftVec, 0.0f));
-}
+        FrontVec  = glm::vec3(YawRot * glm::vec4(FrontVec, 0.0f));
+        LeftVec   = glm::vec3(YawRot * glm::vec4(LeftVec, 0.0f));
+    }

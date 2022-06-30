@@ -74,6 +74,10 @@ void Context::ProcessInput(GLFWwindow* window)
 {
     // 이번 프레임에서 키 입력이 있었는 지 체크
     mainChar->xzMoving = false;
+    // 새로운 방향 받을 수 있도록 초기화
+    mainChar->xzDir = glm::vec3(0.0f, 0.0f, 0.0f);
+
+
 
     // 움직이는 키를 입력 받는다
     if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
@@ -103,10 +107,7 @@ void Context::ProcessInput(GLFWwindow* window)
     if(glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
     {
         m_cameraControl = false;
-    }
-
-
-    
+    }    
 }
 
 void Context::Reshape(int width, int height)
@@ -151,7 +152,7 @@ void Context::Render()
 
         if(ImGui::CollapsingHeader("Character Setting", ImGuiTreeNodeFlags_DefaultOpen))
         {
-            ImGui::DragFloat("Gravity", &(mainChar->Acceleration.y), 0.001f, -5.0f, -0.001f);
+            ImGui::DragFloat("Gravity", &(mainChar->gravity), 0.001f, -5.0f, -0.001f);
             ImGui::DragFloat("Dash Resist", &(mainChar->DashResist), 0.001f, 0.0f, mainChar->JumpPower / 10.0f);
             ImGui::DragFloat("Jump Power", &(mainChar->JumpPower), 0.001f, 0.0f, 2.0f);
             ImGui::DragFloat("Move Speed", &(mainChar->MoveSpeed), 0.001f, 0.0f, 1.0f);
@@ -230,7 +231,33 @@ void Context::Render()
 
 /***** 물리 연산 진행 *****/
 
+    /* 
+        메인 캐릭터 입장에서 생각해보면
 
+        움직이고 = Move()
+            XZ 움직임
+                xzMoving == true 면
+                    이번에 키를 입력받았다는 거니까
+                    Rotate 를 한다
+                
+                xzMoving == false 면
+                    키 입력이 없다, xz 평면에서 움직이지 않는다
+                    할 거 없음
+
+            Y 움직임
+                이전 높이 저장해두고
+                ySpeed <- 점프 입력에 의해서 바뀌어 있을 수도 있는 상황
+                중력에 의한 속도 변경
+            
+            XYZ 방향으로 이동
+
+        충돌판정한다
+            하나라도 충돌이 있으면
+                ySpeed = 0 으로 만들어 버리고
+                점프 초기화
+                groundHeight 초기화
+                이전 높이로 돌아가기
+     */
 
 
 
@@ -318,11 +345,5 @@ void Context::Render()
 
         FloorMesh->Draw(CharProgram.get());
     }
-
-
-        
-
-
-    // 테스트를 위한 바닥 그리기
     
 }
