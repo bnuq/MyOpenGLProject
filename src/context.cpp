@@ -69,36 +69,26 @@ bool Context::Init()
 }
 
 
-
-
-
-
+// 60FPS 속도로 호출된다
 void Context::ProcessInput(GLFWwindow* window)
 {
+    // 이번 프레임에서 키 입력이 있었는 지 체크
+    mainChar->xzMoving = false;
+
+    // 움직이는 키를 입력 받는다
     if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-    {
-        // 회전하면서 이동한다
-        mainChar->Rotate(MainCam->FrontVec);
-        mainChar->Move(MainCam->FrontVec);
-    }
+        mainChar->GetXZDir(MainCam->FrontVec);
 
     if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-    {
-        mainChar->Rotate(-MainCam->FrontVec);
-        mainChar->Move(-MainCam->FrontVec);
-    }
-        
+        mainChar->GetXZDir(-MainCam->FrontVec);
+
     if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-    {
-        mainChar->Rotate(-MainCam->LeftVec);
-        mainChar->Move(-MainCam->LeftVec);
-    }
+        mainChar->GetXZDir(-MainCam->LeftVec);
 
     if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-    {
-        mainChar->Rotate(MainCam->LeftVec);
-        mainChar->Move(MainCam->LeftVec);
-    }
+        mainChar->GetXZDir(MainCam->LeftVec);
+
+
 
     // Q, E로 카메라 조종을 컨트롤하자
     if(glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
@@ -115,6 +105,8 @@ void Context::ProcessInput(GLFWwindow* window)
         m_cameraControl = false;
     }
 
+
+    
 }
 
 void Context::Reshape(int width, int height)
@@ -163,7 +155,7 @@ void Context::Render()
             ImGui::DragFloat("Dash Resist", &(mainChar->DashResist), 0.001f, 0.0f, mainChar->JumpPower / 10.0f);
             ImGui::DragFloat("Jump Power", &(mainChar->JumpPower), 0.001f, 0.0f, 2.0f);
             ImGui::DragFloat("Move Speed", &(mainChar->MoveSpeed), 0.001f, 0.0f, 1.0f);
-            ImGui::DragFloat("Yaw Angle Tick", &(mainChar->YawAngleTick), 0.001f, 0.0f, 1.0f);
+            ImGui::DragFloat("Yaw Angle Tick", &(mainChar->YawAngleTick), 0.1f, 0.0f, 30.0f);
         }
 
         if(ImGui::CollapsingHeader("Camera Setting", ImGuiTreeNodeFlags_DefaultOpen))
@@ -175,7 +167,7 @@ void Context::Render()
             ImGui::DragFloat2("Pitch Rot Limit", glm::value_ptr(MainCam->pitchRotLimit), 0.001f);
         }
         
-        if (ImGui::CollapsingHeader("light", ImGuiTreeNodeFlags_DefaultOpen))
+        if (ImGui::CollapsingHeader("Light Setting", ImGuiTreeNodeFlags_DefaultOpen))
         {
             ImGui::DragFloat3("l.position", glm::value_ptr(m_light.position), 0.01f);
             ImGui::DragFloat3("l.direction", glm::value_ptr(m_light.direction), 0.01f);
@@ -237,6 +229,10 @@ void Context::Render()
 
 
 /***** 물리 연산 진행 *****/
+
+
+
+
 
     // 일단 무조건 Y축 방향으로 움직인다
     auto TempPos = mainChar->Position;

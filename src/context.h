@@ -42,6 +42,8 @@ public:
         mainChar->Jump();
     }
 
+
+
 private:
     Context() {}
     bool Init();

@@ -1,52 +1,20 @@
 #include "Character.h"
 
 
-void Character::Move(glm::vec3 camVec)
+void Character::Move()
 {
-    camVec.y = 0; // 혹시 모르니까
+    //camVec.y = 0; // 혹시 모르니까
     //Velocity += camVec * MoveSpeed;
     // 속도 증가 => 등속도 운동 => 멈추질 않는다
     // 위치 이동으로 변경
-    Position += camVec * MoveSpeed;
+    //Position += camVec * MoveSpeed;
+
+    // 가지고 있는 속도의 방향으로 움직인다
+    Position += Velocity * MoveSpeed;
 }
 
 
-void Character::Rotate(glm::vec3 camVec)             
-{
-    FrontVec = glm::normalize(FrontVec);
-    camVec = glm::normalize(camVec);
-             
-    auto CrossRes = glm::cross(FrontVec, camVec);
-    float RotAngle = 0;
 
-    // 두 벡터가 거의 일치하는 상황
-    // if(CrossRes.y > -YAW_ERROR && CrossRes.y < YAW_ERROR)
-    // {
-    //     // 회전할 게 없다 => front vec 를 완전히 일치시켜 버린다
-    //     FrontVec = camVec;
-    //     return;
-    // }
-    // 양수 => 반시계방향 회전의 경우
-    if(CrossRes.y >= 0)
-    {
-        // 모델 좌표계 전체를 회전시켜야 한다, 위치는 바뀌지 않는다
-        // 그럼 그냥 벡터니까 회전 적용하면 될듯?
-        auto YawRot = glm::rotate(glm::mat4(1.0f), glm::radians(YawAngleTick), glm::vec3(0.0f, 1.0f, 0.0f));
-
-        // 기존 모델 좌표계를 구성하는 벡터를 회전 시킨다
-        FrontVec  = glm::vec3(YawRot * glm::vec4(FrontVec, 0.0f));
-        LeftVec   = glm::vec3(YawRot * glm::vec4(LeftVec, 0.0f));
-    }
-    // 음수 => 시계방향 회전
-    else
-    {
-        auto YawRot = glm::rotate(glm::mat4(1.0f), glm::radians(-YawAngleTick), glm::vec3(0.0f, 1.0f, 0.0f));
-
-        // 기존 모델 좌표계를 구성하는 벡터를 회전 시킨다
-        FrontVec  = glm::vec3(YawRot * glm::vec4(FrontVec, 0.0f));
-        LeftVec   = glm::vec3(YawRot * glm::vec4(LeftVec, 0.0f));
-    }
-}
 
 
 void Character::Jump()
@@ -114,4 +82,40 @@ void Character::Stay(glm::vec3 tempPos)
     Falling = false;
     // 이전 위치가 groundHeight
     groundHeight = tempPos.y;
+}
+
+
+
+void Character::GetXZDir(glm::vec3 dir)
+{
+    xzDir = glm::normalize(xzDir + dir);
+    xzMoving = true;
+}
+
+
+// 앞을 바라보는 방향인 front vec 의 방향을 xzDir 방향과 일치시킨다
+void Character::Rotate()             
+{
+    // 혹시 모르니까 정규화 한번 더
+    FrontVec.y = 0;
+    FrontVec = glm::normalize(FrontVec);
+
+    LeftVec.y = 0;
+    LeftVec = glm::normalize(LeftVec);
+    
+    xzDir.y = 0;
+    xzDir = glm::normalize(xzDir);
+
+
+    auto CrossRes = glm::cross(FrontVec, xzDir);
+    
+    // 양수 ==> 반시계방향 회전 ==> + 방향으로 회전
+    // 음수 ==> 시계방향 회전 ==> - 방향으로 회전
+    float ClockOrNot = (CrossRes.y >= 0) ? (+1) : (-1);
+
+    // 벡터를 회전시킬 것이므로, 회전 변환을 그대로 바로 적용해도 괜찮다
+    auto YawRot = glm::rotate(glm::mat4(1.0f), glm::radians(ClockOrNot * YawAngleTick), glm::vec3(0.0f, 1.0f, 0.0f));
+
+    FrontVec  = glm::vec3(YawRot * glm::vec4(FrontVec, 0.0f));
+    LeftVec   = glm::vec3(YawRot * glm::vec4(LeftVec, 0.0f));
 }

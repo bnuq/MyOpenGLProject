@@ -182,40 +182,39 @@ int main(int argc, const char** argv)
 
     glfwSetScrollCallback(window, OnScroll);
 
-    // glfw ë©”ì¸ ë£¨í”„ ?‹¤?–‰, ?œˆ?„?š° close ë²„íŠ¼?„ ?ˆ„ë¥´ë©´ ? •?ƒ ì¢…ë£Œ
+    
     SPDLOG_INFO("Start main loop");
-    while (!glfwWindowShouldClose(window)) {
-        
-        // window ?—?„œ ë°œìƒ?•˜?Š” ?´ë²¤íŠ¸ë¥? ?ˆ˜ì§?
-        // ?´ë²¤íŠ¸ ë°œìƒ ?‹œ?—, ??™?œ¼ë¡? ê·¸ì— ë§ëŠ” ì½œë°± ?•¨?ˆ˜ë¥? ?˜¸ì¶œí•´ì¤??‹¤
-        glfwPollEvents();
 
 
-        // UI ë¥? ë§? ?”„? ˆ?„ë§ˆë‹¤ ê·¸ë¦°?‹¤
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame(); // ì§?ê¸ˆë???„° ?ƒˆ ? Œ?”ë§? ?”„? ˆ?„?´?‹¤
 
-       
-        // ?œˆ?„?š°?— ?“¤?–´?˜¤?Š” ?¸?’‹?„ ì²˜ë¦¬
-        context->ProcessInput(window);
+    double prevTime {}, curTime {};
+    prevTime = glfwGetTime();
 
+    while (!glfwWindowShouldClose(window))
+    {
+        curTime = glfwGetTime();       
+        // 60FPS Rendering 
+        if(curTime - prevTime >= 0.00166)
+        {
+            glfwPollEvents();
 
-        // Context Object ?´?š© => ?™”ë©´ì— ê·¸ë¦¬?Š” ?‘?—…?„ ì§„í–‰?•œ?‹¤
-        context->Render();
+            // IMGUI ¼³Á¤
+            ImGui_ImplGlfw_NewFrame();
+            ImGui::NewFrame();
 
+            context->ProcessInput(window);
+            context->Render();
 
-        // ?”¬?„ ? Œ?”ë§? ?•œ ?›„, UI ë¥? ? Œ?”ë§í•œ?‹¤
-        ImGui::Render();    // ê·¸ë ¤?•¼ ?•˜?Š” ? •ë³´ë?? ê°?? ¸?˜¤ê³?
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData()); // ê·¸ë¦°?‹¤
+            // IMGUI ±×¸®±â
+            ImGui::Render();
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
+            // Double Buffering, Frame Buffer Swap
+            glfwSwapBuffers(window);
 
-        /* 
-            Double Buffering, Frame Buffer Swap
-
-            Front buffer ??? Back Buffer ë¥? ?”°ë£? êµ¬í˜„, ë¨¼ì?? back buffer ?— ê·¸ë¦° ?‹¤?Œ?—
-            Front Buffer ??? Back Buffer ë¥? ë°”ê¾¼?‹¤
-         */
-        glfwSwapBuffers(window);    // ?”„? ˆ?„ ë²„í¼ ?Š¤?™‘ ì½”ë“œ
+            // ·»´õ¸µÀ» ÇÏ°í ³ª¼­, prevTime °»½Å
+            prevTime = curTime;
+        }
     }
 
 
