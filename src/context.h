@@ -41,6 +41,10 @@ public:
     {
         mainChar->Jump();
     }
+    void MakeDash()
+    {
+        mainChar->Dash();
+    }
 
 
 

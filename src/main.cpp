@@ -42,17 +42,22 @@ void OnKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods)
         );
     */
 
-    // SPACE 키가 처음 한번 눌렸을 때
-    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+    // SPACE 키가 처음 한번 눌렸을 때 => 점프 발동
+    if(key == GLFW_KEY_SPACE && action == GLFW_PRESS)
     {
         SPDLOG_INFO("Space Key Pressed");
         auto context = reinterpret_cast<Context*>(glfwGetWindowUserPointer(window));
         context->MakeJump();
     }
-    if (key == GLFW_KEY_SPACE && action == GLFW_RELEASE)
+
+    // Left Shift 이 눌렸을 때 => 대쉬 발동
+    if(key == GLFW_KEY_LEFT_SHIFT && action == GLFW_PRESS)
     {
-        SPDLOG_INFO("Space Key Released");
+        SPDLOG_INFO("Left Shift Key Pressed");
+        auto context = reinterpret_cast<Context*>(glfwGetWindowUserPointer(window));
+        context->MakeDash();
     }
+
 
     // ESC => 프로그램 종료
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
@@ -196,13 +201,17 @@ int main(int argc, const char** argv)
         // 60FPS Rendering 
         if(curTime - prevTime >= 0.00166)
         {
+            // 키 입력을 먼저 받은 다음에
             glfwPollEvents();
 
             // IMGUI 설정
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
 
+            // xz 키 입력, 확인, 이동 여부 확인
             context->ProcessInput(window);
+
+            // 이후에 렌더링 진행
             context->Render();
 
             // IMGUI 그리기

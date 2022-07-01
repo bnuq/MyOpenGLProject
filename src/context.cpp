@@ -1,5 +1,9 @@
 #include "context.h"
 #include <vector>
+#include <thread>
+#include <future>
+
+using namespace std::chrono_literals;
 
 ContextUPtr Context::Create()                                  
 {
@@ -152,11 +156,11 @@ void Context::Render()
 
         if(ImGui::CollapsingHeader("Character Setting", ImGuiTreeNodeFlags_DefaultOpen))
         {
-            ImGui::DragFloat("Gravity", &(mainChar->Gravity), 0.001f, -5.0f, -0.001f);
-            ImGui::DragFloat("Dash Resist", &(mainChar->DashResist), 0.001f, 0.0f, mainChar->JumpPower / 10.0f);
-            ImGui::DragFloat("Jump Power", &(mainChar->JumpPower), 0.001f, 0.0f, 2.0f);
-            ImGui::DragFloat("Move Speed", &(mainChar->MoveSpeed), 0.001f, 0.0f, 1.0f);
-            ImGui::DragFloat("Yaw Angle Tick", &(mainChar->YawAngleTick), 0.1f, 0.0f, 30.0f);
+            ImGui::DragFloat("Move Speed", &(mainChar->MoveSpeed), 0.01f, 0.0f, 1.0f);
+            ImGui::DragFloat("Yaw Angle Tick", &(mainChar->YawAngleTick), 0.01f, 0.0f, 10.0f);
+            ImGui::DragFloat("Gravity", &(mainChar->Gravity), 0.01f, 1.0f, 10.0f);
+            ImGui::DragFloat("Jump Power", &(mainChar->JumpPower), 0.01f, 0.0f, 1.0f);            
+            ImGui::DragFloat("Dash Power", &(mainChar->DashPower), 0.01f, 0.0f, 1.0f); 
         }
 
         if(ImGui::CollapsingHeader("Camera Setting", ImGuiTreeNodeFlags_DefaultOpen))
