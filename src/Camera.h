@@ -9,6 +9,15 @@ CLASS_PTR(Camera)
 class Camera
 {
 public:
+    // 카메라가 바라보는 점이자 회전의 중심 피벗
+    glm::vec3 CameraPivot;
+    float CamToCharMaxLimit = 1.0f;
+    float CamToCharMinLimit = 0.1f;
+
+    bool CameraMove = false;
+    float CameraMoveSpeed = 0.01f;
+
+
     // 카메라의 위치 초기화
     glm::vec3 Position;
 
@@ -18,11 +27,6 @@ public:
     glm::vec3 UpVec             = glm::vec3(0.0f, 1.0f, 0.0f);
     // 카메라가 바라보는 방향
     glm::vec3 Direction         = glm::vec3(0.0f, 0.0f, 1.0f);
-    
-    
-    // 각도를 저장해 둔다
-    float yawAngle { 0.0f };
-    float pitchAngle { 0.0f };
     
 
 /* Setting Value */
@@ -40,6 +44,7 @@ public:
 
 
     static CameraPtr Create(CharacterPtr player);
+    void Init(CharacterPtr player);
     
 
     // 카메라를 따라간다 + 땅바닥 높이를 바라본다
