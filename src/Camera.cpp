@@ -23,7 +23,7 @@ CameraPtr Camera::Create(CharacterPtr player)
 void Camera::SetPosition()
 {
     auto MainPos = mainChar->Position;
-    if(!mainChar->Falling)
+    if(mainChar->OnGround)
         MainPos.y = mainChar->groundHeight;
 
     // 위치 세팅

@@ -14,9 +14,6 @@ public:
     : Box(pos, x, y, z)
     {}
 
-    
-
-
     glm::vec3 FrontVec          = glm::vec3(0.0f, 0.0f, 1.0f);
     glm::vec3 LeftVec          = glm::vec3(1.0f, 0.0f, 0.0f);
     glm::vec3 UpVec             = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -32,32 +29,43 @@ public:
     
 
     
-    
-    
+/* Rendering 과정 */
+    void Move();
+    void yStop();
+    void OnAir();
 
 
 /* XZ 평면 이동 관련 */
     glm::vec3 xzDir{};
     bool xzMoving = false;
-    float MoveSpeed = 0.1f;
+    float MoveSpeed = 0.01f;
 
-    float YawAngleTick  = 10.0f;
+    float YawAngleTick  = 1.0f;
 
     void GetXZDir(glm::vec3 dir);
     void Rotate();
 
 /* Y 축 이동 관련 */
     float ySpeed = 0.0f;
-    float gravity = -0.001f;
+    float PrevHeight = Position.y;
 
-    float JumpPower = 0.05f;
-    int JumpCount = 0;
-    const int MaxJump = 2;
+    // 중력은 항상 아래로 작용, 양수 값을 가지게 하고 그걸 빼는 방식으로 작동
+    float Gravity = 0.01f;
 
     // 떨어지고 있는 지 체크
-    bool Falling = true;
+    bool OnGround = false;
     // 떨어지고 있지 않을 때, 현재 땅의 높이
     float groundHeight;
+
+/* 점프 */
+    float JumpPower = 0.5f;
+
+/* 대시 */
+    float DashPower = 0.01f;
+    bool Dashing = false;
+    bool AddDash = false;
+
+    void Dash();
 
     
 
@@ -71,7 +79,7 @@ public:
 
 
 
-    void Move();
+
     
 };
 

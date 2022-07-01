@@ -1,82 +1,91 @@
 #include "Character.h"
 
-
-void Character::Move()
-{
+/* Rendering 과정 */
+    // xz 평면, y 축 방향 이동을 모두 velocity 에 더한다
+    void Character::Move()
+    {
+        // 속도 초기화
+        auto velocity = glm::vec3(0.0f, 0.0f, 0.0f);
     
-}
+        // 키 입력을 받고 있다
+        if(xzMoving)
+        {
+            // 일단 xz 방향으로 이동한다
+            velocity += xzDir * MoveSpeed;
+            // 회전을 해야 한다
+            Rotate();
+        }
+
+        // 이후 y 축 방향으로 이동한다
+        PrevHeight = Position.y;
+        ySpeed -= Gravity;
+        velocity.y = ySpeed;
 
 
+        // 이번에 대쉬 명령이 있었는 지 확인
+        if(AddDash)
+        {
+            // front vec 방향으로 속도를 조금 얻고
+            velocity += FrontVec * DashPower;
+            // ySpeed 도 조금 얻는다
+            velocity += glm::vec3(0.0f, 1.0f, 0.0f) * DashPower;
+
+            // 한번 추가하면 더이상 추가 안함
+            AddDash = false;
+        }
 
 
-
-void Character::Jump()
-{
-    SPDLOG_INFO("Jump Count is {}", JumpCount);
-
-    if(JumpCount >= MaxJump) return;
-    JumpCount++;
-    
-    // 점프를 한다 = 속도를 변화시킨다
-    // 첫번째 점프는 위로
-    if(JumpCount == 1)
-    {
-        SPDLOG_INFO("JumpCount is 1 and UpVec is {}, {}, {}", UpVec.x, UpVec.y, UpVec.z);
-        Velocity += JumpPower * UpVec;
-    }
-        
-    // 두번째 점프는 앞으로
-    else
-    {
-        SPDLOG_INFO("JumpCount is 2 and FrontVec is {}, {}, {}", FrontVec.x, FrontVec.y, FrontVec.z);
-        Velocity += JumpPower * FrontVec;
-    }
-        
-}
-
-
-// 바닥과 충돌하지 않았다는 것을 이미 전제
-void Character::Fall()
-{
-    // 일단 속도를 바꾼다
-    Velocity += Acceleration;
-    // 혹시 xz 평면 위 속도가 있다면 그 속도도 줄인다
-    if(glm::dot(Velocity, FrontVec) != 0)
-    {
-        Velocity -= FrontVec * DashResist;
-        if(Velocity.x < 0) Velocity.x = 0;
-        if(Velocity.z < 0) Velocity.z = 0;
+        // 위치를 이동시킨다
+        Position += velocity;
     }
 
 
-    // 이후 이동 위치를 구한다
-    Position += Velocity;
+    // 충돌을 했을 경우, y축으로 낙하를 멈춘다
+    void Character::yStop()
+    {
+        ySpeed = 0.0f;
+        Position.y = PrevHeight;
 
-    // 만약 기존 떨어지던 위치보다 더 내려가면, 기존 발판이 사라졌다는 뜻 or 다른 레벨로 가고있다
-    // 떨어지고 있는 상태로 업데이트 한다
-    if(Position.y < groundHeight)
-        Falling = true;
-}
+        OnGround = true;
+        Dashing = false;
+        groundHeight = PrevHeight;
+    }
 
 
-// 충돌을 했을 경우, 처리해주어야 하는 내용
-void Character::Stay(glm::vec3 tempPos)
-{
-    Velocity = glm::vec3(0.0f, 0.0f, 0.0f);
-    Position = tempPos;
+    // 충돌이 없는 경우 == 공중에 있다
+    void Character::OnAir()
+    {
+        OnGround = false;
+        if(Position.y < groundHeight)
+            groundHeight = Position.y;
+    }
 
-    // y 축으로 떨어지는 속도와 위치만 제자리로 돌린다
-    // Velocity.y = 0.0f;
-    // Position.y = tempPos.y;
 
-    // 점프 횟수 초기화
-    JumpCount = 0;
-    // 더이상 떨어지지 않을 것이다
-    Falling = false;
-    // 이전 위치가 groundHeight
-    groundHeight = tempPos.y;
-}
 
+/* 점프 과정 */
+    void Character::Jump()
+    {
+        // 공중에 있으면 점프 불가능
+        if(!OnGround) return;
+        else ySpeed += JumpPower;
+    }
+
+
+/* 대시 */
+    void Character::Dash()
+    {
+        // 이미 대쉬를 한 상황, 더이상의 대쉬가 있으면 안된다
+        if(Dashing)
+        {
+            return;
+        }
+        else
+        {
+            Dashing = true;
+            // 다음 Move 때 Dash 를 더하라고 명령
+            AddDash = true;
+        }
+    }
 
 
 

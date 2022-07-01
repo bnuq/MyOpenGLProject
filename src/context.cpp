@@ -152,7 +152,7 @@ void Context::Render()
 
         if(ImGui::CollapsingHeader("Character Setting", ImGuiTreeNodeFlags_DefaultOpen))
         {
-            ImGui::DragFloat("Gravity", &(mainChar->gravity), 0.001f, -5.0f, -0.001f);
+            ImGui::DragFloat("Gravity", &(mainChar->Gravity), 0.001f, -5.0f, -0.001f);
             ImGui::DragFloat("Dash Resist", &(mainChar->DashResist), 0.001f, 0.0f, mainChar->JumpPower / 10.0f);
             ImGui::DragFloat("Jump Power", &(mainChar->JumpPower), 0.001f, 0.0f, 2.0f);
             ImGui::DragFloat("Move Speed", &(mainChar->MoveSpeed), 0.001f, 0.0f, 1.0f);
@@ -260,15 +260,15 @@ void Context::Render()
      */
 
 
+    // 메인 캐릭터는 움직이고
+    mainChar->Move();
 
-    // 일단 무조건 Y축 방향으로 움직인다
-    auto TempPos = mainChar->Position;
-    mainChar->Fall();
 
     // 하나라도 충돌이 있었는 지 확인한다
     bool AnyCollision = false;
     for(auto aFloor : GameMap)
     {
+        // 충돌이 발생
         if(mainChar->Collide(aFloor))
         {
             AnyCollision = true;
@@ -278,11 +278,11 @@ void Context::Render()
         }
     }
 
-    // 충돌이 하나라도 있었다면, 초기화를 하고 위치를 되돌린다
+    // 충돌이 하나라도 있었다면, 낙하를 초기화를 하고 위치를 되돌린다
     if(AnyCollision)
-    {
-        mainChar->Stay(TempPos);
-    }
+        mainChar->yStop();
+    else
+        mainChar->OnAir();
 
 
     // 카메라가 상자를 따라가게 한다
