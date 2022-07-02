@@ -11,8 +11,7 @@ class Character : public Box
 {
 public:
     Character(glm::vec3 pos, float x = 1.0f, float y = 1.0f, float z = 1.0f)
-    : Box(pos, x, y, z)
-    {}
+    : Box(pos, x, y, z) {}
 
     glm::vec3 FrontVec          = glm::vec3(0.0f, 0.0f, 1.0f);
     glm::vec3 LeftVec          = glm::vec3(1.0f, 0.0f, 0.0f);
@@ -20,20 +19,10 @@ public:
 
 
     
-
-
-/* Setting Values */
-    
-    float DashResist = 0.02f;
-
-    
-
-    
 /* Rendering 과정 */
     void Move();
     void yStop();
     void OnAir();
-
 
 /* XZ 평면 이동 관련 */
     glm::vec3 xzDir{};
@@ -65,6 +54,8 @@ public:
         float JumpPower = 0.4f;
         const float JumpPowerRatio = 0.1f;
 
+    void Jump();
+
 /* 대시 */
         float DashPower = 0.3f;
         const float DashPowerRatio = 0.1f;
@@ -75,20 +66,6 @@ public:
 
     void Dash();
     void WaitALittle(double curTime);
-    
-
-
-
-
-    void Jump();
-
-    void Fall();
-    void Stay(glm::vec3 tempPos);
-
-
-
-
-    
 };
 
 

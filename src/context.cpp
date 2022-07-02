@@ -131,9 +131,7 @@ void Context::MouseMove(double x, double y)
     auto pos = glm::vec2((float)x, (float)y);
     auto deltaPos = pos - m_prevMousePos;
 
-    //mainChar->Rotate(deltaPos.x);
     MainCam->Rotate(deltaPos);
-
     m_prevMousePos = pos;
 }
 
@@ -156,20 +154,31 @@ void Context::Render()
 
         if(ImGui::CollapsingHeader("Character Setting", ImGuiTreeNodeFlags_DefaultOpen))
         {
-            ImGui::DragFloat("Move Speed", &(mainChar->MoveSpeed), 0.01f, 0.0f, 1.0f);
-            ImGui::DragFloat("Yaw Angle Tick", &(mainChar->YawAngleTick), 0.01f, 0.0f, 10.0f);
-            ImGui::DragFloat("Gravity", &(mainChar->Gravity), 0.01f, 1.0f, 10.0f);
-            ImGui::DragFloat("Jump Power", &(mainChar->JumpPower), 0.01f, 0.0f, 1.0f);            
-            ImGui::DragFloat("Dash Power", &(mainChar->DashPower), 0.01f, 0.0f, 1.0f); 
+            /* XZ 이동 */
+            ImGui::DragFloat("Move Speed", &(mainChar->MoveSpeed), 0.01f, 0.0f);
+            ImGui::DragFloat("Yaw Angle Tick", &(mainChar->YawAngleTick), 0.01f, 0.0f);
+            /* Y 축 이동 */
+            ImGui::DragFloat("Gravity", &(mainChar->Gravity), 0.01f, 1.0f);
+            /* 점프 */
+            ImGui::DragFloat("Jump Power", &(mainChar->JumpPower), 0.01f, 0.0f);
+            /* 대쉬 */
+            ImGui::DragFloat("Dash Power", &(mainChar->DashPower), 0.01f, 0.0f); 
         }
 
         if(ImGui::CollapsingHeader("Camera Setting", ImGuiTreeNodeFlags_DefaultOpen))
         {
-            ImGui::DragFloat("XZ Distance", &(MainCam->xzDist), 0.01f);
-            ImGui::DragFloat("Y Distance", &(MainCam->yDist), 0.01f);
+            /* 카메라 피벗 */
+            ImGui::DragFloat("Cam Pivot Min Limit", &(MainCam->CamToCharMinLimit), 0.01f);
+            ImGui::DragFloat("Cam Pivot Max Limit", &(MainCam->CamToCharMaxLimit), 0.01f);
+            /* 카메라 이동 */
+            ImGui::DragFloat("Cam Move Speed", &(MainCam->CameraMoveSpeed), 0.01f);
+            /* 카메라 회전 */
             ImGui::DragFloat("Yaw Rot Speed", &(MainCam->yawRotSpeed), 0.001f, 0.0f, 1.0f);
             ImGui::DragFloat("Pitch Rot Speed", &(MainCam->pitchRotSpeed), 0.001f, 0.0f, 1.0f);
             ImGui::DragFloat2("Pitch Rot Limit", glm::value_ptr(MainCam->pitchRotLimit), 0.001f);
+            /* 카메라 거리 */
+            ImGui::DragFloat("XZ Distance", &(MainCam->xzDist), 0.01f);
+            ImGui::DragFloat("Y Distance", &(MainCam->yDist), 0.01f);
         }
         
         if (ImGui::CollapsingHeader("Light Setting", ImGuiTreeNodeFlags_DefaultOpen))

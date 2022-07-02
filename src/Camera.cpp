@@ -41,6 +41,9 @@ void Camera::Init(CharacterPtr player)
 // 카메라의 위치를 계산하는 함수 => 피벗의 위치를 메인 캐릭터에 맞춰서 이동
 void Camera::SetPosition()
 {
+    // 거리 세팅이 변하면, 반영
+    Position = CameraPivot + (-FrontVec) * xzDist + UpVec * yDist;
+
     // 메인 캐릭터와 피벗 사이의 벡터
     auto PivotToChar = mainChar->Position - CameraPivot;
     
