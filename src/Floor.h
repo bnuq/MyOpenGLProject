@@ -13,10 +13,19 @@ public:
 
 
     glm::vec3 color{};
+
+
     bool collision = false;
+    double SavedTime;
+    const double LimitTime = 5.0;
+    bool Disappear = false;
 
-
-    bool getTime(float t);
+    void SetTime(double t)
+    {
+        SavedTime = t;
+        collision = true;
+    }
+    bool CheckTime(double t);
     
 private:   
     void setColor();

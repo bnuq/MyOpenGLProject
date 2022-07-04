@@ -27,3 +27,11 @@ void Floor::setColor()
     color.y = static_cast<float>(std::rand()) / (RAND_MAX + 1);
     color.z = static_cast<float>(std::rand()) / (RAND_MAX + 1);
 }
+
+
+
+bool Floor::CheckTime(double d)
+{
+    if(d - SavedTime > LimitTime) return true;
+    else return false;
+}

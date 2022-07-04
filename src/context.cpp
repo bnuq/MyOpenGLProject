@@ -58,13 +58,15 @@ bool Context::Init()
     /* GameMap 초기화 */    
     GameMap.resize(LEVEL);
 
-    for(auto& level : GameMap)
+    for(int level = 0; level < LEVEL; level++)
     {
+        float Height = (-SCALE) * level;
+
         for(int row = 0; row < NUM; row++)
         {
             for(int col = 0; col < NUM; col++)
             {
-                level.push_back(Floor::Create(glm::vec3(row * SCALE, 0.0f, col * SCALE), SCALE, 1, SCALE));
+                GameMap[level].push_back(Floor::Create(glm::vec3(row * SCALE, Height, col * SCALE), SCALE, 1, SCALE));
             }
         }
     }
@@ -281,19 +283,38 @@ void Context::Render()
     // 하나라도 충돌이 있었는 지 확인한다
     bool AnyCollision = false;
 
-
+    // 상자의 모든 레벨에 대해서 조사
     for(auto aFloor : GameMap)
-    {   // 상자의 모든 레벨에 대해서 조사
-        for(auto f : aFloor)
+    {
+        for(int i = 0; i < aFloor.size(); i++)
         {
-            // 충돌이 발생
-            if(mainChar->Collide(f))
+            // 해당 Floor 가 이미 사라졌다면 다음으로 넘어간다
+            // 이미 사라진 바닥이라면, 충돌을 초기화 한다
+            if(aFloor[i]->Disappear) continue;
+
+            // 이미 충돌이 일어났던 바닥이라면 시간을 확인한다
+            if(aFloor[i]->collision)
             {
-                // 충돌이 하나라도 발생
+                // 시간을 체크했는데, 일정 시간이 지났다면 => 이제 없어져야 한다
+                // 사라진 바닥이라고 표시를 한다
+                if(aFloor[i]->CheckTime(glfwGetTime()))
+                {
+                    aFloor[i]->Disappear = true;
+                }
+            }
+            
+
+            // 어떤 Floor 와 이번에 충돌이 발생
+            if(mainChar->Collide(aFloor[i]))
+            {
+                // 충돌이 하나라도 발생하면 일단 무조건 멈춰
                 AnyCollision = true;
-                // 부딪힌 Floor 에 표시를 남김
-                f->collision = true;
-                break;
+                
+                if(aFloor[i]->collision == false)
+                {
+                    // Floor 에 충돌을 기록하고 시간을 세팅한다
+                    aFloor[i]->SetTime(glfwGetTime());
+                }
             }
         }
     }
@@ -357,6 +378,10 @@ void Context::Render()
     {
         for(auto f : aFloor)
         {
+            // 사라진 Floor 는 그리지 않는다
+            if(f->Disappear) continue;
+
+
             // Floor 의 위치, 스케일
             modelTransform =
                 glm::translate(glm::mat4(1.0f), f->Position) *

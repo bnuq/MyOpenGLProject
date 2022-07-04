@@ -105,7 +105,7 @@ private:
     // Map 阑 捞风绰 备己 夸家
     const int NUM = 6;
     const float SCALE = 10;
-    const int LEVEL = 1;
+    const int LEVEL = 3;
 };
 
 #endif // __CONTEXT_H__
