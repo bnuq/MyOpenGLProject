@@ -8,6 +8,7 @@ CLASS_PTR(Box)
 class Box
 {
 public:
+    Box() {}
     Box(glm::vec3 pos, float x = 1.0f, float y = 1.0f, float z = 1.0f)
         : xScale(x), yScale(y), zScale(z), Position(pos) {}
     

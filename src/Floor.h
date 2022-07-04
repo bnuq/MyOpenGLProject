@@ -9,16 +9,12 @@ CLASS_PTR(Floor)
 class Floor : public Box
 {
 public:
-    glm::vec3 color{};
-    bool collision;
+    static FloorUPtr Create(glm::vec3 pos, float x = 1.0f, float y = 1.0f, float z = 1.0f);
 
-    Floor(glm::vec3 pos, float x = 1.0f, float y = 1.0f, float z = 1.0f)
-    : Box(pos, x, y, z)
-    {
-        collision = false;
-        // 임의의 색깔을 가지게 한다
-        setColor();
-    }
+
+    glm::vec3 color{};
+    bool collision = false;
+
 
     bool getTime(float t);
     

@@ -1,8 +1,6 @@
 #include "context.h"
 #include <vector>
 
-const int INTERVAL = 10;
-const int NUM = 4;
 
 ContextUPtr Context::Create()                                  
 {
@@ -28,6 +26,7 @@ bool Context::Init()
     // Meshes
     CharMesh = Mesh::CreateBox();
     FloorMesh = Mesh::CreateBox();
+
 
     // Materials
     CharMat = Material::Create();
@@ -55,69 +54,20 @@ bool Context::Init()
 
     
 
-    // GameMap 을 만든다
-    GameMap.push_back(FloorPtr(new Floor(glm::vec3(0.0f, 1.0f, 3.0f))));
-    GameMap.push_back(FloorPtr(new Floor(glm::vec3(3.0f, 1.0f, 3.0f))));
-    GameMap.push_back(FloorPtr(new Floor(glm::vec3(0.0f, 0.0f, -3.0f), 1.0f, 2.0f, 1.0f)));
-    GameMap.push_back(FloorPtr(new Floor(glm::vec3(0.0f, -2.0f, 0.0f), 200.0f, 0.5f, 200.0f)));   // 바닥
-    
+/*********************************************************************************/
+    /* GameMap 초기화 */    
+    GameMap.resize(LEVEL);
 
-
-
-    floorPos.resize(NUM * NUM);
-    TouchAndDelete.resize(NUM * NUM);
-
-    for(size_t i = 0; i < NUM * NUM; i++)
+    for(auto& level : GameMap)
     {
-        int p = i / NUM;
-        int q = i % NUM;
-        
-        floorPos[i] = glm::vec3(p * INTERVAL, 0, q * INTERVAL);
-        TouchAndDelete[i] = glm::vec2(0.0f, 0.0f);
+        for(int row = 0; row < NUM; row++)
+        {
+            for(int col = 0; col < NUM; col++)
+            {
+                level.push_back(Floor::Create(glm::vec3(row * SCALE, 0.0f, col * SCALE), SCALE, 1, SCALE));
+            }
+        }
     }
-    floorInstancing = VertexLayout::Create();
-    floorInstancing->Bind();
-        FloorMesh->GetVertexBuffer()->Bind();
-        floorInstancing->SetAttrib(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
-        floorInstancing->SetAttrib(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, normal));
-        floorInstancing->SetAttrib(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, texCoord));
-    
-        floorPosBuffer = Buffer::CreateWithData(GL_ARRAY_BUFFER, GL_STATIC_DRAW, 
-            floorPos.data(), sizeof(glm::vec3), floorPos.size());
-        floorPosBuffer->Bind();
-        floorInstancing->SetAttrib(3, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), 0);
-        glVertexAttribDivisor(3, 1);
-
-        TouchAndDeleteBuffer = Buffer::CreateWithData(GL_ARRAY_BUFFER, GL_DYNAMIC_DRAW,
-            TouchAndDelete.data(), sizeof(glm::vec2), TouchAndDelete.size());
-        TouchAndDeleteBuffer->Bind();
-        floorInstancing->SetAttrib(4, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), 0);
-        glVertexAttribDivisor(4, 1);
-
-        FloorMesh->GetIndexBuffer()->Bind();
-
-
-
-    // // 프로그램에서 UBO 찾기
-    // auto UBOId = glGetUniformBlockIndex(MapProgram->Get(), "Floor");
-    // glUniformBlockBinding(MapProgram->Get(), UBOId, 0);
-
-    // // UBO 를 이용
-    // FloorUBO = Buffer::CreateWithData(GL_UNIFORM_BUFFER, GL_DYNAMIC_DRAW, NULL, 16, 1);
-    // glBindBufferBase(GL_UNIFORM_BUFFER, 0, FloorUBO->Get());
-
-    FloorInformation.push_back(FloorStr{glm::vec3(0.0f, 0.0f, 0.0f), 0});
-    FloorInformation.push_back(FloorStr{glm::vec3(5.0f, 0.0f, 0.0f), 0});
-    FloorInformation.push_back(FloorStr{glm::vec3(0.0f, 0.0f, 5.0f), 0});
-    FloorInformation.push_back(FloorStr{glm::vec3(5.0f, 0.0f, 5.0f), 0});
-
-
-    FloorSSBO = Buffer::CreateWithData(GL_SHADER_STORAGE_BUFFER, GL_STATIC_DRAW, FloorInformation.data(), sizeof(FloorStr), 4);
-
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 8, FloorSSBO->Get());
-    //glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
-
 
     return true;
 }
@@ -327,52 +277,24 @@ void Context::Render()
     mainChar->Move();
 
 
-    // // 메인 캐릭터의 좌표 값 이용 => 해당하는 floor 의 좌표를 하나 찾자
-    // int px = (int)mainChar->Position.x / INTERVAL;
-    // int qx = (int)(mainChar->Position.x) % INTERVAL;
-    // if(qx > (INTERVAL / 2)) px++;
-
-    // int pz = (int)mainChar->Position.z / INTERVAL;
-    // int qz = (int)(mainChar->Position.z) % INTERVAL;
-    // if(qz > (INTERVAL / 2)) pz++;
-
-    // TouchAndDelete[px * NUM + pz] = glm::vec2(1.0f, 1.0f);
-    // floorInstancing->Bind();
-    // TouchAndDeleteBuffer->Bind();
-    // glBufferSubData(GL_ARRAY_BUFFER, px * NUM + pz, sizeof(glm::vec2), TouchAndDelete.data());
-    // glBindBuffer(GL_ARRAY_BUFFER, 0);
-
 
     // 하나라도 충돌이 있었는 지 확인한다
     bool AnyCollision = false;
 
-    for(auto f : FloorInformation)
-    {
-        if(glm::length((mainChar->Position - f.FloorPos)) < 0.1f)
-        {
-            f.FloorTouched = 1;
-        }
-        else f.FloorTouched = 0;
-
-    }
-    glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, 4 * sizeof(FloorStr), FloorInformation.data());
-
-
-
-
-
-
-
 
     for(auto aFloor : GameMap)
-    {
-        // 충돌이 발생
-        if(mainChar->Collide(aFloor))
+    {   // 상자의 모든 레벨에 대해서 조사
+        for(auto f : aFloor)
         {
-            AnyCollision = true;
-            
-            aFloor->collision = true;
-            break;
+            // 충돌이 발생
+            if(mainChar->Collide(f))
+            {
+                // 충돌이 하나라도 발생
+                AnyCollision = true;
+                // 부딪힌 Floor 에 표시를 남김
+                f->collision = true;
+                break;
+            }
         }
     }
 
@@ -430,33 +352,25 @@ void Context::Render()
 
 
     // Game Map Draw
-    // CharProgram->Use();
-    // for(auto aFloor : GameMap)
-    // {
-    //     modelTransform =
-    //         glm::translate(glm::mat4(1.0f), aFloor->Position) *
-    //         glm::scale(glm::mat4(1.0f), glm::vec3(aFloor->xScale, aFloor->yScale, aFloor->zScale));
-    //     transform = projection * view * modelTransform;
-
-    //     CharProgram->SetUniform("transform", transform);
-    //     CharProgram->SetUniform("modelTransform", modelTransform);
-
-    //     FloorMesh->Draw(CharProgram.get());
-    // }
-    
-
-
-    // Floor GPU Instancing
     MapProgram->Use();
+    for(auto aFloor : GameMap)
+    {
+        for(auto f : aFloor)
+        {
+            // Floor 의 위치, 스케일
+            modelTransform =
+                glm::translate(glm::mat4(1.0f), f->Position) *
+                glm::scale(glm::mat4(1.0f), glm::vec3(f->xScale, f->yScale, f->zScale));
+            transform = projection * view * modelTransform;
 
-    transform = projection * view;
-    MapProgram->SetUniform("transform", transform);
-    MapProgram->SetUniform("viewPos", MainCam->Position);
+            // Uniform for Vertex Shader
+            MapProgram->SetUniform("transform", transform);
+            MapProgram->SetUniform("modelTransform", modelTransform);
 
-    floorInstancing->Bind();
+            // Uniform for Fragment Shader
+            MapProgram->SetUniform("Collision", f->collision);
 
-    FloorMat->SetToProgram(MapProgram.get());
-
-glDrawElementsInstanced(GL_TRIANGLES, FloorMesh->GetIndexBuffer()->GetCount(),
-        GL_UNSIGNED_INT, 0, 4);
+            FloorMesh->Draw(MapProgram.get());
+        }
+    }
 }

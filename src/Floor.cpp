@@ -4,6 +4,21 @@
 #include "Floor.h"
 
 
+FloorUPtr Floor::Create(glm::vec3 pos, float x, float y, float z)
+{
+    auto fl = FloorUPtr(new Floor{});
+    fl->Position = pos;
+
+    fl->xScale = x;
+    fl->yScale = y;
+    fl->zScale = z;
+
+    return std::move(fl);
+}
+
+
+
+
 void Floor::setColor()
 {
     std::srand(static_cast<unsigned int>(std::time(0)));

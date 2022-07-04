@@ -68,7 +68,7 @@ private:
     MeshUPtr CharMesh;          // 메인 캐릭터를 그리는 메쉬
     MeshUPtr FloorMesh;         // 바닥을 그리는 메쉬
     
-    // Materials    
+    // Materials
     MaterialPtr CharMat;
     MaterialPtr FloorMat;
     
@@ -77,6 +77,7 @@ private:
     glm::vec3 m_cameraPos { glm::vec3(0.0f, 2.5f, 8.0f) }; // 일단 light 계산에 사용
     bool m_cameraControl { false };
 
+    // 빛, 라이트
     struct Light
     {
         glm::vec3 position { glm::vec3(1.0f, 4.0f, 4.0f) };
@@ -98,37 +99,13 @@ private:
     // 플레이할 메인 캐릭터
     CharacterPtr mainChar;
 
+    // Floor 들이 모여서 만드는 전체 Map
+    std::vector<std::vector<FloorPtr>> GameMap{};
 
-    
-    // Floor 들을 저장하는 벡터
-    std::vector<FloorPtr> GameMap{};
-
-
-
-
-    // gpu instancing 에 사용될 위치 벡터
-    std::vector<glm::vec3> floorPos{};
-    // gpu instancing => 플레이어와 바닥이 닿았는 지 체크하는 데 사용
-    std::vector<glm::vec2> TouchAndDelete{};
-
-    VertexLayoutUPtr floorInstancing;
-    BufferUPtr floorPosBuffer;
-    BufferUPtr TouchAndDeleteBuffer;
-
-
-
-
-    // Floor Data UBO
-    BufferUPtr FloorUBO;
-
-
-    BufferUPtr FloorSSBO;
-    struct FloorStr
-    {
-        glm::vec3 FloorPos;
-        int FloorTouched;
-    };
-    std::vector<FloorStr> FloorInformation{};
+    // Map 을 이루는 구성 요소
+    const int NUM = 6;
+    const float SCALE = 10;
+    const int LEVEL = 1;
 };
 
 #endif // __CONTEXT_H__
