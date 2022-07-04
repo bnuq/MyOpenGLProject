@@ -1,13 +1,29 @@
-#version 330 core
+#version 460 core
 
 in vec3 normal;
 in vec2 texCoord;
 in vec3 position;
+in vec2 bBool;
 
+int instanceID;
 
 out vec4 fragColor;
 
-uniform bool contact;
+
+struct FloorStr
+{
+    vec3 FloorPos;
+    int FloorTouched;
+};
+
+
+layout (std430, binding = 8) buffer FloorBuffer
+{
+    FloorStr floorstr[];
+};
+
+
+
 uniform vec3 viewPos;
 
 
@@ -41,13 +57,11 @@ uniform Material material;
 
 
 void main() {
-    
-    if(contact)
-        fragColor = vec4(1.0, 0.0, 0.0, 1.0);
-    else
-    {
+
+    if(floorstr[instanceID].FloorTouched == 1)
         fragColor = vec4(0.0, 1.0, 0.0, 1.0);
-    }
+    else
+        fragColor = vec4(1.0, 1.0, 0.0, 1.0);
 
 
 

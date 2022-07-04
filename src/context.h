@@ -104,7 +104,31 @@ private:
     std::vector<FloorPtr> GameMap{};
 
 
-    
+
+
+    // gpu instancing 에 사용될 위치 벡터
+    std::vector<glm::vec3> floorPos{};
+    // gpu instancing => 플레이어와 바닥이 닿았는 지 체크하는 데 사용
+    std::vector<glm::vec2> TouchAndDelete{};
+
+    VertexLayoutUPtr floorInstancing;
+    BufferUPtr floorPosBuffer;
+    BufferUPtr TouchAndDeleteBuffer;
+
+
+
+
+    // Floor Data UBO
+    BufferUPtr FloorUBO;
+
+
+    BufferUPtr FloorSSBO;
+    struct FloorStr
+    {
+        glm::vec3 FloorPos;
+        int FloorTouched;
+    };
+    std::vector<FloorStr> FloorInformation{};
 };
 
 #endif // __CONTEXT_H__
