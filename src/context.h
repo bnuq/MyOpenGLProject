@@ -106,6 +106,25 @@ private:
     const int NUM = 6;
     const float SCALE = 10;
     const int LEVEL = 3;
+
+
+
+    // 일단 SSBO 버퍼를 위한 id
+    GLuint SSBO;
+
+    // Floor 대신, 타일을 구성하는 구조
+    struct Tile
+    {
+        glm::vec4 position;
+        glm::vec4 collAndTime;
+    };
+    // 타일 데이터의 배열
+    std::vector<Tile> tileArr{};
+
+    // Compute Program
+    ProgramUPtr ComputeProgram;
+    // compute shader
+    ShaderPtr ComputeShader;
 };
 
 #endif // __CONTEXT_H__

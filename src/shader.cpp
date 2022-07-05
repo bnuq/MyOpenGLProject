@@ -21,70 +21,73 @@ Shader::~Shader()
 bool Shader::LoadFile(const std::string& filename, GLenum shaderType)
 {
     auto result = LoadTextFile(filename);
-    // optional::has_value() => ê°’ì´ ì¡´ì¬í•˜ëŠ” ì§€, ì•„ë‹Œ ì§€ë¥¼ íŒë‹¨í•˜ëŠ” ë©”ì„œë“œ
-    if (!result.has_value()) // ê°’ì´ ì—†ë‹¤ == íŒŒì¼ì„ ì—´ì§€ ëª»í•œ ê²½ìš°
+    // optional::has_value() => °ªÀÌ Á¸ÀçÇÏ´Â Áö, ¾Æ´Ñ Áö¸¦ ÆÇ´ÜÇÏ´Â ¸Ş¼­µå
+    if (!result.has_value()) // °ªÀÌ ¾ø´Ù == ÆÄÀÏÀ» ¿­Áö ¸øÇÑ °æ¿ì
         return false;
-    // optional::value() => optional ì´ ê°ì‹¸ê³  ìˆëŠ” ê°’ ë¦¬í„´
-    // Text íŒŒì¼ ë‚´ ì‘ì„±ëœ ì½”ë“œ
+    // optional::value() => optional ÀÌ °¨½Î°í ÀÖ´Â °ª ¸®ÅÏ
+    // Text ÆÄÀÏ ³» ÀÛ¼ºµÈ ÄÚµå
     auto& code = result.value();
     /*
-        string::c_str() => string ì´ ì €ì¥í•˜ê³  ìˆëŠ” ë¬¸ìì—´ ì£¼ì†Œ ë¦¬í„´
-        string => c-style string ë³€í™˜
-        GLshader ì—ëŠ” c-style í˜•íƒœë¡œ ì €ì¥ëœë‹¤
+        string::c_str() => string ÀÌ ÀúÀåÇÏ°í ÀÖ´Â ¹®ÀÚ¿­ ÁÖ¼Ò ¸®ÅÏ
+        string => c-style string º¯È¯
+        GLshader ¿¡´Â c-style ÇüÅÂ·Î ÀúÀåµÈ´Ù
      */
-    const char* codePtr = code.c_str();             // file ë‚´ ì½”ë“œ ë¬¸ìì—´ ì£¼ì†Œ
-    int32_t codeLength = (int32_t)code.length();    // file ë‚´ ì½”ë“œ ê¸¸ì´
+    const char* codePtr = code.c_str();             // file ³» ÄÚµå ¹®ÀÚ¿­ ÁÖ¼Ò
+    int32_t codeLength = (int32_t)code.length();    // file ³» ÄÚµå ±æÀÌ
     /* 
-        gl shader obj ë¥¼ ìƒì„±
+        gl shader obj ¸¦ »ı¼º
 
         glCreateShader
-            GL shader object ë¥¼ ìƒì„±
-            í•¸ë“¤ ë²ˆí˜¸ë¥¼ ë¦¬í„´
+            GL shader object ¸¦ »ı¼º
+            ÇÚµé ¹øÈ£¸¦ ¸®ÅÏ
             
-        shader type ì„ í†µí•´ì„œ ì–´ë–¤ ì¢…ë¥˜ì˜ ì…°ì´ë”ë¥¼ ë§Œë“œëŠ” ê²ƒì¸ì§€ë¥¼ ì•Œë¦°ë‹¤
+        shader type À» ÅëÇØ¼­ ¾î¶² Á¾·ùÀÇ ¼ÎÀÌ´õ¸¦ ¸¸µå´Â °ÍÀÎÁö¸¦ ¾Ë¸°´Ù
             Vertex Shader
             Fragment Shader
             Compute Shader 
-            ë“±ë“± GLshader ì˜ ì¢…ë¥˜ë¥¼ ê²°ì •í•˜ê³ , ìƒì„±í•œë‹¤ 
+            µîµî GLshader ÀÇ Á¾·ù¸¦ °áÁ¤ÇÏ°í, »ı¼ºÇÑ´Ù 
      */
     m_shader = glCreateShader(shaderType);
     /* 
-        gl shader ì•ˆì— ì†ŒìŠ¤ì½”ë“œë¥¼ ë„£ëŠ”ë‹¤
+        gl shader ¾È¿¡ ¼Ò½ºÄÚµå¸¦ ³Ö´Â´Ù
 
         glShaderSource
-            GL shader object ì— shader code ë¥¼ ì§‘ì–´ ë„£ëŠ”ë‹¤
-            1ê°œ ì´ìƒì˜ ì½”ë“œë¥¼ ë„£ì„ ìˆ˜ ìˆë‹¤, ê°œìˆ˜ ì§€ì •
-            ì½”ë“œì™€ ì½”ë“œ ê¸¸ì´ ì „ë‹¬
+            GL shader object ¿¡ shader code ¸¦ Áı¾î ³Ö´Â´Ù
+            1°³ ÀÌ»óÀÇ ÄÚµå¸¦ ³ÖÀ» ¼ö ÀÖ´Ù, °³¼ö ÁöÁ¤
+            ÄÚµå¿Í ÄÚµå ±æÀÌ Àü´Ş
 
-        <ì°¸ê³ >
-            const ëŠ” ì™¼ìª½ì— ì ìš©ëœë‹¤
-            ì™¼ìª½ì— ì•„ë¬´ê²ƒë„ ì—†ë‹¤ë©´ ì˜¤ë¥¸ìª½ì— ì ìš©ëœë‹¤
-            ë”°ë¼ì„œ const GLchar* const* == const GLchar**
+        <Âü°í>
+            const ´Â ¿ŞÂÊ¿¡ Àû¿ëµÈ´Ù
+            ¿ŞÂÊ¿¡ ¾Æ¹«°Íµµ ¾ø´Ù¸é ¿À¸¥ÂÊ¿¡ Àû¿ëµÈ´Ù
+            µû¶ó¼­ const GLchar* const* == const GLchar**
      */
     glShaderSource(m_shader, 1, (const GLchar**)&codePtr, &codeLength);
-    // GLshader compile, ì…°ì´ë” ì½”ë“œë¥¼ ë„£ì€ ë‹¤ìŒ, ë°”ë¡œ ì»´íŒŒì¼ì„ ì§„í–‰í•œë‹¤
+    // GLshader compile, ¼ÎÀÌ´õ ÄÚµå¸¦ ³ÖÀº ´ÙÀ½, ¹Ù·Î ÄÄÆÄÀÏÀ» ÁøÇàÇÑ´Ù
     glCompileShader(m_shader);
    
     /*
         glGetShader|iv
-            shader ì— ìˆëŠ” ì •ë³´ë¥¼ ê°€ì ¸ì˜¨ë‹¤
-            ì–´ë–¤ ì •ë³´ë¥¼ ì•Œì•„ë‚´ê³  ì‹¶ì€ ì§€ë¥¼ ì „ë‹¬
+            shader ¿¡ ÀÖ´Â Á¤º¸¸¦ °¡Á®¿Â´Ù
+            ¾î¶² Á¤º¸¸¦ ¾Ë¾Æ³»°í ½ÍÀº Áö¸¦ Àü´Ş
             iv = integer pointer parameter
-            ë„˜ê¸´ ì •ìˆ˜ í¬ì¸í„°ì— ì •ë³´ë¥¼ ì €ì¥í•´ì„œ ì „ë‹¬í•œë‹¤
+            ³Ñ±ä Á¤¼ö Æ÷ÀÎÅÍ¿¡ Á¤º¸¸¦ ÀúÀåÇØ¼­ Àü´ŞÇÑ´Ù
      */
     int success = 0;
     glGetShaderiv(m_shader, GL_COMPILE_STATUS, &success);
-    if (!success) // ì»´íŒŒì¼ ì—ëŸ¬ ì‹œ, ì—ëŸ¬ ë‚´ìš© í™•ì¸
+    if (!success) // ÄÄÆÄÀÏ ¿¡·¯ ½Ã, ¿¡·¯ ³»¿ë È®ÀÎ
     {
         char infoLog[1024];
 
-        // shader object ì˜ ì—ëŸ¬ ë‚´ìš©ì„ ê°€ì ¸ì˜¨ë‹¤
+        // shader object ÀÇ ¿¡·¯ ³»¿ëÀ» °¡Á®¿Â´Ù
         glGetShaderInfoLog(m_shader, 1024, nullptr, infoLog);
 
-        // speed log ì‚¬ìš©
+        // speed log »ç¿ë
         SPDLOG_ERROR("failed to compile shader: \"{}\"", filename);
         SPDLOG_ERROR("reason: {}", infoLog);
         return false;
     }
+
+
+    SPDLOG_INFO("{} shader make, id = {}", filename, m_shader);
     return true;
 }

@@ -71,6 +71,72 @@ bool Context::Init()
         }
     }
 
+
+/*********************************************************************************/
+    /* 일단 타일 데이터를 채우자 */
+    for(int i = 0; i < 10; i++)
+    {
+        tileArr.push_back(Tile{glm::vec4(0,0,0,0), glm::vec4(0,0,0,0)});
+    }
+    
+    /* SSBO 버퍼 생성 */
+    glGenBuffers(1, &SSBO);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, SSBO);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Tile) * tileArr.size(), tileArr.data(), GL_STATIC_DRAW);
+
+    // Binding 할 위치
+    int ssbo_binding = 1;
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbo_binding, SSBO);
+    //glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    SPDLOG_INFO("1");
+
+    /* compute shader */
+    ComputeShader = Shader::CreateFromFile("./shader/Compute/TileCheck.compute", GL_COMPUTE_SHADER);
+
+    SPDLOG_INFO("2");
+    SPDLOG_INFO("Compute Shader id {}", ComputeShader->Get());
+
+    /* compute program 에 compute shader 붙이기 */
+    ComputeProgram = Program::Create({ComputeShader});
+
+    SPDLOG_INFO("3");
+
+    /* compute shader 에서, SSBO 의 위치를 알아야 한다 */
+    auto block_index = glGetProgramResourceIndex(ComputeShader->Get(), GL_SHADER_STORAGE_BUFFER, "TileBuffer");
+    glShaderStorageBlockBinding(ComputeShader->Get(), block_index, ssbo_binding);
+
+    SPDLOG_INFO("4");
+
+    /* compute program test */
+    ComputeProgram->Use();
+    glDispatchCompute(5, 1, 1);
+
+
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+    SPDLOG_INFO("5");
+
+    /* compute shader 에서 작성한 값에 다시 접근할 수 있다 */
+    void* ptr = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_WRITE);
+    if(ptr == NULL)
+        SPDLOG_INFO("glMapBuffer return NULL");
+    if(ptr != NULL)
+    {
+        SPDLOG_INFO("glMapBuffer returns not NULL");
+
+        Tile* tilePtr = (Tile*)ptr;
+
+        for(int i = 0; i < 10; i++)
+        {
+            SPDLOG_INFO("{}", tilePtr[i].position.x);
+        }
+    }
+
+    glUseProgram(0);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
     return true;
 }
 
