@@ -47,6 +47,10 @@ public:
     }
 
 
+    
+
+
+
 
 private:
     Context() {}
@@ -102,20 +106,40 @@ private:
     // Floor 들이 모여서 만드는 전체 Map
     std::vector<std::vector<FloorPtr>> GameMap{};
 
-    // Map 을 이루는 구성 요소
-    const int NUM = 6;
-    const float SCALE = 10;
-    const int LEVEL = 3;
+
+    // Map 을 구성하는 여러 요소
+    struct Map
+    {
+        int     COUNT    = 2;
+        float   STRIDE   = 10;
+        int     STORY    = 2;
+    };
+    const Map gameMap{};
+    
 
 
+    
+    // SSBO 버퍼를 관리하는 객체
+    BufferPtr tileBuffer;
+    int tile_binding = 1;
 
-    // 일단 SSBO 버퍼를 위한 id
-    GLuint SSBO;
+    BufferPtr outputBuffer;
+    int output_binding = 2;
 
     // Floor 대신, 타일을 구성하는 구조
     struct Tile
     {
+        /* 
+            xyz = Position
+            w   = Main Character 충돌 유무
+         */
         glm::vec4 position;
+        /* 
+            x   = collision
+            y   = disappear
+            z   = save time
+            w   = limit time
+         */
         glm::vec4 collAndTime;
     };
     // 타일 데이터의 배열
@@ -125,6 +149,16 @@ private:
     ProgramUPtr ComputeProgram;
     // compute shader
     ShaderPtr ComputeShader;
+
+
+
+
+/* Initializing */
+    void InitGameMap();
+    void InitSSBOs();
+    void InitComputeProgram();
+    void ConnectShaderAndSSBO();
+
 };
 
 #endif // __CONTEXT_H__

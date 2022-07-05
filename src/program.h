@@ -36,6 +36,7 @@ public:
 
         Uniform ë³??ˆ˜?˜ ?´ë¦? ë¬¸ì?—´?„ ?†µ?•´?„œ ? ‘ê·¼í•œ?‹¤
      */
+    void SetUniform(const std::string& name, unsigned int value) const;
     void SetUniform(const std::string& name, int value) const;
     void SetUniform(const std::string& name, bool value) const;
     void SetUniform(const std::string& name, float value) const;

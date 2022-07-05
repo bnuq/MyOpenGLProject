@@ -1,5 +1,6 @@
 #version 460 core
-layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+layout (local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
 
 
 struct Tile
@@ -13,12 +14,32 @@ layout(std430, binding = 1) buffer TileBuffer
 {
     Tile tileData[];
 };
+layout(std430, binding = 2) buffer OutputBuffer
+{
+    uint CharOnGround;
+};
+
+
+
+
+
+uniform uint TileCount;
+uniform vec3 TileScale;
+
+uniform float curTime;
+uniform vec3 MainCharPos;
 
 
 
 void main()
 {
-    vec3 temp = gl_GlobalInvocationID;
+    uvec3 glID = gl_GlobalInvocationID;
+    uint index = glID.x;
 
-    tileData[gl_GlobalInvocationID.x].position.x = gl_GlobalInvocationID.x;
+    if(index >= TileCount)
+    {
+        tileData[index].position.x = -100.0f;;
+        return;
+    }
+    tileData[index].position.x = index;
 }

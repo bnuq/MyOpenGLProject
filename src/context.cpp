@@ -15,12 +15,27 @@ bool Context::Init()
 {
     glClearColor(0.1f, 0.2f, 0.3f, 0.0f);
 
-    // Programs
+    // Main Character 그리는 Program
     CharProgram = Program::Create("./shader/Character/character.vs", "./shader/Character/character.fs");
     if(!CharProgram) return false;
 
+    // Map 그리는 Program
     MapProgram = Program::Create("./shader/Map/map.vs", "./shader/Map/map.fs");
     if(!MapProgram) return false;
+
+    
+    
+    InitComputeProgram();
+
+    /* GPU 로 넘길 데이터 넘기는 과정 */
+    InitGameMap();
+    InitSSBOs();
+
+    ConnectShaderAndSSBO();
+        
+
+        
+
 
     
     // Meshes
@@ -56,89 +71,118 @@ bool Context::Init()
 
 /*********************************************************************************/
     /* GameMap 초기화 */    
-    GameMap.resize(LEVEL);
+    GameMap.resize(gameMap.STORY);
 
-    for(int level = 0; level < LEVEL; level++)
+    for(int story = 0; story < gameMap.STORY; story++)
     {
-        float Height = (-SCALE) * level;
+        float Height = (-gameMap.STRIDE) * story;
 
-        for(int row = 0; row < NUM; row++)
+        for(int row = 0; row < gameMap.COUNT; row++)
         {
-            for(int col = 0; col < NUM; col++)
+            for(int col = 0; col < gameMap.COUNT; col++)
             {
-                GameMap[level].push_back(Floor::Create(glm::vec3(row * SCALE, Height, col * SCALE), SCALE, 1, SCALE));
+                GameMap[story].push_back(Floor::Create(glm::vec3(row * gameMap.STRIDE, Height, col * gameMap.STRIDE),gameMap.STRIDE, 1, gameMap.STRIDE));
             }
         }
     }
 
 
 /*********************************************************************************/
-    /* 일단 타일 데이터를 채우자 */
-    for(int i = 0; i < 10; i++)
-    {
-        tileArr.push_back(Tile{glm::vec4(0,0,0,0), glm::vec4(0,0,0,0)});
-    }
-    
-    /* SSBO 버퍼 생성 */
-    glGenBuffers(1, &SSBO);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, SSBO);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Tile) * tileArr.size(), tileArr.data(), GL_STATIC_DRAW);
+  
 
-    // Binding 할 위치
-    int ssbo_binding = 1;
 
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbo_binding, SSBO);
-    //glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
-    SPDLOG_INFO("1");
-
-    /* compute shader */
-    ComputeShader = Shader::CreateFromFile("./shader/Compute/TileCheck.compute", GL_COMPUTE_SHADER);
-
-    SPDLOG_INFO("2");
-    SPDLOG_INFO("Compute Shader id {}", ComputeShader->Get());
-
-    /* compute program 에 compute shader 붙이기 */
-    ComputeProgram = Program::Create({ComputeShader});
-
-    SPDLOG_INFO("3");
-
-    /* compute shader 에서, SSBO 의 위치를 알아야 한다 */
-    auto block_index = glGetProgramResourceIndex(ComputeShader->Get(), GL_SHADER_STORAGE_BUFFER, "TileBuffer");
-    glShaderStorageBlockBinding(ComputeShader->Get(), block_index, ssbo_binding);
-
-    SPDLOG_INFO("4");
-
-    /* compute program test */
+    /* compute program 을 이용하는 부분 */
     ComputeProgram->Use();
-    glDispatchCompute(5, 1, 1);
+        ComputeProgram->SetUniform("TileCount", (unsigned int)tileArr.size());
+        glDispatchCompute(1, 1, 1);
+        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
-
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-    SPDLOG_INFO("5");
-
-    /* compute shader 에서 작성한 값에 다시 접근할 수 있다 */
-    void* ptr = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_WRITE);
-    if(ptr == NULL)
-        SPDLOG_INFO("glMapBuffer return NULL");
-    if(ptr != NULL)
-    {
-        SPDLOG_INFO("glMapBuffer returns not NULL");
-
-        Tile* tilePtr = (Tile*)ptr;
-
-        for(int i = 0; i < 10; i++)
+        /* compute shader 에서 작성한 값에 다시 접근할 수 있다 */
+        void* ptr = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_WRITE);
+        if(ptr == NULL)
+            SPDLOG_INFO("glMapBuffer return NULL");
+        if(ptr != NULL)
         {
-            SPDLOG_INFO("{}", tilePtr[i].position.x);
-        }
-    }
+            SPDLOG_INFO("glMapBuffer returns not NULL");
 
+            Tile* tilePtr = (Tile*)ptr;
+
+            for(int i = 0; i < 32; i++)
+            {
+                SPDLOG_INFO("{}, {}, {}", tilePtr[i].position.x, tilePtr[i].position.y, tilePtr[i].position.z);
+            }
+        }
     glUseProgram(0);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
     return true;
 }
+
+
+
+void Context::InitComputeProgram()
+{
+    /* compute shader => 직접 생성한 다음 */
+    ComputeShader = Shader::CreateFromFile("./shader/Compute/TileCheck.compute", GL_COMPUTE_SHADER);
+    /* compute program 에 compute shader 붙이기 */
+    ComputeProgram = Program::Create({ComputeShader});
+
+    // 변하지 않는 Uniform 변수를 미리 넣어두자
+    ComputeProgram->SetUniform("TileCount", (unsigned int)tileArr.size());
+    ComputeProgram->SetUniform("TileScale", glm::vec3(gameMap.STRIDE, 0.5f, gameMap.STRIDE));
+}
+
+void Context::InitGameMap()
+{
+    // CPU data => 맵을 구성하는 타일들의 위치를 초기화 한다
+    for(int story = 0; story < gameMap.STORY; story++)
+    {
+        float Height = (-story) * gameMap.STRIDE;
+        for(int row = 0; row < gameMap.COUNT; row++)
+        {
+            for(int col = 0; col < gameMap.COUNT; col++)
+            {
+                tileArr.push_back
+                (
+                    Tile{glm::vec4(row * gameMap.STRIDE, Height, col * gameMap.STRIDE, 0.0f),
+                        glm::vec4(0.0f, 0.0f, 0.0f, 0.0f)}
+                );
+            }
+        }
+    }
+}
+
+void Context::InitSSBOs()
+{
+    // SSBO 버퍼를 생성 <= GPU
+    // CPU 데이터를 GPU 에 저장
+    tileBuffer = Buffer::CreateWithData(GL_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW,
+                                        tileArr.data(), sizeof(Tile), tileArr.size());
+
+    // output 데이터를 담을 버퍼
+    outputBuffer = Buffer::CreateWithData(GL_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW,
+                                        NULL, sizeof(unsigned int), 1);
+
+
+    // SSBO 버퍼를 Binding Point 에 연결하고
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, tile_binding,   tileBuffer->Get());
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, output_binding, outputBuffer->Get());
+}
+
+
+
+// shader 와 Binding Point 를 연결한다
+void Context::ConnectShaderAndSSBO()
+{
+    auto block_index = glGetProgramResourceIndex(ComputeShader->Get(), GL_SHADER_STORAGE_BUFFER, "TileBuffer");
+    glShaderStorageBlockBinding(ComputeShader->Get(), block_index, tile_binding);
+
+    block_index = glGetProgramResourceIndex(ComputeShader->Get(), GL_SHADER_STORAGE_BUFFER, "OutputBuffer");
+    glShaderStorageBlockBinding(ComputeShader->Get(), block_index, output_binding);
+}
+
+
+
 
 
 // 60FPS 속도로 호출된다
@@ -214,8 +258,6 @@ void Context::MouseButton(int button, int action, double x, double y)
 void Context::Render()
 {
     /****************************************************************/
-    
-
     if(ImGui::Begin("ImGui"))
     {
         ImGui::Checkbox("Camera Control", &(m_cameraControl));
@@ -262,18 +304,12 @@ void Context::Render()
 
     }
     
-
     ImGui::End();
-
     /****************************************************************/
-    
-    
+        
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
  
- 
-
-    
     
     // Light Setting
     {
