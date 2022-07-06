@@ -126,12 +126,14 @@ private:
     BufferPtr outputBuffer;
     int output_binding = 2;
 
+
+    unsigned int CharHit = 0;
+
     // Floor 대신, 타일을 구성하는 구조
     struct Tile
     {
         /* 
             xyz = Position
-            w   = Main Character 충돌 유무
          */
         glm::vec4 position;
         /* 
@@ -149,6 +151,8 @@ private:
     ProgramUPtr ComputeProgram;
     // compute shader
     ShaderPtr ComputeShader;
+    // compute shader 를 실행시킬 그룹의 개수
+    int ComputeGroupNum;
 
 
 
@@ -158,6 +162,11 @@ private:
     void InitSSBOs();
     void InitComputeProgram();
     void ConnectShaderAndSSBO();
+
+
+
+    void UpdateTiles();
+
 
 };
 

@@ -1,5 +1,6 @@
 #include "context.h"
 #include <vector>
+#include <string>
 
 
 ContextUPtr Context::Create()                                  
@@ -15,6 +16,15 @@ bool Context::Init()
 {
     glClearColor(0.1f, 0.2f, 0.3f, 0.0f);
 
+    
+    // 메인 캐릭터
+    mainChar = CharacterPtr(new Character(glm::vec3(0.0f, 10.0f, 0.0f), 2.0f, 1.0f, 4.0f));
+    
+    // 메인 카메라
+    MainCam = Camera::Create(mainChar);
+    m_cameraControl = false;
+
+
     // Main Character 그리는 Program
     CharProgram = Program::Create("./shader/Character/character.vs", "./shader/Character/character.fs");
     if(!CharProgram) return false;
@@ -23,8 +33,7 @@ bool Context::Init()
     MapProgram = Program::Create("./shader/Map/map.vs", "./shader/Map/map.fs");
     if(!MapProgram) return false;
 
-    
-    
+    // Compute Program 을 생성    
     InitComputeProgram();
 
     /* GPU 로 넘길 데이터 넘기는 과정 */
@@ -60,13 +69,6 @@ bool Context::Init()
 
 
 
-    // 메인 캐릭터
-    mainChar = CharacterPtr(new Character(glm::vec3(0.0f, 10.0f, 0.0f), 2.0f, 1.0f, 4.0f));
-    
-    // 메인 카메라
-    MainCam = Camera::Create(mainChar);
-    m_cameraControl = false;
-
     
 
 /*********************************************************************************/
@@ -88,32 +90,18 @@ bool Context::Init()
 
 
 /*********************************************************************************/
-  
+    
+    // ComputeProgram->Use();
+
+    // glDispatchCompute(ComputeGroupNum, 1, 1);
+    // glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+    // glBindBuffer(GL_SHADER_STORAGE_BUFFER, outputBuffer->Get());
+    // auto ptr = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_WRITE);
+    // if(ptr == nullptr)  SPDLOG_INFO("NULLPTR");
 
 
-    /* compute program 을 이용하는 부분 */
-    ComputeProgram->Use();
-        ComputeProgram->SetUniform("TileCount", (unsigned int)tileArr.size());
-        glDispatchCompute(1, 1, 1);
-        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-        /* compute shader 에서 작성한 값에 다시 접근할 수 있다 */
-        void* ptr = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_WRITE);
-        if(ptr == NULL)
-            SPDLOG_INFO("glMapBuffer return NULL");
-        if(ptr != NULL)
-        {
-            SPDLOG_INFO("glMapBuffer returns not NULL");
-
-            Tile* tilePtr = (Tile*)ptr;
-
-            for(int i = 0; i < 32; i++)
-            {
-                SPDLOG_INFO("{}, {}, {}", tilePtr[i].position.x, tilePtr[i].position.y, tilePtr[i].position.z);
-            }
-        }
-    glUseProgram(0);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    //UpdateTiles();
 
     return true;
 }
@@ -130,6 +118,12 @@ void Context::InitComputeProgram()
     // 변하지 않는 Uniform 변수를 미리 넣어두자
     ComputeProgram->SetUniform("TileCount", (unsigned int)tileArr.size());
     ComputeProgram->SetUniform("TileScale", glm::vec3(gameMap.STRIDE, 0.5f, gameMap.STRIDE));
+    ComputeProgram->SetUniform("LimitTime", 5.0f);
+    ComputeProgram->SetUniform("CharScale", glm::vec3(mainChar->xScale, mainChar->yScale, mainChar->zScale));
+
+    // 실행에 필요한 그룹 수 계산
+    // 그냥 무조건 널널하게 그룹 할당해
+    ComputeGroupNum = ((gameMap.COUNT * gameMap.COUNT * gameMap.STORY) / 32) + 1;
 }
 
 void Context::InitGameMap()
@@ -161,24 +155,28 @@ void Context::InitSSBOs()
 
     // output 데이터를 담을 버퍼
     outputBuffer = Buffer::CreateWithData(GL_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW,
-                                        NULL, sizeof(unsigned int), 1);
+                                        &(CharHit), sizeof(unsigned int), 1);
 
 
-    // SSBO 버퍼를 Binding Point 에 연결하고
+    // 각 SSBO 버퍼를 Binding Point 에 연결한다
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, tileBuffer->Get());
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, tile_binding,   tileBuffer->Get());
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, outputBuffer->Get());
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, output_binding, outputBuffer->Get());
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
 }
-
-
 
 // shader 와 Binding Point 를 연결한다
 void Context::ConnectShaderAndSSBO()
 {
-    auto block_index = glGetProgramResourceIndex(ComputeShader->Get(), GL_SHADER_STORAGE_BUFFER, "TileBuffer");
-    glShaderStorageBlockBinding(ComputeShader->Get(), block_index, tile_binding);
+    auto block_index = glGetProgramResourceIndex(ComputeProgram->Get(), GL_SHADER_STORAGE_BUFFER, "TileBuffer");
+    glShaderStorageBlockBinding(ComputeProgram->Get(), block_index, tile_binding);
 
-    block_index = glGetProgramResourceIndex(ComputeShader->Get(), GL_SHADER_STORAGE_BUFFER, "OutputBuffer");
-    glShaderStorageBlockBinding(ComputeShader->Get(), block_index, output_binding);
+    block_index = glGetProgramResourceIndex(ComputeProgram->Get(), GL_SHADER_STORAGE_BUFFER, "OutputBuffer");
+    glShaderStorageBlockBinding(ComputeProgram->Get(), block_index, output_binding);
 }
 
 
@@ -252,6 +250,65 @@ void Context::MouseButton(int button, int action, double x, double y)
     if(m_cameraControl)
         m_prevMousePos = glm::vec2((float) x, (float) y);
 }
+
+
+void Context::UpdateTiles()
+{
+    /* compute program 을 이용하는 부분 */
+    ComputeProgram->Use();
+        // 매 프레임마다 달라지는 값을 넣어준다
+        ComputeProgram->SetUniform("CurTime", (float)glfwGetTime());
+        ComputeProgram->SetUniform("MainCharPos", mainChar->Position);
+
+        // output 버퍼의 값을 false 로 넣어주어야 한다
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, outputBuffer->Get());
+        auto ptr = (unsigned int*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
+        if(ptr == nullptr)
+        {
+            auto error = glGetError();
+            std::string errStr;
+            switch (error)
+            {
+                case GL_NO_ERROR:          errStr = "No Errors"; break;
+                case GL_INVALID_ENUM:      errStr = "Invalid Enum"; break;
+                case GL_INVALID_VALUE:     errStr = "Invalid Value"; break;
+                case GL_INVALID_OPERATION: errStr = "Invalid Operation"; break;
+                case GL_INVALID_FRAMEBUFFER_OPERATION: errStr = "Invalid Framebuffer Operation"; break;
+                case GL_OUT_OF_MEMORY:   errStr = "Out of Memory"; break;
+                case GL_STACK_UNDERFLOW: errStr = "Stack Underflow"; break;
+                case GL_STACK_OVERFLOW:  errStr = "Stack Overflow"; break;
+
+                default: errStr = "Unknown"; break;
+            }
+            SPDLOG_INFO("Eroor is {}", errStr);
+        }
+
+        *ptr = 0;
+
+
+        // compute shader 실행
+        glDispatchCompute(ComputeGroupNum, 1, 1);
+        // 배리어 => 모든 스레드가 연산이 끝날 때까지 기다린다?
+        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+
+        // glBindBuffer(GL_SHADER_STORAGE_BUFFER, outputBuffer->Get());
+        // ptr = (unsigned int*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+        // 실행 후 어차피 unsigned int 값 하나만 읽는다
+        if(*ptr != 0) // 값이 0 이 아니면, 충돌한 것이다
+            mainChar->yStop();
+        else
+            mainChar->OnAir();
+    
+    
+    // compute shader 프로그램 사용과 버퍼 사용 초기화
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    glUseProgram(0);
+}
+
+
+
 
 
 
@@ -377,55 +434,11 @@ void Context::Render()
      */
 
 
-    // 메인 캐릭터는 움직이고
+    // 메인 캐릭터는 이동시키고
     mainChar->Move();
+    // 그에 따른 타일들의 상태를 갱신한다
+    UpdateTiles();
 
-
-
-    // 하나라도 충돌이 있었는 지 확인한다
-    bool AnyCollision = false;
-
-    // 상자의 모든 레벨에 대해서 조사
-    for(auto aFloor : GameMap)
-    {
-        for(int i = 0; i < aFloor.size(); i++)
-        {
-            // 해당 Floor 가 이미 사라졌다면 다음으로 넘어간다
-            // 이미 사라진 바닥이라면, 충돌을 초기화 한다
-            if(aFloor[i]->Disappear) continue;
-
-            // 이미 충돌이 일어났던 바닥이라면 시간을 확인한다
-            if(aFloor[i]->collision)
-            {
-                // 시간을 체크했는데, 일정 시간이 지났다면 => 이제 없어져야 한다
-                // 사라진 바닥이라고 표시를 한다
-                if(aFloor[i]->CheckTime(glfwGetTime()))
-                {
-                    aFloor[i]->Disappear = true;
-                }
-            }
-            
-
-            // 어떤 Floor 와 이번에 충돌이 발생
-            if(mainChar->Collide(aFloor[i]))
-            {
-                // 충돌이 하나라도 발생하면 일단 무조건 멈춰
-                AnyCollision = true;
-                
-                if(aFloor[i]->collision == false)
-                {
-                    // Floor 에 충돌을 기록하고 시간을 세팅한다
-                    aFloor[i]->SetTime(glfwGetTime());
-                }
-            }
-        }
-    }
-
-    // 충돌이 하나라도 있었다면, 낙하를 초기화를 하고 위치를 되돌린다
-    if(AnyCollision)
-        mainChar->yStop();
-    else
-        mainChar->OnAir();
 
 
     // 카메라가 상자를 따라가게 한다

@@ -45,7 +45,7 @@
         Position += velocity;
     }
 
-    // 충돌을 했을 경우, y축으로 낙하를 멈춘다
+    // 충돌을 했을 경우, y축상의 이동을 멈춘다
     void Character::yStop()
     {
         ySpeed = 0.0f;
