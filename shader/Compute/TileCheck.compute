@@ -11,9 +11,9 @@ struct Tile
     vec4 position;
 
     /* 
-        x   = collision
-        y   = disappear
-        z   = save time
+        x   = collision == 0 이면, 충돌이 없었다
+        y   = disappear == 0 이면, 안 사라진다
+        z   = save time ==> 시간 저장
     */
     vec4 collAndTime;
 };
@@ -23,9 +23,11 @@ layout(std430, binding = 1) buffer TileBuffer
 {
     Tile tileData[];
 };
+
+
 layout(std430, binding = 2) buffer OutputBuffer
 {
-    uint CharOnGround;
+    vec4 CharOnGround;
 };
 
 
@@ -43,42 +45,49 @@ void main()
 {
     uint Index = gl_GlobalInvocationID.x;
 
-    if(Index >= TileCount)  return;
+
+    if(Index >= TileCount) return;
 
     // 현재 스레드가 담당하는 타일
     Tile curTile = tileData[Index];
 
-    // 사라진 타일
-    if(curTile.collAndTime.y == 1.0f) return;
+        // 사라진 타일
+        if(curTile.collAndTime.y != 0.0f) return;
 
-    // 이미 충돌이 일어난 타일
-    if(curTile.collAndTime.x == 1.0f)
-    {
-        // 시간도 지났다
-        if((CurTime - curTile.collAndTime.z) > LimitTime)
-            curTile.collAndTime.y = 1.0f;
-    }
-
-    // 충돌 판정 => 메인 캐릭터가 타일을 밟는 경우에 대해서만 판정하자
-    bool result = true;
-    // 캐릭터가 밑에 있다면 밟는 상황이 아니다
-    if(MainCharPos.y < curTile.position.y) result = false;
-    // x, y, z 축 중 하나라도 떨어져 있다면 충돌 상황이 아니다
-    if(abs(MainCharPos.x - curTile.position.x) > (CharScale.x * 0.5f + TileScale.x * 0.5f)) result = false;
-    if(abs(MainCharPos.y - curTile.position.y) > (CharScale.y * 0.5f + TileScale.y * 0.5f)) result = false;
-    if(abs(MainCharPos.z - curTile.position.z) > (CharScale.z * 0.5f + TileScale.z * 0.5f)) result = false;
-
-
-    // 충돌한 경우에 대해서만 생각
-    if(result)
-    {
-        CharOnGround = 1;
-
-        // 충돌이 0 이였다면, 충돌이 처음이라면
-        if(curTile.collAndTime.x == 0)
+        // 이미 충돌이 일어난 타일
+        if(curTile.collAndTime.x != 0.0f)
         {
-            curTile.collAndTime.x = 1;
-            curTile.collAndTime.z = CurTime;
+            // 시간도 지났다
+            if((CurTime - curTile.collAndTime.z) > LimitTime)
+                curTile.collAndTime.y = 1.0f;
         }
-    }
+
+        // 충돌 판정 => 메인 캐릭터가 타일을 밟는 경우에 대해서만 판정하자
+        bool result = true;
+
+        // 캐릭터가 밑에 있다면 밟는 상황이 아니다
+        if(MainCharPos.y < curTile.position.y) result = false;
+
+        // x, y, z 축 중 하나라도 떨어져 있다면 충돌 상황이 아니다
+             if(abs(MainCharPos.x - curTile.position.x) > (CharScale.x * 0.5f + TileScale.x * 0.5f)) result = false;
+        else if(abs(MainCharPos.y - curTile.position.y) > (CharScale.y * 0.5f + TileScale.y * 0.5f)) result = false;
+        else if(abs(MainCharPos.z - curTile.position.z) > (CharScale.z * 0.5f + TileScale.z * 0.5f)) result = false;
+
+        
+        // 충돌한 경우에 대해서만 생각
+        if(result)
+        {
+            CharOnGround.x = 1.0f;
+
+            // 충돌이 0 이였다면, 충돌이 처음이라면
+            if(curTile.collAndTime.x == 0)
+            {
+                curTile.collAndTime.x = 1.0f;
+                curTile.collAndTime.z = CurTime;
+            }
+        }
+
+    tileData[Index] = curTile;
+    // CharOnGround.w = -78.0f;
+    // CharOnGround.x = 1.0f;
 }

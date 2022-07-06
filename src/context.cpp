@@ -16,35 +16,54 @@ bool Context::Init()
 {
     glClearColor(0.1f, 0.2f, 0.3f, 0.0f);
 
+    // Main Character 그리는 Program 생성
+        CharProgram = Program::Create("./shader/Character/character.vs", "./shader/Character/character.fs");
+        if(!CharProgram) return false;
+
+
+    // Map 그리는 Program 생성
+        MapProgram = Program::Create("./shader/Map/map.vs", "./shader/Map/map.fs");
+        if(!MapProgram) return false;
+
+
+    // Compute Program 생성
+        // compute shader 를 직접 먼저 생성한 다음, 붙인다
+        ComputeShader = Shader::CreateFromFile("./shader/Compute/TileCheck.compute", GL_COMPUTE_SHADER);
+        ComputeProgram = Program::Create({ComputeShader});
+        if(!ComputeProgram) return false;
+
+
+    // 전체 게임 맵을 생성한다 == CPU 데이터
+        InitGameMap();
     
+
+    // CPU 데이터를 GPU 내에서 저장하는 Shader Storage Buffer Object 를 생성
+        // 타일 데이터
+        tileBuffer = Buffer::CreateWithData(GL_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW, tileArr.data(), sizeof(Tile), tileArr.size());
+        // 메인 캐릭터 터치 유무 확인
+        outputBuffer = Buffer::CreateWithData(GL_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW, &(CharHit), sizeof(glm::vec4), 1);
+
+
+    // 각 SSBO 버퍼를 Binding Point 에 연결한다
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, tile_binding,   tileBuffer->Get());
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, output_binding, outputBuffer->Get());
+
+
+    // SSBO 를 사용할 프로그램을 Binding Point 에 연결한다
+        auto block_index = glGetProgramResourceIndex(ComputeProgram->Get(), GL_SHADER_STORAGE_BUFFER, "TileBuffer");
+        glShaderStorageBlockBinding(ComputeProgram->Get(), block_index, tile_binding);
+
+        block_index = glGetProgramResourceIndex(ComputeProgram->Get(), GL_SHADER_STORAGE_BUFFER, "OutputBuffer");
+        glShaderStorageBlockBinding(ComputeProgram->Get(), block_index, output_binding);
+
+    
+
     // 메인 캐릭터
     mainChar = CharacterPtr(new Character(glm::vec3(0.0f, 10.0f, 0.0f), 2.0f, 1.0f, 4.0f));
     
     // 메인 카메라
     MainCam = Camera::Create(mainChar);
     m_cameraControl = false;
-
-
-    // Main Character 그리는 Program
-    CharProgram = Program::Create("./shader/Character/character.vs", "./shader/Character/character.fs");
-    if(!CharProgram) return false;
-
-    // Map 그리는 Program
-    MapProgram = Program::Create("./shader/Map/map.vs", "./shader/Map/map.fs");
-    if(!MapProgram) return false;
-
-    // Compute Program 을 생성    
-    InitComputeProgram();
-
-    /* GPU 로 넘길 데이터 넘기는 과정 */
-    InitGameMap();
-    InitSSBOs();
-
-    ConnectShaderAndSSBO();
-        
-
-        
-
 
     
     // Meshes
@@ -69,6 +88,10 @@ bool Context::Init()
 
 
 
+
+    
+    // Compute Program 에 필요한 Uniform 변수 중, 한번만 정의되는 것을 한꺼번에 정의
+    SetComputeUniformOnce();
     
 
 /*********************************************************************************/
@@ -108,22 +131,18 @@ bool Context::Init()
 
 
 
-void Context::InitComputeProgram()
+// 변하지 않는 Uniform 변수를 미리 넣어두자
+void Context::SetComputeUniformOnce()
 {
-    /* compute shader => 직접 생성한 다음 */
-    ComputeShader = Shader::CreateFromFile("./shader/Compute/TileCheck.compute", GL_COMPUTE_SHADER);
-    /* compute program 에 compute shader 붙이기 */
-    ComputeProgram = Program::Create({ComputeShader});
+    // Uniform 변수를 정의하기 전에, program 을 use 해야 한다
+    ComputeProgram->Use();
+    
+        ComputeProgram->SetUniform("TileCount", (unsigned int)tileArr.size());
+        ComputeProgram->SetUniform("TileScale", glm::vec3(gameMap.STRIDE, 1.0f, gameMap.STRIDE));
+        ComputeProgram->SetUniform("LimitTime", 5.0f);
+        ComputeProgram->SetUniform("CharScale", glm::vec3(mainChar->xScale, mainChar->yScale, mainChar->zScale));
 
-    // 변하지 않는 Uniform 변수를 미리 넣어두자
-    ComputeProgram->SetUniform("TileCount", (unsigned int)tileArr.size());
-    ComputeProgram->SetUniform("TileScale", glm::vec3(gameMap.STRIDE, 0.5f, gameMap.STRIDE));
-    ComputeProgram->SetUniform("LimitTime", 5.0f);
-    ComputeProgram->SetUniform("CharScale", glm::vec3(mainChar->xScale, mainChar->yScale, mainChar->zScale));
-
-    // 실행에 필요한 그룹 수 계산
-    // 그냥 무조건 널널하게 그룹 할당해
-    ComputeGroupNum = ((gameMap.COUNT * gameMap.COUNT * gameMap.STORY) / 32) + 1;
+    glUseProgram(0);
 }
 
 void Context::InitGameMap()
@@ -144,40 +163,12 @@ void Context::InitGameMap()
             }
         }
     }
+
+    // 실행에 필요한 그룹 수 계산 => 무조건 널널하게 설정
+    ComputeGroupNum = ((gameMap.COUNT * gameMap.COUNT * gameMap.STORY) / 32) + 1;
 }
 
-void Context::InitSSBOs()
-{
-    // SSBO 버퍼를 생성 <= GPU
-    // CPU 데이터를 GPU 에 저장
-    tileBuffer = Buffer::CreateWithData(GL_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW,
-                                        tileArr.data(), sizeof(Tile), tileArr.size());
 
-    // output 데이터를 담을 버퍼
-    outputBuffer = Buffer::CreateWithData(GL_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW,
-                                        &(CharHit), sizeof(unsigned int), 1);
-
-
-    // 각 SSBO 버퍼를 Binding Point 에 연결한다
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, tileBuffer->Get());
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, tile_binding,   tileBuffer->Get());
-
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, outputBuffer->Get());
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, output_binding, outputBuffer->Get());
-
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
-}
-
-// shader 와 Binding Point 를 연결한다
-void Context::ConnectShaderAndSSBO()
-{
-    auto block_index = glGetProgramResourceIndex(ComputeProgram->Get(), GL_SHADER_STORAGE_BUFFER, "TileBuffer");
-    glShaderStorageBlockBinding(ComputeProgram->Get(), block_index, tile_binding);
-
-    block_index = glGetProgramResourceIndex(ComputeProgram->Get(), GL_SHADER_STORAGE_BUFFER, "OutputBuffer");
-    glShaderStorageBlockBinding(ComputeProgram->Get(), block_index, output_binding);
-}
 
 
 
@@ -254,56 +245,40 @@ void Context::MouseButton(int button, int action, double x, double y)
 
 void Context::UpdateTiles()
 {
-    /* compute program 을 이용하는 부분 */
+    // compute program -> shader 를 이용해서 계산한다
     ComputeProgram->Use();
+    
         // 매 프레임마다 달라지는 값을 넣어준다
         ComputeProgram->SetUniform("CurTime", (float)glfwGetTime());
         ComputeProgram->SetUniform("MainCharPos", mainChar->Position);
 
-        // output 버퍼의 값을 false 로 넣어주어야 한다
+
+        // 실행하기 전에, 메인 캐릭터에 충돌이 일어나지 않았다고 생각한다
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, outputBuffer->Get());
-        auto ptr = (unsigned int*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
-        if(ptr == nullptr)
-        {
-            auto error = glGetError();
-            std::string errStr;
-            switch (error)
-            {
-                case GL_NO_ERROR:          errStr = "No Errors"; break;
-                case GL_INVALID_ENUM:      errStr = "Invalid Enum"; break;
-                case GL_INVALID_VALUE:     errStr = "Invalid Value"; break;
-                case GL_INVALID_OPERATION: errStr = "Invalid Operation"; break;
-                case GL_INVALID_FRAMEBUFFER_OPERATION: errStr = "Invalid Framebuffer Operation"; break;
-                case GL_OUT_OF_MEMORY:   errStr = "Out of Memory"; break;
-                case GL_STACK_UNDERFLOW: errStr = "Stack Underflow"; break;
-                case GL_STACK_OVERFLOW:  errStr = "Stack Overflow"; break;
 
-                default: errStr = "Unknown"; break;
-            }
-            SPDLOG_INFO("Eroor is {}", errStr);
-        }
-
-        *ptr = 0;
+            auto colCheck = (glm::vec4 *)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
+                (*colCheck).x = 0;
+                (*colCheck).w = 100;
+            glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 
 
-        // compute shader 실행
-        glDispatchCompute(ComputeGroupNum, 1, 1);
-        // 배리어 => 모든 스레드가 연산이 끝날 때까지 기다린다?
-        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+            // compute shader 실행
+            glDispatchCompute(ComputeGroupNum, 1, 1);
+            // 배리어 => 모든 스레드가 연산이 끝날 때까지 기다린다?
+            glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 
-        // glBindBuffer(GL_SHADER_STORAGE_BUFFER, outputBuffer->Get());
-        // ptr = (unsigned int*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-        // 실행 후 어차피 unsigned int 값 하나만 읽는다
-        if(*ptr != 0) // 값이 0 이 아니면, 충돌한 것이다
-            mainChar->yStop();
-        else
-            mainChar->OnAir();
-    
-    
-    // compute shader 프로그램 사용과 버퍼 사용 초기화
-    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+            // 실행한 후에, 다시 Mapping 을 한다
+            colCheck = (glm::vec4 *)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+                if((*colCheck).x != 0) // 값이 0 이 아니면, 충돌한 것이다
+                    mainChar->yStop();
+                else
+                    mainChar->OnAir();
+            glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+
     glUseProgram(0);
 }
 
@@ -436,10 +411,9 @@ void Context::Render()
 
     // 메인 캐릭터는 이동시키고
     mainChar->Move();
+
     // 그에 따른 타일들의 상태를 갱신한다
     UpdateTiles();
-
-
 
     // 카메라가 상자를 따라가게 한다
     MainCam->SetPosition();

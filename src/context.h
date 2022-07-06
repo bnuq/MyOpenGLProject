@@ -110,9 +110,9 @@ private:
     // Map 을 구성하는 여러 요소
     struct Map
     {
-        int     COUNT    = 2;
+        int     COUNT    = 4;
         float   STRIDE   = 10;
-        int     STORY    = 2;
+        int     STORY    = 3;
     };
     const Map gameMap{};
     
@@ -127,7 +127,7 @@ private:
     int output_binding = 2;
 
 
-    unsigned int CharHit = 0;
+    glm::vec4 CharHit = glm::vec4(0, 0, 0, 0);
 
     // Floor 대신, 타일을 구성하는 구조
     struct Tile
@@ -159,8 +159,11 @@ private:
 
 /* Initializing */
     void InitGameMap();
-    void InitSSBOs();
-    void InitComputeProgram();
+    void CreateSSBO();
+
+
+    void CreateComputeProgram();
+    void SetComputeUniformOnce();
     void ConnectShaderAndSSBO();
 
 
