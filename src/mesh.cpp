@@ -95,14 +95,30 @@ MeshUPtr Mesh::CreatePlane()
 
 void Mesh::Draw(const Program* program) const
 {
-    m_vertexLayout->Bind(); // Draw 를 하려면 VBO, EBO 필요 => VAO 필요
-                            // 멤버 VAO 내에서 VBO, EBO 가 만들어지면서 바인딩이 이미 됐다
+    m_vertexLayout->Bind(); 
+
     if (m_material)
     {
         m_material->SetToProgram(program);
     }
     glDrawElements(m_primitiveType, m_indexBuffer->GetCount(), GL_UNSIGNED_INT, 0);
 }
+
+void Mesh::GPUInstancingDraw(const Program* program, size_t num) const
+{
+    m_vertexLayout->Bind();
+
+    if (m_material)
+    {
+        m_material->SetToProgram(program);
+    }
+
+    glDrawElementsInstanced(GL_TRIANGLES, m_indexBuffer->GetCount(), GL_UNSIGNED_INT, 0, num);
+}
+
+
+
+
 
 /* Mesh PRIVATE */
 void Mesh::Init

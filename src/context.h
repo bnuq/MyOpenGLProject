@@ -110,9 +110,9 @@ private:
     // Map 을 구성하는 여러 요소
     struct Map
     {
-        int     COUNT    = 4;
+        int     COUNT    = 2;
         float   STRIDE   = 10;
-        int     STORY    = 3;
+        int     STORY    = 2;
     };
     const Map gameMap{};
     
@@ -163,7 +163,13 @@ private:
 
 
     void CreateComputeProgram();
+    
     void SetComputeUniformOnce();
+
+    void SetMapUniformOnce();
+
+
+
     void ConnectShaderAndSSBO();
 
 

@@ -46,7 +46,14 @@ public:
     );
     static MeshUPtr CreateBox();
     static MeshUPtr CreatePlane();
+
+
     void Draw(const Program*) const;
+
+    // Mesh 를 GPU Instancing 으로 그리는 메서드
+    void GPUInstancingDraw(const Program*, size_t num) const;
+
+
 
     const VertexLayout* GetVertexLayout() const { return m_vertexLayout.get(); }
     BufferPtr GetVertexBuffer() const { return m_vertexBuffer; }

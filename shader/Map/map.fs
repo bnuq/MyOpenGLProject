@@ -1,8 +1,11 @@
-#version 330 core
+#version 460 core
 
 in vec2 texCoord;
 in vec3 WorldNormal;
 in vec3 WorldPosition;
+in float col;
+in float dis;
+
 
 out vec4 fragColor;
 
@@ -31,15 +34,15 @@ struct Material
 uniform Material material;
 
 
-uniform bool Collision;
-
-
 void main()
 {
-    if(Collision)
-        fragColor = vec4(1.0, 1.0, 0.0, 1.0);
+    if(dis != 0)
+        fragColor = vec4(1, 1, 1, 0);
+    else if(col != 0)
+        fragColor = vec4(1, 1, 0, 1);
     else
-    {
+        fragColor = vec4(1, 0, 1, 1);
+/*    {
         // 0. Ambient Color, 기본적으로 가지는 색을 먼저 계산한다
             // Diffuse 텍스처에서 색깔을 가져온다
             vec3 DiffuseTexColor = texture2D(material.diffuse, texCoord).xyz;
@@ -59,11 +62,11 @@ void main()
             vec3 LightVec = (light.position - WorldPosition) / dist;
             // 광원으로 들어가는 빛과 프레그먼트에서 광원을 바라보는 시선 사이의 각도 => cosine
             float theta = dot(LightVec, normalize(-light.direction));
-            /* 
+            /*
                 theta 의 범위가 100% 빛을 받을 수 있는 각도에 속하는 지
                 아니면 조금의 빛이라도 받을 수 있는 위치에 속하는 지
                 아니면 아예 빛을 받지 못하는 위치인 지 계산한다
-            */
+            *
             float intensity = clamp((theta - light.cutoff[1]) / (light.cutoff[0] - light.cutoff[1]), 0.0f, 1.0f);
             // 빛을 조금이라도 받는 프레그먼트인 경우, 빛에 의한 Diffuse, Specular 색을 계산한다
             if (intensity > 0.0f)
@@ -88,5 +91,5 @@ void main()
         // 앞서 구한 감쇠를 최종 색에 적용한다
         //ResultColor *= attenuation;
         fragColor = vec4(ResultColor, 1.0);
-    }
+    }*/
 }

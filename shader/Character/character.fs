@@ -85,4 +85,7 @@ void main()
     // 앞서 구한 감쇠를 최종 색에 적용한다
     //ResultColor *= attenuation;
     fragColor = vec4(ResultColor, 1.0);
+
+
+    //fragColor = vec4(1, 0, 0, 1);
 }

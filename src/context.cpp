@@ -50,11 +50,15 @@ bool Context::Init()
 
 
     // SSBO 를 사용할 프로그램을 Binding Point 에 연결한다
+    // Compute Program
         auto block_index = glGetProgramResourceIndex(ComputeProgram->Get(), GL_SHADER_STORAGE_BUFFER, "TileBuffer");
         glShaderStorageBlockBinding(ComputeProgram->Get(), block_index, tile_binding);
 
         block_index = glGetProgramResourceIndex(ComputeProgram->Get(), GL_SHADER_STORAGE_BUFFER, "OutputBuffer");
         glShaderStorageBlockBinding(ComputeProgram->Get(), block_index, output_binding);
+    // Map Program => 타일 데이터만 필요
+        block_index = glGetProgramResourceIndex(MapProgram->Get(), GL_SHADER_STORAGE_BUFFER, "TileBuffer");
+        glShaderStorageBlockBinding(MapProgram->Get(), block_index, tile_binding);
 
     
 
@@ -93,38 +97,8 @@ bool Context::Init()
     // Compute Program 에 필요한 Uniform 변수 중, 한번만 정의되는 것을 한꺼번에 정의
     SetComputeUniformOnce();
     
-
-/*********************************************************************************/
-    /* GameMap 초기화 */    
-    GameMap.resize(gameMap.STORY);
-
-    for(int story = 0; story < gameMap.STORY; story++)
-    {
-        float Height = (-gameMap.STRIDE) * story;
-
-        for(int row = 0; row < gameMap.COUNT; row++)
-        {
-            for(int col = 0; col < gameMap.COUNT; col++)
-            {
-                GameMap[story].push_back(Floor::Create(glm::vec3(row * gameMap.STRIDE, Height, col * gameMap.STRIDE),gameMap.STRIDE, 1, gameMap.STRIDE));
-            }
-        }
-    }
-
-
-/*********************************************************************************/
-    
-    // ComputeProgram->Use();
-
-    // glDispatchCompute(ComputeGroupNum, 1, 1);
-    // glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-    // glBindBuffer(GL_SHADER_STORAGE_BUFFER, outputBuffer->Get());
-    // auto ptr = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_WRITE);
-    // if(ptr == nullptr)  SPDLOG_INFO("NULLPTR");
-
-
-    //UpdateTiles();
+    // Map Program 에 필요한 Uniform 변수
+    SetMapUniformOnce();
 
     return true;
 }
@@ -144,6 +118,20 @@ void Context::SetComputeUniformOnce()
 
     glUseProgram(0);
 }
+
+
+void Context::SetMapUniformOnce()
+{
+    // Map Program 에서 한번만 정의되면 되는 Uniform 변수들
+    MapProgram->Use();
+        MapProgram->SetUniform("TileCount", (unsigned int)tileArr.size());
+        MapProgram->SetUniform("TileScale", glm::vec3(gameMap.STRIDE, 1.0f, gameMap.STRIDE));
+    glUseProgram(0);
+}
+
+
+
+
 
 void Context::InitGameMap()
 {
@@ -343,6 +331,7 @@ void Context::Render()
     glEnable(GL_DEPTH_TEST);
  
     
+    
     // Light Setting
     {
         CharProgram->SetUniform("viewPos", m_cameraPos);
@@ -443,48 +432,35 @@ void Context::Render()
 
 /***** Draw Call *****/
 
+
     // Main Player Draw
     CharProgram->Use();
-    auto modelTransform = glm::translate(glm::mat4(1.0f), mainChar->Position) *
-                          glm::mat4(glm::vec4(mainChar->LeftVec, 0.0f), 
-                                    glm::vec4(mainChar->UpVec, 0.0f),
-                                    glm::vec4(mainChar->FrontVec, 0.0f), 
-                                    glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)) *
-                          glm::scale(glm::mat4(1.0f), glm::vec3(mainChar->xScale, mainChar->yScale, mainChar->zScale));
-    
-    auto transform = projection * view * modelTransform;
-    CharProgram->SetUniform("transform", transform);
-    CharProgram->SetUniform("modelTransform", modelTransform);
+        auto modelTransform = glm::translate(glm::mat4(1.0f), mainChar->Position) *
+                            glm::mat4(glm::vec4(mainChar->LeftVec, 0.0f), 
+                                        glm::vec4(mainChar->UpVec, 0.0f),
+                                        glm::vec4(mainChar->FrontVec, 0.0f), 
+                                        glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)) *
+                            glm::scale(glm::mat4(1.0f), glm::vec3(mainChar->xScale, mainChar->yScale, mainChar->zScale));
+        
+        auto transform = projection * view * modelTransform;
+        CharProgram->SetUniform("transform", transform);
+        CharProgram->SetUniform("modelTransform", modelTransform);
 
-    CharMesh->Draw(CharProgram.get());
+        CharMesh->Draw(CharProgram.get());
+    glUseProgram(0);
 
 
 
 
+
+    // glEnable(GL_BLEND);
+    // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
     // Game Map Draw
+  
     MapProgram->Use();
-    for(auto aFloor : GameMap)
-    {
-        for(auto f : aFloor)
-        {
-            // 사라진 Floor 는 그리지 않는다
-            if(f->Disappear) continue;
+        transform = projection * view;
 
-
-            // Floor 의 위치, 스케일
-            modelTransform =
-                glm::translate(glm::mat4(1.0f), f->Position) *
-                glm::scale(glm::mat4(1.0f), glm::vec3(f->xScale, f->yScale, f->zScale));
-            transform = projection * view * modelTransform;
-
-            // Uniform for Vertex Shader
-            MapProgram->SetUniform("transform", transform);
-            MapProgram->SetUniform("modelTransform", modelTransform);
-
-            // Uniform for Fragment Shader
-            MapProgram->SetUniform("Collision", f->collision);
-
-            FloorMesh->Draw(MapProgram.get());
-        }
-    }
+        MapProgram->SetUniform("transform", transform);
+        FloorMesh->GPUInstancingDraw(MapProgram.get(), tileArr.size());
+    glUseProgram(0);
 }
