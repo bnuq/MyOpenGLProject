@@ -1,4 +1,4 @@
-#version 330 core
+#version 460 core
 
 
 // VAO 에 의해 읽게 되는 Vertex Attributes

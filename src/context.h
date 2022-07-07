@@ -3,8 +3,8 @@
 
 #include <imgui.h>
 #include <vector>
-#include <queue>
-#include <unordered_map>
+#include <map>
+
 
 #include "common.h"
 #include "program.h"
@@ -134,13 +134,15 @@ private:
     {
         /* 
             xyz = Position
+            w   = story, 위치한 층 수를 저장
+                  위 -> 밑 가면서, 1, 2, 3 ... 순서
          */
         glm::vec4 position;
         /* 
             x   = collision
             y   = disappear
             z   = save time
-            w   = limit time
+            w   = collision 이 체크됐는 지 확인
          */
         glm::vec4 collAndTime;
     };
@@ -153,6 +155,29 @@ private:
     ShaderPtr ComputeShader;
     // compute shader 를 실행시킬 그룹의 개수
     int ComputeGroupNum;
+
+
+
+    struct OutputData
+    {
+        /* 
+            x = 캐릭터 충돌유무
+            y = 갱신 collision index
+            z = 갱신 disappear index
+            w = collision 갱신 여부, 0 이면 갱신되지 않았다는 것
+        */
+        glm::vec4 collCheck;
+
+        /* 
+            갱신 collision 타일의 position + height
+         */
+        glm::vec4 collData;
+    };
+    OutputData outputdata = OutputData{
+        // w = 0.0f => collision 갱신된 타일이 없다
+        glm::vec4(0.0f, -1.0f, -1.0f, 0.0f),
+        glm::vec4(0.0f, 0.0f, 0.0f, 0.0f)
+    };
 
 
 
@@ -175,6 +200,41 @@ private:
 
 
     void UpdateTiles();
+
+
+
+
+    /* 
+        충돌상태 => 사라지고 있는 타일의 정보를 저장하는 map
+        카메라->위치 사이의 거리를 키로 가지는 map
+            근데 카메라 위치는 매 프레임 바뀔 수 있잖아
+            그럼 매번 바뀐 카메라 위치 -> collision 상태인 타일들 사이의 거리를 계산해서
+            다시 map 에 넣은 다음에
+            Draw Call 하기 전에 다시 넣어주어야 한다?
+        그럼 위치 정보 랑 색깔 정보만 있으면 되나?
+        위치 정보는 유니폼 변수로 넣어주고
+        색깔 정보가 들어가기 보단, 그냥 층수만 알면 되잖아
+        그럼 value = glm::vec4 => position + story
+        이렇게 구성하면 될듯??
+
+
+        키 = 타일의 인덱스
+            근데 정렬은 카메라와 타일 사이 거리로 하고 싶다
+        값 = 타일에 대한 정보
+     */
+
+    std::map<float, glm::vec4, std::greater<float>> OrderedCollTiles{};
+
+    /* 
+        그럼 충돌한 타일들을 일단 저장해놓는 자료구조가 필요하다
+        여기에 일단 저장해 둔 다음, iterate 하면서 map 을 채운다
+        
+        그리고, disappear 하는 게 있는 지 찾을 수 도 있어야 한다
+        iteration + search 둘 다 가능해야 한다
+        저장되는 순서가 중요한 건 아니니까, hash function 을 이용하자
+        똑같이 위치랑 층수를 저장
+     */
+    std::unordered_map<unsigned int, glm::vec4> CollIndex{};
 
 
 };

@@ -38,10 +38,10 @@ bool Context::Init()
     
 
     // CPU 데이터를 GPU 내에서 저장하는 Shader Storage Buffer Object 를 생성
-        // 타일 데이터
+        // 타일 데이터 => 변하는 타일들의 데이터가 그대로 저장됨
         tileBuffer = Buffer::CreateWithData(GL_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW, tileArr.data(), sizeof(Tile), tileArr.size());
-        // 메인 캐릭터 터치 유무 확인
-        outputBuffer = Buffer::CreateWithData(GL_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW, &(CharHit), sizeof(glm::vec4), 1);
+        // output 데이터
+        outputBuffer = Buffer::CreateWithData(GL_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW, &(outputdata), sizeof(OutputData), 1);
 
 
     // 각 SSBO 버퍼를 Binding Point 에 연결한다
@@ -50,13 +50,14 @@ bool Context::Init()
 
 
     // SSBO 를 사용할 프로그램을 Binding Point 에 연결한다
-    // Compute Program
+    // Compute Program => 데이터 계산
         auto block_index = glGetProgramResourceIndex(ComputeProgram->Get(), GL_SHADER_STORAGE_BUFFER, "TileBuffer");
         glShaderStorageBlockBinding(ComputeProgram->Get(), block_index, tile_binding);
 
         block_index = glGetProgramResourceIndex(ComputeProgram->Get(), GL_SHADER_STORAGE_BUFFER, "OutputBuffer");
         glShaderStorageBlockBinding(ComputeProgram->Get(), block_index, output_binding);
-    // Map Program => 타일 데이터만 필요
+
+    // Map Program => 타일 렌더링, 타일 데이터만 필요
         block_index = glGetProgramResourceIndex(MapProgram->Get(), GL_SHADER_STORAGE_BUFFER, "TileBuffer");
         glShaderStorageBlockBinding(MapProgram->Get(), block_index, tile_binding);
 
@@ -81,6 +82,7 @@ bool Context::Init()
     CharMat->specular = Texture::CreateFromImage(Image::Load("./image/container2_specular.png").get());
     CharMat->shininess = 64.0f;
     CharMesh->SetMaterial(CharMat);
+
 
     FloorMat = Material::Create();
     FloorMat->diffuse = Texture::CreateFromImage(Image::Load("./image/container.jpg").get());
@@ -145,7 +147,8 @@ void Context::InitGameMap()
             {
                 tileArr.push_back
                 (
-                    Tile{glm::vec4(row * gameMap.STRIDE, Height, col * gameMap.STRIDE, 0.0f),
+                        // 위치                                                      // 층 수
+                    Tile{glm::vec4(row * gameMap.STRIDE, Height, col * gameMap.STRIDE, (float)story),
                         glm::vec4(0.0f, 0.0f, 0.0f, 0.0f)}
                 );
             }
@@ -231,6 +234,8 @@ void Context::MouseButton(int button, int action, double x, double y)
 }
 
 
+
+
 void Context::UpdateTiles()
 {
     // compute program -> shader 를 이용해서 계산한다
@@ -241,12 +246,19 @@ void Context::UpdateTiles()
         ComputeProgram->SetUniform("MainCharPos", mainChar->Position);
 
 
-        // 실행하기 전에, 메인 캐릭터에 충돌이 일어나지 않았다고 생각한다
+        // 실행하기 전에, output buffer 의 값을 초기화 한다
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, outputBuffer->Get());
 
-            auto colCheck = (glm::vec4 *)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
-                (*colCheck).x = 0;
-                (*colCheck).w = 100;
+            auto colCheck = (OutputData *)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
+
+                (*colCheck).collCheck.x = 0.0f;       // 메인 캐릭터 충돌 유무 초기화
+                (*colCheck).collCheck.y = -1.0f;      // collision 갱신 인덱스 초기화
+                (*colCheck).collCheck.z = -1.0f;      // disappear 갱신 인덱스 초기화
+                                   // w = collision 갱신 여부, 초기화 하지 않는다
+
+                // collision 갱신 타일 위치 정보
+                (*colCheck).collData = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+
             glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 
 
@@ -257,15 +269,44 @@ void Context::UpdateTiles()
 
 
             // 실행한 후에, 다시 Mapping 을 한다
-            colCheck = (glm::vec4 *)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-                if((*colCheck).x != 0) // 값이 0 이 아니면, 충돌한 것이다
+            colCheck = (OutputData *)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_WRITE);
+                
+                auto Result = (*colCheck).collCheck;
+
+                // 먼저 메인 캐릭터의 충돌유무를 확인한다
+                // 그에 따른 메인 캐릭터 동작 설정
+                if(Result.x != 0)
                     mainChar->yStop();
                 else
                     mainChar->OnAir();
+
+                // collision 갱신된 것이 있는 지 확인한다
+                // -1 이 아니라면, 갱신된 타일 인덱스가 들어있다
+                if(Result.y != -1.0f)
+                {
+                    // 충돌한 타일 인덱스를 CPU Unordered Map 에 저장해둔다
+                    // 대응되는 타일 데이터도 같이 저장해둔다
+                    CollIndex[Result.y] = (*colCheck).collData;
+
+                    // collision 이 갱신된 타일이 있음을 compute shader 에 알린다
+                    (*colCheck).collCheck.w = Result.y;
+                }
+                // collision 이 갱신되지 않았다면 w 값을 통해서 알린다
+                else
+                    (*colCheck).collCheck.w = 0.0f;
+
+                // disappear 갱신된 것이 있는 지 확인한다
+                if(Result.z != -1.0f)
+                {
+                    // 있다면, CPU Unordered Map 에서 제거한다
+                    CollIndex.erase(Result.z);
+
+                    // 생각해보니, disappear 되는 것의 위치 정보는 필요없네..
+                }
+
             glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
 
     glUseProgram(0);
 }
@@ -412,6 +453,7 @@ void Context::Render()
 
 
 
+    // 카메라 설정, 위치 등을 확정
     auto projection = glm::perspective
     (
         glm::radians(45.0f),
@@ -453,14 +495,33 @@ void Context::Render()
 
 
 
-    // glEnable(GL_BLEND);
-    // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
+    
     // Game Map Draw
   
+    // 일단 tileBuffer 에 저장된 모든 데이터를 GPU Instancing 으로 그려내기
     MapProgram->Use();
         transform = projection * view;
-
         MapProgram->SetUniform("transform", transform);
+
+
         FloorMesh->GPUInstancingDraw(MapProgram.get(), tileArr.size());
     glUseProgram(0);
+
+
+
+    /* 
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        여기서 std map 을 새로 만들고
+        
+        Unordered Map 을 iterate 하면서 
+        카메라 - 타일 사이 거리 체크, 
+        std multi map 에 거리를 key, 타일 정보를 value 로 해서 집어 넣는다
+
+        이후 multimap 을 iterate 하면서
+        draw call 진행
+        멀리 있는 반투명 타일부터 draw 를 진행한다
+     */
+
 }

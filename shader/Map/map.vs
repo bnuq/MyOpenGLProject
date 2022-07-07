@@ -58,6 +58,8 @@ void main()
 
     gl_Position = transform * modelTransform * vec4(aPos, 1.0);
 
+    if(curTile.collAndTime.y != 0.0f) gl_Position = vec4(0, 0, 0, 1);
+
     
     // 모델 변환이 이동하고 균등 확대밖에 없으니까, 노멀 벡터는 그냥 진행해도 무관하다
     WorldNormal = aNormal;

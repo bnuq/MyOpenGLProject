@@ -113,7 +113,7 @@ void Mesh::GPUInstancingDraw(const Program* program, size_t num) const
         m_material->SetToProgram(program);
     }
 
-    glDrawElementsInstanced(GL_TRIANGLES, m_indexBuffer->GetCount(), GL_UNSIGNED_INT, 0, num);
+    glDrawElementsInstanced(m_primitiveType, m_indexBuffer->GetCount(), GL_UNSIGNED_INT, 0, num);
 }
 
 
