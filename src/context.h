@@ -4,7 +4,7 @@
 #include <imgui.h>
 #include <vector>
 #include <map>
-#include <queue>
+#include <deque>
 
 
 #include "common.h"
@@ -111,7 +111,7 @@ private:
     // Map 을 구성하는 여러 요소
     struct Map
     {
-        int     COUNT    = 2;
+        int     COUNT    = 20;
         float   STRIDE   = 10;
         int     STORY    = 2;
     };
@@ -219,6 +219,8 @@ private:
 
     void SetMapUniformOnce();
 
+    void SetAlphaMapUniformOnce();
+
 
 
     void ConnectShaderAndSSBO();
@@ -264,11 +266,15 @@ private:
 
 
 
-    std::queue<std::pair<unsigned int, double>> IndexQueue{};
+    std::deque<std::pair<unsigned int, double>> IndexQueue{};
 
 
 
     double LimitTime = 5.0;
+
+
+
+    ProgramUPtr AlphaMapProgram;
 
 };
 

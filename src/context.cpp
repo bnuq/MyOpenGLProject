@@ -33,6 +33,12 @@ bool Context::Init()
         if(!ComputeProgram) return false;
 
 
+    // 반투명한 Map 을 그리는 Program 생성
+        AlphaMapProgram = Program::Create("./shader/Map/alphamap.vs", "./shader/Map/alphamap.fs");
+        if(!AlphaMapProgram) return false;
+
+
+
     // 전체 게임 맵을 생성한다 == CPU 데이터
         InitGameMap();
     
@@ -65,7 +71,7 @@ bool Context::Init()
 
     // 메인 캐릭터
     mainChar = CharacterPtr(new Character(glm::vec3(0.0f, 10.0f, 0.0f), 2.0f, 1.0f, 4.0f));
-    SPDLOG_INFO("main character position is {}, {}, {}", mainChar->Position.x, mainChar->Position.y, mainChar->Position.z);
+    
     
     // 메인 카메라
     MainCam = Camera::Create(mainChar);
@@ -103,6 +109,8 @@ bool Context::Init()
     // Map Program 에 필요한 Uniform 변수
     SetMapUniformOnce();
 
+    SetAlphaMapUniformOnce();
+
     return true;
 }
 
@@ -132,6 +140,12 @@ void Context::SetMapUniformOnce()
 }
 
 
+void Context::SetAlphaMapUniformOnce()
+{
+    AlphaMapProgram->Use();
+        AlphaMapProgram->SetUniform("TileScale", glm::vec3(gameMap.STRIDE, 1.0f, gameMap.STRIDE));
+    glUseProgram(0);
+}
 
 
 
@@ -280,7 +294,7 @@ void Context::UpdateTiles()
                 if(outputdata->HasWriteColTile == +1.0f)
                 {
                     // 충돌한 것으로 추측되는 타일 인덱스를, 현재 시간과 함께 큐에 넣는다
-                    IndexQueue.push({outputdata->WriteColTile, curtime});
+                    IndexQueue.push_back({outputdata->WriteColTile, curtime});
 
                         // 큐에 넣은 인덱스를 compute shader 에 알린다
                         outputdata->HasInformColTile = +1.0f;
@@ -298,7 +312,7 @@ void Context::UpdateTiles()
                     outputdata->InformDisTile = IndexQueue.front().first;
                     
                     // 큐에서 제거
-                    IndexQueue.pop();
+                    IndexQueue.pop_front();
                 }
             
             glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
@@ -520,5 +534,34 @@ void Context::Render()
         draw call 진행
         멀리 있는 반투명 타일부터 draw 를 진행한다
      */
+    
+    std::map<float, glm::vec3, std::greater<float>> AlphaTiles{};
+    
+    for(auto i : IndexQueue)
+    {
+        glm::vec3 tilePos = glm::vec3(tileArr[i.first].xpos, tileArr[i.first].ypos, tileArr[i.first].zpos);
 
+        // 카메라와 타일 사이의 거리를 구한다
+        float len = glm::distance(MainCam->Position, tilePos);
+
+        // Map 에 집어 넣는다
+        AlphaTiles[len] = tilePos;
+    }
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    AlphaMapProgram->Use();
+        AlphaMapProgram->SetUniform("transform", transform);
+        
+        // 카메라 거리가 긴 타일 부터 draw call 시작
+        for(auto i : AlphaTiles)
+        {
+            AlphaMapProgram->SetUniform("TilePos", i.second);
+
+            SPDLOG_INFO("alpha tiles size is {}", AlphaTiles.size());
+
+            FloorMesh->Draw(AlphaMapProgram.get());
+        }
+    glUseProgram(0);
+    glDisable(GL_BLEND);
 }

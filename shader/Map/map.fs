@@ -35,13 +35,10 @@ uniform Material material;
 
 void main()
 {
-    if(state == 1.0f)
-        fragColor = vec4(1, 1, 0, 1);
-    else
-    {
-        vec3 DiffuseTexColor = texture2D(material.diffuse, texCoord).xyz;
-        fragColor = vec4(DiffuseTexColor, 1.0);
-    }
+    vec3 DiffuseTexColor = texture2D(material.diffuse, texCoord).xyz;
+    fragColor = vec4(DiffuseTexColor, 1.0);
+
+    
 /*   {
         // 0. Ambient Color, 기본적으로 가지는 색을 먼저 계산한다
             // Diffuse 텍스처에서 색깔을 가져온다

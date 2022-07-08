@@ -40,9 +40,17 @@ void main()
     //if(gl_InstanceID >= TileCount) return;
 
 
+
     Tile curTile = tileData[gl_InstanceID];
 
-    // ¸ðµ¨ º¯È¯
+
+    if(curTile.state != 0.0f)
+    {
+        gl_Position = vec4(0, 0, 0, 0);
+    }
+    else
+    {
+        // ¸ðµ¨ º¯È¯
         mat4 modelTransform = mat4(
             TileScale.x, 0.0, 0.0, 0.0,
             0.0, TileScale.y, 0.0, 0.0,
@@ -57,6 +65,12 @@ void main()
         texCoord = aTexCoord;
         WorldPosition = (modelTransform * vec4(aPos, 1.0)).xyz;
         state = curTile.state;
+    }
+
+
+
+
+    
     
     
     // // gl_Position °áÁ¤
