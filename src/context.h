@@ -4,6 +4,7 @@
 #include <imgui.h>
 #include <vector>
 #include <map>
+#include <queue>
 
 
 #include "common.h"
@@ -129,25 +130,33 @@ private:
 
     glm::vec4 CharHit = glm::vec4(0, 0, 0, 0);
 
-    // Floor 대신, 타일을 구성하는 구조
+
+
+
+
+
+    /* 
+        타일 데이터
+        xyz = position
+        w   = state value
+            = 0.0f = 초기 상태
+            = 1.0f = 충돌 상태
+            = 2.0f = 사라진 상태
+     */
+    //std::vector<glm::vec4> tileArr{};
+
     struct Tile
     {
-        /* 
-            xyz = Position
-            w   = story, 위치한 층 수를 저장
-                  위 -> 밑 가면서, 1, 2, 3 ... 순서
-         */
-        glm::vec4 position;
-        /* 
-            x   = collision
-            y   = disappear
-            z   = save time
-            w   = collision 이 체크됐는 지 확인
-         */
-        glm::vec4 collAndTime;
+        float xpos;
+        float ypos;
+        float zpos;
+        float state;
     };
-    // 타일 데이터의 배열
     std::vector<Tile> tileArr{};
+
+
+
+
 
     // Compute Program
     ProgramUPtr ComputeProgram;
@@ -158,27 +167,44 @@ private:
 
 
 
+
+    
+    /* 
+        float
+            먼저 이 값들을 확인하고 나서, 인덱스를 참조한다
+            충돌한 타일이 있는 지?
+            사라진 타일이 있는 지?
+            메인 캐릭터 충돌 유무 알림
+
+        uint
+            충돌한 타일 인덱스 입력
+        
+            충돌한 타일 인덱스 알림
+            사라진 타일 인덱스 알림
+     */
     struct OutputData
     {
-        /* 
-            x = 캐릭터 충돌유무
-            y = 갱신 collision index
-            z = 갱신 disappear index
-            w = collision 갱신 여부, 0 이면 갱신되지 않았다는 것
-        */
-        glm::vec4 collCheck;
+        float HasCharCollision;
 
-        /* 
-            갱신 collision 타일의 position + height
-         */
-        glm::vec4 collData;
+        // -1 or +1 으로 토글
+        float HasWriteColTile;
+        float HasInformColTile;
+        float HasInformDisTile;
+        
+        unsigned int WriteColTile;
+        unsigned int InformColTile;
+        unsigned int InformDisTile;
     };
-    OutputData outputdata = OutputData{
-        // w = 0.0f => collision 갱신된 타일이 없다
-        glm::vec4(0.0f, -1.0f, -1.0f, 0.0f),
-        glm::vec4(0.0f, 0.0f, 0.0f, 0.0f)
-    };
-
+    OutputData outputdata = OutputData
+                            {
+                                -1.0f, 
+                                -1.0f, -1.0f, -1.0f,
+                                0, 0, 0
+                            };
+    /* 
+        처음에는 어떤 타일도 충돌하지 않았고,
+        어떤 타일도 사라지지 않았다고 알린다
+     */
 
 
 
@@ -236,6 +262,13 @@ private:
      */
     std::unordered_map<unsigned int, glm::vec4> CollIndex{};
 
+
+
+    std::queue<std::pair<unsigned int, double>> IndexQueue{};
+
+
+
+    double LimitTime = 5.0;
 
 };
 

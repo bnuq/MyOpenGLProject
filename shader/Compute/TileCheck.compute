@@ -5,21 +5,15 @@ layout (local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
 
 struct Tile
 {
+    float xpos;
+    float ypos;
+    float zpos;
     /* 
-        xyz = Position
-        w   = Story
-    */
-    vec4 position;
-
-    /* 
-        x   = collision == 0 이면, 충돌이 없었다
-        y   = disappear == 0 이면, 안 사라진다
-        z   = save time ==> 시간 저장
-        w   = collision 갱신 여부 확인, 0 이면 collision 으로 인식된 적이 없다는 것
-    */
-    float collision;
-    float disappear;
-    float savedTime;
+        0 = 그냥
+        1 = 충돌
+        2 = 사라짐
+     */
+    float state;
 };
 
 // SSBO
@@ -34,18 +28,16 @@ layout(std430, binding = 1) buffer TileBuffer
 
 struct OutputData
 {
-    /* 
-        x = 캐릭터 충돌유무
-        y = 갱신 collision index
-        z = 갱신 disappear index
-        w = collision 갱신 여부, 0 이면 갱신되지 않았다는 것
-    */
-    glm::vec4 collCheck;
+    float HasCharCollision;
 
-    /* 
-        갱신 collision 타일의 position + height
-    */
-    glm::vec4 collData;
+    // -1 or +1 으로 토글
+    float HasWriteColTile;
+    float HasInformColTile;
+    float HasInformDisTile;
+    
+    uint WriteColTile;
+    uint InformColTile;
+    uint InformDisTile;
 };
 
 layout(std430, binding = 2) buffer OutputBuffer
@@ -54,13 +46,14 @@ layout(std430, binding = 2) buffer OutputBuffer
 };
 
 
+
+
 uniform uint TileCount;
 uniform vec3 TileScale;
-uniform float LimitTime;
 uniform vec3 CharScale;
 
-uniform float CurTime;
 uniform vec3 MainCharPos;
+
 
 
 
@@ -72,76 +65,77 @@ void main()
     // 대응되는 데이터가 없으면 종료
     if(Index >= TileCount) return;
 
+
+
     // 현재 스레드가 담당하는 타일
     Tile curTile = tileData[Index];
 
-        // 사라진 타일 => 더이상 업데이트 할 내용이 없다 => 그대로 종료
-        if(curTile.collAndTime.y != 0.0f) return;
-
-
-        // 담당하는 타일에 대해서, 바깥 CPU 에서 Draw Call 을 따로하기 위해
-        // Hash Function 에 저장을 했다면, 타일 데이터에 기록을 해둔다
-        if(curTile.collAndTime.w == 0 && collCheck.w == Index)
-            // 이 타일은 바깥에서 Draw Call 을 따로 뺀 적이 있다는 뜻
-            curTile.collAndTime.w = 1.0f;
-
-
-        // 이미 충돌이 일어난 타일 => 타일의 정보를 업데이트를 해야 하는데
-        // 앞서 동시에 충돌한 타일이 여러 개라서, 바깥에서 draw call 을 따로 하고 있지 않을 수도 있다
-        if(curTile.collAndTime.x != 0.0f)
+        // 가장 먼저 output 버퍼를 통해서, 갱신해야 하는 정보가 있는 지 확인한다
+        // 충돌 타일 인덱스가 업데이트 됐다면
+        if(outputdata.HasInformColTile == +1.0f)
         {
-            // Draw Call 을 따로 빼서 하지 않았다면
-            if(curTile.collAndTime.w == 0.0f)
+            // 자신과 같으면 갱신
+            if(outputdata.InformColTile == Index)
             {
-                // 시간이 흐르게 하지 않는다
-                curTile.collAndTime.z = CurTime;
-            }
-            // 따로 Draw Call 을 뺐다면, 시간이 흐른 정도를 체크한다
-            else
-            {
-                if((CurTime - curTile.collAndTime.z) > LimitTime)
-                {
-                    // Disappear 체크
-                    curTile.collAndTime.y = 1.0f;
+                // 이제 충돌 상태
+                curTile.state = 1.0f;
 
-                    // 바깥에도 알려야 한다
-                    collCheck.z = Index;
-                }
+                // 갱신하는 스레드가 output 버퍼를 초기화 시킨다
+                outputdata.HasInformColTile = -1.0f;
             }
-            
+        }
+
+        // 사라지는 타일 인덱스가 업데이트 됐다면
+        if(outputdata.HasInformDisTile == +1.0f)
+        {
+            if(outputdata.InformDisTile == Index)
+            {
+                // 이제 사라진 상태
+                curTile.state = 2.0f;
+
+                outputdata.HasInformDisTile = -1.0f;
+            }
+        }
+
+        
+        // 사라진 타일이라면 더이상 진행하지 않는다
+        if(curTile.state == 2.0f)
+        {
+            tileData[Index] = curTile;
+            return;
         }
 
 
         // 충돌 판정 => 메인 캐릭터가 타일을 밟는 경우에 대해서만 판정하자
         bool result = true;
 
+
         // 캐릭터가 밑에 있다면 밟는 상황이 아니다
-        if(MainCharPos.y < curTile.position.y) result = false;
+        if(MainCharPos.y < curTile.ypos) result = false;
 
         // x, y, z 축 중 하나라도 떨어져 있다면 충돌 상황이 아니다
-             if(abs(MainCharPos.x - curTile.position.x) > (CharScale.x * 0.5f + TileScale.x * 0.5f)) result = false;
-        else if(abs(MainCharPos.y - curTile.position.y) > (CharScale.y * 0.5f + TileScale.y * 0.5f)) result = false;
-        else if(abs(MainCharPos.z - curTile.position.z) > (CharScale.z * 0.5f + TileScale.z * 0.5f)) result = false;
+             if(abs(MainCharPos.x - curTile.xpos) > (CharScale.x * 0.5f + TileScale.x * 0.5f)) result = false;
+        else if(abs(MainCharPos.y - curTile.ypos) > (CharScale.y * 0.5f + TileScale.y * 0.5f)) result = false;
+        else if(abs(MainCharPos.z - curTile.zpos) > (CharScale.z * 0.5f + TileScale.z * 0.5f)) result = false;
 
-        
+
         // 충돌한 경우 => 일단 메인 캐릭터는 멈추게 된다
-        if(result)
+        if(result == true)
         {
             // 일단 무조건 메인 캐릭터는 멈춘다는 것을 입력
-            collCheck.x = 1.0f;
+            outputdata.HasCharCollision = +1.0f;
 
-
-            // 충돌이 0 이였다면, 충돌이 처음이라면
-            // CPU 에 알려 ~ Draw Call 을 따로 해야 한다고 알려야 한다
-            if(curTile.collAndTime.x == 0)
+            // 이미 충돌 상태라면, 밖에 알리지 않아도 된다
+            if(curTile.state == 1.0f)
             {
-                // 일단 타일의 정보를 업데이트 하고
-                curTile.collAndTime.x = 1.0f;
-                curTile.collAndTime.z = CurTime;
-
-                
-                // 바깥으로 보낸다, 인덱스를 알린다
-                collCheck.y = Index;
+                tileData[Index] = curTile;
+                return;
+            }
+            // 충돌 상태가 아니라면, 바깥에 자신이 충돌했다고 알린다
+            else
+            {
+                outputdata.HasWriteColTile = +1.0f;
+                outputdata.WriteColTile = Index;
             }
         }
 

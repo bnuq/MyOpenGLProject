@@ -3,8 +3,7 @@
 in vec2 texCoord;
 in vec3 WorldNormal;
 in vec3 WorldPosition;
-in float col;
-in float dis;
+in float state;
 
 
 out vec4 fragColor;
@@ -36,9 +35,7 @@ uniform Material material;
 
 void main()
 {
-    if(dis != 0)
-        fragColor = vec4(1, 1, 1, 0);
-    else if(col != 0)
+    if(state == 1.0f)
         fragColor = vec4(1, 1, 0, 1);
     else
     {

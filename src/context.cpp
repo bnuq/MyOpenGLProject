@@ -65,6 +65,7 @@ bool Context::Init()
 
     // 메인 캐릭터
     mainChar = CharacterPtr(new Character(glm::vec3(0.0f, 10.0f, 0.0f), 2.0f, 1.0f, 4.0f));
+    SPDLOG_INFO("main character position is {}, {}, {}", mainChar->Position.x, mainChar->Position.y, mainChar->Position.z);
     
     // 메인 카메라
     MainCam = Camera::Create(mainChar);
@@ -115,7 +116,6 @@ void Context::SetComputeUniformOnce()
     
         ComputeProgram->SetUniform("TileCount", (unsigned int)tileArr.size());
         ComputeProgram->SetUniform("TileScale", glm::vec3(gameMap.STRIDE, 1.0f, gameMap.STRIDE));
-        ComputeProgram->SetUniform("LimitTime", 5.0f);
         ComputeProgram->SetUniform("CharScale", glm::vec3(mainChar->xScale, mainChar->yScale, mainChar->zScale));
 
     glUseProgram(0);
@@ -147,13 +147,15 @@ void Context::InitGameMap()
             {
                 tileArr.push_back
                 (
-                        // 위치                                                      // 층 수
-                    Tile{glm::vec4(row * gameMap.STRIDE, Height, col * gameMap.STRIDE, (float)story),
-                        glm::vec4(0.0f, 0.0f, 0.0f, 0.0f)}
+                    Tile{
+                        row * gameMap.STRIDE, Height, col * gameMap.STRIDE, 0.0f
+                    }
+                    //glm::vec4(row * gameMap.STRIDE, Height, col * gameMap.STRIDE, 0.0f)
                 );
             }
         }
     }
+
 
     // 실행에 필요한 그룹 수 계산 => 무조건 널널하게 설정
     ComputeGroupNum = ((gameMap.COUNT * gameMap.COUNT * gameMap.STORY) / 32) + 1;
@@ -238,27 +240,23 @@ void Context::MouseButton(int button, int action, double x, double y)
 
 void Context::UpdateTiles()
 {
+    // 현재 함수가 실행되는 시간
+    double curtime = glfwGetTime();
+
+
     // compute program -> shader 를 이용해서 계산한다
     ComputeProgram->Use();
     
-        // 매 프레임마다 달라지는 값을 넣어준다
-        ComputeProgram->SetUniform("CurTime", (float)glfwGetTime());
+        // 매 프레임마다 달라지는 메인 캐릭터의 위치를 입력한다
         ComputeProgram->SetUniform("MainCharPos", mainChar->Position);
 
 
         // 실행하기 전에, output buffer 의 값을 초기화 한다
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, outputBuffer->Get());
 
-            auto colCheck = (OutputData *)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
-
-                (*colCheck).collCheck.x = 0.0f;       // 메인 캐릭터 충돌 유무 초기화
-                (*colCheck).collCheck.y = -1.0f;      // collision 갱신 인덱스 초기화
-                (*colCheck).collCheck.z = -1.0f;      // disappear 갱신 인덱스 초기화
-                                   // w = collision 갱신 여부, 초기화 하지 않는다
-
-                // collision 갱신 타일 위치 정보
-                (*colCheck).collData = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
-
+            auto outputdata = (OutputData *)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
+                // 메인 캐릭터 충돌 유무 초기화
+                outputdata->HasCharCollision = -1.0f;
             glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 
 
@@ -268,42 +266,41 @@ void Context::UpdateTiles()
             glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 
-            // 실행한 후에, 다시 Mapping 을 한다
-            colCheck = (OutputData *)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_WRITE);
+            // 실행한 후, 연산 결과를 확인하기 위해 버퍼에 다시 접근한다
+            outputdata = (OutputData *)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_WRITE);
                 
-                auto Result = (*colCheck).collCheck;
-
                 // 먼저 메인 캐릭터의 충돌유무를 확인한다
-                // 그에 따른 메인 캐릭터 동작 설정
-                if(Result.x != 0)
+                if(outputdata->HasCharCollision == +1.0f)
                     mainChar->yStop();
                 else
                     mainChar->OnAir();
 
-                // collision 갱신된 것이 있는 지 확인한다
-                // -1 이 아니라면, 갱신된 타일 인덱스가 들어있다
-                if(Result.y != -1.0f)
+                
+                // 충돌을 감지한 타일이 있는 지 조사한다
+                if(outputdata->HasWriteColTile == +1.0f)
                 {
-                    // 충돌한 타일 인덱스를 CPU Unordered Map 에 저장해둔다
-                    // 대응되는 타일 데이터도 같이 저장해둔다
-                    CollIndex[Result.y] = (*colCheck).collData;
+                    // 충돌한 것으로 추측되는 타일 인덱스를, 현재 시간과 함께 큐에 넣는다
+                    IndexQueue.push({outputdata->WriteColTile, curtime});
 
-                    // collision 이 갱신된 타일이 있음을 compute shader 에 알린다
-                    (*colCheck).collCheck.w = Result.y;
-                }
-                // collision 이 갱신되지 않았다면 w 값을 통해서 알린다
-                else
-                    (*colCheck).collCheck.w = 0.0f;
-
-                // disappear 갱신된 것이 있는 지 확인한다
-                if(Result.z != -1.0f)
-                {
-                    // 있다면, CPU Unordered Map 에서 제거한다
-                    CollIndex.erase(Result.z);
-
-                    // 생각해보니, disappear 되는 것의 위치 정보는 필요없네..
+                        // 큐에 넣은 인덱스를 compute shader 에 알린다
+                        outputdata->HasInformColTile = +1.0f;
+                        outputdata->InformColTile = outputdata->WriteColTile;
+                        
+                    // collision 을 다시 받을 수 있도록 초기화 한다
+                    outputdata->HasWriteColTile = -1.0f;
                 }
 
+                // 큐에 들어간 타일들 중에서, 큐의 가장 앞에 있는 타일의 시간이 다 지났는 지 확인한다
+                if(!IndexQueue.empty() && curtime - IndexQueue.front().second > LimitTime)
+                {
+                    // shader 에 해당 타일이 사라졌다는 것을 알린다
+                    outputdata->HasInformDisTile = +1.0f;
+                    outputdata->InformDisTile = IndexQueue.front().first;
+                    
+                    // 큐에서 제거
+                    IndexQueue.pop();
+                }
+            
             glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
@@ -503,7 +500,7 @@ void Context::Render()
         transform = projection * view;
         MapProgram->SetUniform("transform", transform);
 
-
+        SPDLOG_INFO("tile array size {}", tileArr.size());
         FloorMesh->GPUInstancingDraw(MapProgram.get(), tileArr.size());
     glUseProgram(0);
 
