@@ -111,9 +111,9 @@ private:
     // Map 을 구성하는 여러 요소
     struct Map
     {
-        int     COUNT    = 20;
+        int     COUNT    = 5;
         float   STRIDE   = 10;
-        int     STORY    = 2;
+        int     STORY    = 4;
     };
     const Map gameMap{};
     

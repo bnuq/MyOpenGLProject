@@ -154,7 +154,7 @@ void Context::InitGameMap()
     // CPU data => 맵을 구성하는 타일들의 위치를 초기화 한다
     for(int story = 0; story < gameMap.STORY; story++)
     {
-        float Height = (-story) * gameMap.STRIDE;
+        float Height = (-story) * gameMap.STRIDE * 2;
         for(int row = 0; row < gameMap.COUNT; row++)
         {
             for(int col = 0; col < gameMap.COUNT; col++)
@@ -535,14 +535,16 @@ void Context::Render()
         멀리 있는 반투명 타일부터 draw 를 진행한다
      */
     
-    std::map<float, glm::vec3, std::greater<float>> AlphaTiles{};
-    
+    std::map<float, glm::vec4, std::greater<float>> AlphaTiles{};
+    double curTime = glfwGetTime();
+
+                // deque<pair<unsigned int, double>>
     for(auto i : IndexQueue)
     {
-        glm::vec3 tilePos = glm::vec3(tileArr[i.first].xpos, tileArr[i.first].ypos, tileArr[i.first].zpos);
+        glm::vec4 tilePos = glm::vec4(tileArr[i.first].xpos, tileArr[i.first].ypos, tileArr[i.first].zpos, (float)(curTime - i.second) / LimitTime);
 
         // 카메라와 타일 사이의 거리를 구한다
-        float len = glm::distance(MainCam->Position, tilePos);
+        float len = glm::distance(MainCam->Position, glm::vec3(tilePos.x, tilePos.y, tilePos.z));
 
         // Map 에 집어 넣는다
         AlphaTiles[len] = tilePos;
@@ -556,7 +558,8 @@ void Context::Render()
         // 카메라 거리가 긴 타일 부터 draw call 시작
         for(auto i : AlphaTiles)
         {
-            AlphaMapProgram->SetUniform("TilePos", i.second);
+            AlphaMapProgram->SetUniform("TilePos", glm::vec3(i.second.x, i.second.y, i.second.z));
+            AlphaMapProgram->SetUniform("TimeRatio", i.second.w);
 
             SPDLOG_INFO("alpha tiles size is {}", AlphaTiles.size());
 

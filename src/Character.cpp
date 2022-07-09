@@ -99,6 +99,9 @@
         // 각도는 1 / 10 만 적용
         float ClockOrNot = (CrossRes.y >= 0) ? (+1.0f) : (-1.0f);
 
+        // 일정 값보다 작다면 회전하지 않는다
+        if(glm::abs(CrossRes.y) < YawMinValue) return;
+
         // 벡터를 회전시킬 것이므로, 회전 변환을 그대로 바로 적용해도 괜찮다
         auto YawRot = glm::rotate(glm::mat4(1.0f), glm::radians(ClockOrNot * YawAngleTick * YawAngleTickRatio), glm::vec3(0.0f, 1.0f, 0.0f));
 

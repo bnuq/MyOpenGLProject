@@ -11,8 +11,8 @@ class Camera
 public:
     // 카메라가 바라보는 점이자 회전의 중심 피벗
     glm::vec3 CameraPivot;
-        float CamToCharMaxLimit = 1.0f;
-        float CamToCharMinLimit = 0.1f;
+        float CamToCharMaxLimit = 0.1f;
+        float CamToCharMinLimit = 0.01f;
 
     bool CameraMove = false;
         float CameraMoveSpeed = 0.01f;
@@ -34,8 +34,8 @@ public:
     
 
 /* 카메라 위치, 거리 */
-    float xzDist = 20.0f;
-    float yDist = 10.0f;
+    float xzDist = 40.0f;
+    float yDist = 30.0f;
 
     
     // 카메라가 따라다니는 플레이어

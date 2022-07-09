@@ -11,6 +11,8 @@ uniform mat4 transform;
 uniform vec3 TilePos;
 uniform vec3 TileScale;
 
+uniform float TimeRatio;
+
 
 out vec2 texCoord;
 out vec3 WorldNormal;
@@ -26,15 +28,29 @@ void main()
             TilePos.x, TilePos.y, TilePos.z, 1.0
         );
 
+    // 월드 공간에서 정점의 위치
+    WorldPosition = (modelTransform * vec4(aPos, 1.0)).xyz;
 
-
-    // 클립 공간에서 정점의 위치
-    gl_Position = transform * modelTransform * vec4(aPos, 1.0);
     // 텍스처 좌표, 변경없이 가져옴
     texCoord = aTexCoord;
 
     //정점의 노멀벡터 => 월드 공간으로 변환
     WorldNormal = (transpose(inverse(modelTransform)) * vec4(aNormal, 0.0)).xyz;
-    // 월드 공간에서 정점의 위치
-    WorldPosition = (modelTransform * vec4(aPos, 1.0)).xyz;
+
+
+    // 모델 좌표계 내에서, 점들을 가운데, (0, 0, 0) 으로 이동시킨다
+    // 시간이 지나면서 조금씩 사라지는 것을 묘사
+    
+    mat3 localTransform = mat3
+    (
+        1 - TimeRatio * 0.2, 0, 0,
+        0, 1 - TimeRatio * 0.2, 0,
+        0, 0, 1 - TimeRatio * 0.2
+    );
+    
+    vec3 TransApos = localTransform * aPos;
+
+
+    // 클립 공간에서 정점의 위치
+    gl_Position = transform * modelTransform * vec4(TransApos, 1.0);
 }

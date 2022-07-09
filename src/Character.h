@@ -28,11 +28,13 @@ public:
     glm::vec3 xzDir{};
     bool xzMoving = false;
     
-        float MoveSpeed = 0.3f;
+        float MoveSpeed = 0.8f;
         const float MoveSpeedRatio = 0.1f;
 
-        float YawAngleTick  = 5.0f;
+        float YawAngleTick  = 20.0f;
         const float YawAngleTickRatio = 0.1f;
+
+        float YawMinValue = 0.1f;
 
     void GetXZDir(glm::vec3 dir);
     void Rotate();
@@ -43,7 +45,7 @@ public:
 
         // 중력은 항상 아래로 작용, 양수 값을 가지게 하고 그걸 빼는 방식으로 작동
         float Gravity = 1.0f;
-        const float GravityRatio = 0.0001f;
+        const float GravityRatio = 0.001f;
 
     // 떨어지고 있는 지 체크
     bool OnGround = false;
