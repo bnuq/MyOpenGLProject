@@ -2,19 +2,24 @@
 #define __CHAR_H__
 
 #include "../FrameWork/common.h"
-#include "Box.h"
-#include "Floor.h"
-
 
 CLASS_PTR(Character)
-class Character : public Box
+class Character
 {
 public:
     Character(glm::vec3 pos, float x = 1.0f, float y = 1.0f, float z = 1.0f)
-    : Box(pos, x, y, z) {}
+    : Position(pos), xScale(x), yScale(y), zScale(z)
+    {}
+
+    
+    glm::vec3 Position;
+    
+    float xScale;
+    float yScale;
+    float zScale;
 
     glm::vec3 FrontVec          = glm::vec3(0.0f, 0.0f, 1.0f);
-    glm::vec3 LeftVec          = glm::vec3(1.0f, 0.0f, 0.0f);
+    glm::vec3 LeftVec           = glm::vec3(1.0f, 0.0f, 0.0f);
     glm::vec3 UpVec             = glm::vec3(0.0f, 1.0f, 0.0f);
 
 
