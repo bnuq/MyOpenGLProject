@@ -111,6 +111,40 @@ bool Context::Init()
 
     SetAlphaMapUniformOnce();
 
+
+
+
+
+
+    // 셰이더 테스트 용 프로그램
+    testShader = Shader::CreateFromFile("./shader/test.compute", GL_COMPUTE_SHADER);
+    testProgram = Program::Create({testShader});
+    testBuffer = Buffer::CreateWithData(GL_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW, NULL, sizeof(unsigned int), 32);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, testBuffer->Get());
+    block_index = glGetProgramResourceIndex(testProgram->Get(), GL_SHADER_STORAGE_BUFFER, "testBuffer");
+    glShaderStorageBlockBinding(testProgram->Get(), block_index, 7);
+
+    unsigned int temp = 0;
+
+    testProgram->Use();
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, testBuffer->Get());
+            glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(unsigned int), &(temp));
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+
+        glDispatchCompute(1, 1, 1);
+        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, testBuffer->Get());
+            auto checkData = (unsigned int*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+                for(int i = 0; i < 11; i++)
+                    SPDLOG_INFO("{} th data is {}", i, checkData[i]);
+            glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    glUseProgram(0);
+
+
+
     return true;
 }
 
@@ -514,7 +548,6 @@ void Context::Render()
         transform = projection * view;
         MapProgram->SetUniform("transform", transform);
 
-        SPDLOG_INFO("tile array size {}", tileArr.size());
         FloorMesh->GPUInstancingDraw(MapProgram.get(), tileArr.size());
     glUseProgram(0);
 
@@ -561,10 +594,11 @@ void Context::Render()
             AlphaMapProgram->SetUniform("TilePos", glm::vec3(i.second.x, i.second.y, i.second.z));
             AlphaMapProgram->SetUniform("TimeRatio", i.second.w);
 
-            SPDLOG_INFO("alpha tiles size is {}", AlphaTiles.size());
+
 
             FloorMesh->Draw(AlphaMapProgram.get());
         }
     glUseProgram(0);
     glDisable(GL_BLEND);
+
 }

@@ -1,8 +1,8 @@
 #ifndef __BOX_H__
 #define __BOX_H__
 
-#include "common.h"
-#include "mesh.h"
+#include "../FrameWork/buffer.h"
+#include "../FrameWork/mesh.h"
 
 CLASS_PTR(Box)
 class Box

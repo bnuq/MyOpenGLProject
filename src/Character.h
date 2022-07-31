@@ -1,7 +1,7 @@
 #ifndef __CHAR_H__
 #define __CHAR_H__
 
-#include "common.h"
+#include "../FrameWork/common.h"
 #include "Box.h"
 #include "Floor.h"
 

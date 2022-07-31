@@ -11,15 +11,15 @@
 #include "program.h"
 #include "mesh.h"
 #include "framebuffer.h"
-#include "Player.h"
-#include "Camera.h"
 
 
+#include "../Src/Player.h"
+#include "../Src/Camera.h"
 
 // 앞으로 사용할 클래스
-#include "Box.h"
-#include "Character.h"
-#include "Floor.h"
+#include "../Src/Box.h"
+#include "../Src/Character.h"
+#include "../Src/Floor.h"
 
 
 
@@ -276,6 +276,12 @@ private:
 
     ProgramUPtr AlphaMapProgram;
 
+
+
+
+    ShaderPtr testShader;
+    ProgramUPtr testProgram;
+    BufferPtr testBuffer;
 };
 
 #endif // __CONTEXT_H__

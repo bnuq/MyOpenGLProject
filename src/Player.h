@@ -3,10 +3,10 @@
 
 #include <string>
 
-#include "common.h"
-#include "mesh.h"
-#include "texture.h"
-#include "image.h"
+#include "../FrameWork/common.h"
+#include "../FrameWork/mesh.h"
+#include "../FrameWork/texture.h"
+#include "../FrameWork/image.h"
 
 
 

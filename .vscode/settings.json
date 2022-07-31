@@ -4,6 +4,8 @@
         "cwd": "${workspaceFolder}"
     },
     "files.associations": {
-        "memory": "cpp"
+        "*.compute": "glsl",
+        "memory": "cpp",
+        "vector": "cpp"
     }
 }

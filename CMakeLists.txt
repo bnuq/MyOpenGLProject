@@ -28,31 +28,33 @@ project(${PROJECT_NAME})
 ]]#
 add_executable(
     ${PROJECT_NAME}                               # Project ?ù¥Î¶ÑÍ≥º ?èô?ùº?ïú ?ã§?ñâ?åå?ùº?ùÑ ?Éù?Ñ±
-    src/main.cpp
+    FrameWork/main.cpp
 
-    src/common.cpp              src/common.h
+    FrameWork/common.cpp              FrameWork/common.h
 
-    src/shader.cpp              src/shader.h
-    src/program.cpp             src/program.h
+    FrameWork/shader.cpp              FrameWork/shader.h
+    FrameWork/program.cpp             FrameWork/program.h
 
-    src/buffer.cpp              src/buffer.h
-    src/vertex_layout.cpp       src/vertex_layout.h
+    FrameWork/buffer.cpp              FrameWork/buffer.h
+    FrameWork/vertex_layout.cpp       FrameWork/vertex_layout.h
 
-    src/image.cpp               src/image.h
-    src/texture.cpp             src/texture.h
+    FrameWork/image.cpp               FrameWork/image.h
+    FrameWork/texture.cpp             FrameWork/texture.h
 
-    src/context.cpp             src/context.h
+    FrameWork/context.cpp             FrameWork/context.h
     
-    src/mesh.cpp                src/mesh.h
-    src/model.cpp               src/model.h
+    FrameWork/mesh.cpp                FrameWork/mesh.h
+    FrameWork/model.cpp               FrameWork/model.h
 
-    src/framebuffer.cpp         src/framebuffer.h
+    FrameWork/framebuffer.cpp         FrameWork/framebuffer.h
 
-    src/Player.cpp              src/Player.h
-    src/Camera.cpp              src/Camera.h
-    src/Floor.cpp               src/Floor.h
-    src/Box.cpp                 src/Box.h
-    src/Character.cpp           src/Character.h
+    FrameWork/shadow_map.cpp         FrameWork/shadow_map.h
+
+    Src/Player.cpp              Src/Player.h
+    Src/Camera.cpp              Src/Camera.h
+    Src/Floor.cpp               Src/Floor.h
+    Src/Box.cpp                 Src/Box.h
+    Src/Character.cpp           Src/Character.h
 )
 
 
