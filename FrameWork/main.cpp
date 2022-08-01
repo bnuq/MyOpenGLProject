@@ -36,15 +36,6 @@ void OnKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods)
         context->MakeJump();
     }
 
-    
-    // Left Shift => 대시 처리
-    if(key == GLFW_KEY_LEFT_SHIFT && action == GLFW_PRESS)
-    {
-        SPDLOG_INFO("Left Shift Key Pressed");
-        auto context = reinterpret_cast<Context*>(glfwGetWindowUserPointer(window));
-        context->MakeDash();
-    }
-
 
     // ESC => 창을 닫음
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)

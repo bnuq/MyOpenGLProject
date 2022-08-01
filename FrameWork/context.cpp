@@ -349,8 +349,6 @@ void Context::Render()
             ImGui::DragFloat("Gravity", &(mainChar->Gravity), 0.01f, 1.0f);
             /* 점프 */
             ImGui::DragFloat("Jump Power", &(mainChar->JumpPower), 0.01f, 0.0f);
-            /* 대쉬 */
-            ImGui::DragFloat("Dash Power", &(mainChar->DashPower), 0.01f, 0.0f); 
         }
 
         if(ImGui::CollapsingHeader("Camera Setting", ImGuiTreeNodeFlags_DefaultOpen))
