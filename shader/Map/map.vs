@@ -12,6 +12,7 @@ struct Tile
     float ypos;
     float zpos;
     float state;
+    uint story;
 };
 // SSBO
 layout(std430, binding = 1) buffer TileBuffer
@@ -65,7 +66,39 @@ void main()
         WorldPosition = (modelTransform * vec4(aPos, 1.0)).xyz;
 
 
-        // 타일의 높이에 따라서, 다른 색깔을 가지게 하자. 일단 여기서는 무조건 노란색
-        DiffColor = vec3(1, 1, 0);
+        // 타일의 높이에 따라서, 다른 색깔을 가지게 하자. 일단 최대 7개, 무지개 색깔을 준비
+        vec3 tempColor = vec3(0, 0, 0);
+        switch(curTile.story)
+        {
+            case 0:     // 빨
+                tempColor = vec3(1.0, 0.0, 0.0);
+                break;
+
+            case 1:     // 주
+                tempColor = vec3(1.0, 0.5, 0.0);
+                break;
+
+            case 2:     // 노
+                tempColor = vec3(1.0, 1.0, 0.0);
+                break;
+
+            case 3:     // 초
+                tempColor = vec3(0.0, 1.0, 0.0);
+                break;
+
+            case 4:     // 파
+                tempColor = vec3(0.0, 0.0, 1.0);
+                break;
+
+            case 5:     // 남
+                tempColor = vec3(0.25, 0.0, 0.5);
+                break;
+
+            case 6:     // 보
+                tempColor = vec3(0.5, 0.0, 0.5);
+                break;
+        }
+
+        DiffColor = tempColor;
     }
 }

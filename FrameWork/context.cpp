@@ -203,7 +203,7 @@ void Context::InitGameMap()
                 (
                     Tile
                     {
-                        row * gameMap.STRIDE, Height, col * gameMap.STRIDE, 0.0f
+                        row * gameMap.STRIDE, Height, col * gameMap.STRIDE, 0.0f, story
                     }
                     //glm::vec4(row * gameMap.STRIDE, Height, col * gameMap.STRIDE, 0.0f)
                 );

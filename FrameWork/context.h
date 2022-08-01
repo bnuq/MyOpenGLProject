@@ -130,6 +130,7 @@ private:
         float ypos;
         float zpos;
         float state;
+        unsigned int story;
     };
     std::vector<Tile> tileArr{};
 
