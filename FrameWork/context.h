@@ -73,7 +73,7 @@ private:
 
     // Meshes
     MeshUPtr CharMesh;                  // 메인 캐릭터 Mesh
-    MeshUPtr FloorMesh;                 // 바닥 Mesh
+    MeshUPtr TileMesh;                  // 바닥을 구성하는 Tile Mesh
     
 
     // Materials
@@ -111,9 +111,9 @@ private:
     // 전체 Game Map 에 대한 정보
     struct Map
     {
-        int     COUNT    = 5;
-        float   STRIDE   = 10;
-        int     STORY    = 4;
+        unsigned int     COUNT    = 5;
+        float            STRIDE   = 10;
+        unsigned int     STORY    = 4;
     };
     const Map gameMap{};
     

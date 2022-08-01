@@ -14,14 +14,16 @@ ContextUPtr Context::Create()
 
 bool Context::Init()
 {
+    // Clear Color
     glClearColor(0.1f, 0.2f, 0.3f, 0.0f);
+
 
     // Main Character 그리는 Program 생성
         CharProgram = Program::Create("./shader/Character/character.vs", "./shader/Character/character.fs");
         if(!CharProgram) return false;
 
 
-    // Map 그리는 Program 생성
+    // Map 그리는 Program 생성 <= GPU Instancing
         MapProgram = Program::Create("./shader/Map/map.vs", "./shader/Map/map.fs");
         if(!MapProgram) return false;
 
@@ -39,15 +41,19 @@ bool Context::Init()
 
 
 
-    // 전체 게임 맵을 생성한다 == CPU 데이터
+
+    // 전체 게임 맵을 생성한다 ==> CPU 내의 데이터 초기화
         InitGameMap();
     
 
     // CPU 데이터를 GPU 내에서 저장하는 Shader Storage Buffer Object 를 생성
         // 타일 데이터 => 변하는 타일들의 데이터가 그대로 저장됨
-        tileBuffer = Buffer::CreateWithData(GL_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW, tileArr.data(), sizeof(Tile), tileArr.size());
-        // output 데이터
-        outputBuffer = Buffer::CreateWithData(GL_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW, &(outputdata), sizeof(OutputData), 1);
+        tileBuffer 
+            = Buffer::CreateWithData(GL_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW, tileArr.data(), sizeof(Tile), tileArr.size());
+        
+        // output 데이터 => CPU 와 GPU 끼리 주고받는 데이터
+        outputBuffer 
+            = Buffer::CreateWithData(GL_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW, &(outputdata), sizeof(OutputData), 1);
 
 
     // 각 SSBO 버퍼를 Binding Point 에 연결한다
@@ -56,18 +62,19 @@ bool Context::Init()
 
 
     // SSBO 를 사용할 프로그램을 Binding Point 에 연결한다
-    // Compute Program => 데이터 계산
+        // Compute Program => 타일들의 상태를 계산하고, output data 를 통해 결과를 주고 받는다
         auto block_index = glGetProgramResourceIndex(ComputeProgram->Get(), GL_SHADER_STORAGE_BUFFER, "TileBuffer");
         glShaderStorageBlockBinding(ComputeProgram->Get(), block_index, tile_binding);
 
         block_index = glGetProgramResourceIndex(ComputeProgram->Get(), GL_SHADER_STORAGE_BUFFER, "OutputBuffer");
         glShaderStorageBlockBinding(ComputeProgram->Get(), block_index, output_binding);
 
-    // Map Program => 타일 렌더링, 타일 데이터만 필요
+        // Map Program => 타일 렌더링, 타일 데이터만 필요
         block_index = glGetProgramResourceIndex(MapProgram->Get(), GL_SHADER_STORAGE_BUFFER, "TileBuffer");
         glShaderStorageBlockBinding(MapProgram->Get(), block_index, tile_binding);
 
     
+
 
     // 메인 캐릭터
     mainChar = CharacterPtr(new Character(glm::vec3(0.0f, 10.0f, 0.0f), 2.0f, 1.0f, 4.0f));
@@ -80,10 +87,10 @@ bool Context::Init()
     
     // Meshes
     CharMesh = Mesh::CreateBox();
-    FloorMesh = Mesh::CreateBox();
+    TileMesh = Mesh::CreateBox();
 
 
-    // Materials
+    // Materials => 메쉬의 색을 나타내는 텍스처들
     CharMat = Material::Create();
     CharMat->diffuse = Texture::CreateFromImage(Image::Load("./image/container2.png").get());
     CharMat->specular = Texture::CreateFromImage(Image::Load("./image/container2_specular.png").get());
@@ -97,7 +104,7 @@ bool Context::Init()
                             Image::CreateSingleColorImage(
                                 FloorMat->diffuse->GetWidth(), FloorMat->diffuse->GetHeight(), glm::vec4(0.5f, 0.5f, 0.5f, 1.0f)).get()
                         );
-    FloorMesh->SetMaterial(FloorMat);
+    TileMesh->SetMaterial(FloorMat);
 
 
 
@@ -168,7 +175,6 @@ void Context::SetMapUniformOnce()
 {
     // Map Program 에서 한번만 정의되면 되는 Uniform 변수들
     MapProgram->Use();
-        MapProgram->SetUniform("TileCount", (unsigned int)tileArr.size());
         MapProgram->SetUniform("TileScale", glm::vec3(gameMap.STRIDE, 1.0f, gameMap.STRIDE));
     glUseProgram(0);
 }
@@ -186,16 +192,17 @@ void Context::SetAlphaMapUniformOnce()
 void Context::InitGameMap()
 {
     // CPU data => 맵을 구성하는 타일들의 위치를 초기화 한다
-    for(int story = 0; story < gameMap.STORY; story++)
+    for(unsigned int story = 0; story < gameMap.STORY; story++)
     {
-        float Height = (-story) * gameMap.STRIDE * 2;
-        for(int row = 0; row < gameMap.COUNT; row++)
+        float Height = (-1.0f) * (story) * gameMap.STRIDE * 2;
+        for(unsigned int row = 0; row < gameMap.COUNT; row++)
         {
-            for(int col = 0; col < gameMap.COUNT; col++)
+            for(unsigned int col = 0; col < gameMap.COUNT; col++)
             {
                 tileArr.push_back
                 (
-                    Tile{
+                    Tile
+                    {
                         row * gameMap.STRIDE, Height, col * gameMap.STRIDE, 0.0f
                     }
                     //glm::vec4(row * gameMap.STRIDE, Height, col * gameMap.STRIDE, 0.0f)
@@ -548,7 +555,7 @@ void Context::Render()
         transform = projection * view;
         MapProgram->SetUniform("transform", transform);
 
-        FloorMesh->GPUInstancingDraw(MapProgram.get(), tileArr.size());
+        TileMesh->GPUInstancingDraw(MapProgram.get(), tileArr.size());
     glUseProgram(0);
 
 
@@ -596,7 +603,7 @@ void Context::Render()
 
 
 
-            FloorMesh->Draw(AlphaMapProgram.get());
+            TileMesh->Draw(AlphaMapProgram.get());
         }
     glUseProgram(0);
     glDisable(GL_BLEND);

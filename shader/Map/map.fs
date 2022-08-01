@@ -1,9 +1,8 @@
 #version 460 core
 
-in vec2 texCoord;
 in vec3 WorldNormal;
 in vec3 WorldPosition;
-in float state;
+in vec3 DiffColor;
 
 
 out vec4 fragColor;
@@ -35,8 +34,9 @@ uniform Material material;
 
 void main()
 {
-    vec3 DiffuseTexColor = texture2D(material.diffuse, texCoord).xyz;
-    fragColor = vec4(DiffuseTexColor, 1.0);
+    vec3 DiffuseColor = DiffColor;
+    //fragColor = vec4(DiffuseTexColor, 1.0);
+    fragColor = vec4(DiffColor, 1.0);
 
     
 /*   {
