@@ -240,7 +240,12 @@ void Context::MouseMove(double x, double y)
 // 여기서는 마우스 클릭에 따른 동작이 없다
 void Context::MouseButton(int button, int action, double x, double y)
 {
-
+    if (button == GLFW_MOUSE_BUTTON_RIGHT) 
+    {
+        if (action == GLFW_PRESS)    // 우측 키 클릭
+            // Tiles 를 업데이트 하는 변수의 값을 반대로 입력한다
+            Update_Tiles = !(Update_Tiles);
+    }
 }
 
 
@@ -284,32 +289,36 @@ void Context::UpdateTiles()
                     mainChar->OnAir();                      // 충돌하지 않은 경우, 낙하한다
 
                 
-                // 이번 프레임에서 충돌을 감지한 타일이 있는 지 조사한다
-                if(outputdata->HasWriteColTile == +1.0f)
+                // 타일들의 상태를 바꾸는 경우에만, Compute Program 의 결과를 CPU 에서 반영한다
+                if(Update_Tiles)
                 {
-                    // 충돌한 것으로 추측되는 타일 인덱스를, 현재 시간과 함께 큐에 넣는다
-                    IndexQueue.push_back( {outputdata->WriteColTile, curtime} );
+                    // 이번 프레임에서 충돌을 감지한 타일이 있는 지 조사한다
+                    if(outputdata->HasWriteColTile == +1.0f)
+                    {
+                        // 충돌한 것으로 추측되는 타일 인덱스를, 현재 시간과 함께 큐에 넣는다
+                        IndexQueue.push_back( {outputdata->WriteColTile, curtime} );
 
-                        // output buffer 를 통해서, 큐에 넣은 인덱스를 compute shader 에 알린다
-                        outputdata->HasInformColTile = +1.0f;
-                        outputdata->InformColTile = outputdata->WriteColTile;
+                            // output buffer 를 통해서, 큐에 넣은 인덱스를 compute shader 에 알린다
+                            outputdata->HasInformColTile = +1.0f;
+                            outputdata->InformColTile = outputdata->WriteColTile;
+                            
+                        // collision 을 다시 받을 수 있도록 초기화 한다
+                        outputdata->HasWriteColTile = -1.0f;
+                    }
+
+
+                    // 큐에 들어간 타일들 중에서, 큐의 가장 앞에 있는 타일의 시간이 다 지났는 지 확인한다
+                    // 순서대로 들어갔기 때문에, 반드시 큐의 앞에서부터 사라질 것이라는 판단
+                    if(!IndexQueue.empty() && curtime - IndexQueue.front().second > LimitTime)
+                    {
+                        // shader 에 해당 타일이 사라졌다는 것을 알린다
+                        outputdata->HasInformDisTile = +1.0f;
+                        outputdata->InformDisTile = IndexQueue.front().first;
                         
-                    // collision 을 다시 받을 수 있도록 초기화 한다
-                    outputdata->HasWriteColTile = -1.0f;
-                }
-
-
-                // 큐에 들어간 타일들 중에서, 큐의 가장 앞에 있는 타일의 시간이 다 지났는 지 확인한다
-                // 순서대로 들어갔기 때문에, 반드시 큐의 앞에서부터 사라질 것이라는 판단
-                if(!IndexQueue.empty() && curtime - IndexQueue.front().second > LimitTime)
-                {
-                    // shader 에 해당 타일이 사라졌다는 것을 알린다
-                    outputdata->HasInformDisTile = +1.0f;
-                    outputdata->InformDisTile = IndexQueue.front().first;
-                    
-                    // 큐에서 제거
-                    // 한번에 하나의 타일만 사라진다
-                    IndexQueue.pop_front();
+                        // 큐에서 제거
+                        // 한번에 하나의 타일만 사라진다
+                        IndexQueue.pop_front();
+                    }
                 }
             
             glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
@@ -371,6 +380,8 @@ void Context::Render()
             ImGui::DragFloat("l.distance", &m_light.distance, 0.5f, 0.0f, 3000.0f);
         }
 
+        ImGui::Checkbox("Update_Tiles", &(Update_Tiles));
+
     }
     
     ImGui::End();
@@ -416,8 +427,7 @@ void Context::Render()
 
 
 
-/***** 물리 연산 진행 *****/
-
+    /***** 물리 연산 진행 *****/
     /* 
         메인 캐릭터 입장에서 생각해보면
 
@@ -430,7 +440,7 @@ void Context::Render()
                 xzMoving == false 면
                     키 입력이 없다, xz 평면에서 움직이지 않는다
                     할 거 없음
-
+        
             Y 움직임
                 이전 높이 저장해두고
                 ySpeed <- 점프 입력에 의해서 바뀌어 있을 수도 있는 상황
@@ -438,7 +448,8 @@ void Context::Render()
             
             XYZ 방향으로 이동
 
-        충돌판정한다
+        
+        충돌판정한다 = UpdateTiles()
             하나라도 충돌이 있으면
                 ySpeed = 0 으로 만들어 버리고
                 점프 초기화
@@ -446,14 +457,14 @@ void Context::Render()
                 이전 높이로 돌아가기
      */
 
-
-    // 메인 캐릭터는 이동시키고
+    // 메인 캐릭터는 이동시키고 => XZ 이동 + Y 이동( 점프  or 대쉬 )
     mainChar->Move();
 
     // 그에 따른 타일들의 상태를 갱신한다
+    // 타일 상태에 따라서 캐릭터의 y 축 움직임이 결정된다
     UpdateTiles();
 
-    // 카메라가 상자를 따라가게 한다
+    // 카메라가 캐릭터를 따라가게 한다
     MainCam->SetPosition();
     
 
@@ -466,7 +477,7 @@ void Context::Render()
     (
         glm::radians(45.0f),
         (float)m_width / (float)m_height,
-        0.01f, 100.0f
+        1.0f, 500.0f
     );
 
     auto view = glm::lookAt
@@ -480,8 +491,7 @@ void Context::Render()
 
 
 
-/***** Draw Call *****/
-
+    /***** Draw Call *****/
 
     // Main Player Draw
     CharProgram->Use();
@@ -505,7 +515,6 @@ void Context::Render()
 
     
     // Game Map Draw
-  
     // 일단 tileBuffer 에 저장된 모든 데이터를 GPU Instancing 으로 그려내기
     MapProgram->Use();
         transform = projection * view;
@@ -516,39 +525,43 @@ void Context::Render()
 
 
 
-    /* 
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+
+
+    /* 
         여기서 std map 을 새로 만들고
         
-        Unordered Map 을 iterate 하면서 
+        deque 을 iterate 하면서 
         카메라 - 타일 사이 거리 체크, 
-        std multi map 에 거리를 key, 타일 정보를 value 로 해서 집어 넣는다
+        std map 에 거리를 key, ( 타일 위치 + 시간 정보 )를 value 로 해서 집어 넣는다
+            카메라~타일 거리가 먼 것 -> 가까운 것 순서로 정렬되게 한다
 
-        이후 multimap 을 iterate 하면서
+        이후 map 을 iterate 하면서
         draw call 진행
         멀리 있는 반투명 타일부터 draw 를 진행한다
      */
-    
     std::map<float, glm::vec4, std::greater<float>> AlphaTiles{};
     double curTime = glfwGetTime();
 
                 // deque<pair<unsigned int, double>>
     for(auto i : IndexQueue)
     {
-        glm::vec4 tilePos = glm::vec4(tileArr[i.first].xpos, tileArr[i.first].ypos, tileArr[i.first].zpos, (float)(curTime - i.second) / LimitTime);
+        // 타일에 대한 정보             타일 위치                                                             타일이 사라지기 전까지 어느정도 시간이 남았는 지
+        glm::vec4 tileInfo = glm::vec4(tileArr[i.first].xpos, tileArr[i.first].ypos, tileArr[i.first].zpos, (float)(curTime - i.second) / LimitTime);
 
         // 카메라와 타일 사이의 거리를 구한다
-        float len = glm::distance(MainCam->Position, glm::vec3(tilePos.x, tilePos.y, tilePos.z));
+        float len = glm::distance(MainCam->Position, glm::vec3(tileInfo.x, tileInfo.y, tileInfo.z));
 
-        // Map 에 집어 넣는다
-        AlphaTiles[len] = tilePos;
+        // 카메라까지 거리를 key 로, Map 에 집어 넣는다
+        AlphaTiles[len] = tileInfo;
     }
 
+
+    // 이제 완성된 Map 을 Iterate 하면서, 충돌 후 사라지고 있는 반투명 타일들을 렌더링한다
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     AlphaMapProgram->Use();
+        transform = projection * view;  // 동일
         AlphaMapProgram->SetUniform("transform", transform);
         
         // 카메라 거리가 긴 타일 부터 draw call 시작
@@ -556,8 +569,6 @@ void Context::Render()
         {
             AlphaMapProgram->SetUniform("TilePos", glm::vec3(i.second.x, i.second.y, i.second.z));
             AlphaMapProgram->SetUniform("TimeRatio", i.second.w);
-
-
 
             TileMesh->Draw(AlphaMapProgram.get());
         }

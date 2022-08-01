@@ -25,8 +25,6 @@ layout(std430, binding = 1) buffer TileBuffer
 
 
 
-
-
 struct OutputData
 {
     float HasCharCollision;
@@ -63,8 +61,9 @@ void main()
     // ssbo 에 접근하는 스레드의 인덱스
     uint Index = gl_GlobalInvocationID.x;
 
-    // 대응되는 데이터가 없으면 종료
+    // 해당 스레드와 대응되는 데이터가 없으면 종료
     if(Index >= TileCount) return;
+
 
 
 
@@ -72,10 +71,10 @@ void main()
     Tile curTile = tileData[Index];
 
         // 가장 먼저 output 버퍼를 통해서, 갱신해야 하는 정보가 있는 지 확인한다
-        // 충돌 타일 인덱스가 업데이트 됐다면
+        // CPU 에서 충돌 타일 인덱스가 업데이트 됐다면
         if(outputdata.HasInformColTile == +1.0f)
         {
-            // 자신과 같으면 갱신
+            // 자신의 인덱스가 같다면, 타일의 상태를 업데이트 한다
             if(outputdata.InformColTile == Index)
             {
                 // 이제 충돌 상태
@@ -86,7 +85,8 @@ void main()
             }
         }
 
-        // 사라지는 타일 인덱스가 업데이트 됐다면
+
+        // CPU 에서 사라진 타일 인덱스가 업데이트 됐다면
         if(outputdata.HasInformDisTile == +1.0f)
         {
             if(outputdata.InformDisTile == Index)
@@ -100,6 +100,7 @@ void main()
 
         
         // 사라진 타일이라면 더이상 진행하지 않는다
+        // 사라진 타일의 상태는 더이상 업데이트 하지 않는다
         if(curTile.state == 2.0f)
         {
             tileData[Index] = curTile;
@@ -107,17 +108,21 @@ void main()
         }
 
 
-        // 충돌 판정 => 메인 캐릭터가 타일을 밟는 경우에 대해서만 판정하자
-        bool result = true;
 
+
+        // 충돌 판정 => 메인 캐릭터가 타일을 밟는 경우에 대해서만 판정하자
+        // 일단 무조건 충돌이 발생했다고 생각
+        bool result = true;
 
         // 캐릭터가 밑에 있다면 밟는 상황이 아니다
         if(MainCharPos.y < curTile.ypos) result = false;
 
+        // 캐릭터와 타일 모두 직육면체 모양, 따라서 서로 충돌한다면 x,y,z 모든 방향에서 충돌이 일어날 것이다
         // x, y, z 축 중 하나라도 떨어져 있다면 충돌 상황이 아니다
              if(abs(MainCharPos.x - curTile.xpos) > (CharScale.x * 0.5f + TileScale.x * 0.5f)) result = false;
         else if(abs(MainCharPos.y - curTile.ypos) > (CharScale.y * 0.5f + TileScale.y * 0.5f)) result = false;
         else if(abs(MainCharPos.z - curTile.zpos) > (CharScale.z * 0.5f + TileScale.z * 0.5f)) result = false;
+
 
 
         // 충돌한 경우 => 일단 메인 캐릭터는 멈추게 된다
@@ -126,7 +131,7 @@ void main()
             // 일단 무조건 메인 캐릭터는 멈춘다는 것을 입력
             outputdata.HasCharCollision = +1.0f;
 
-            // 이미 충돌 상태라면, 밖에 알리지 않아도 된다
+            // 이미 충돌 상태의 타일이라면, 업데이트할 내용이 없다, 바깥에 알리지 않는다
             if(curTile.state == 1.0f)
             {
                 tileData[Index] = curTile;
@@ -137,6 +142,7 @@ void main()
             {
                 outputdata.HasWriteColTile = +1.0f;
                 outputdata.WriteColTile = Index;
+                // CPU 에서 충돌 인덱스를 입력받고, 큐에 넣는다면 이후 output buffer 를 통해 inform 할 것이다
             }
         }
 

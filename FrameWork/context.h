@@ -57,6 +57,7 @@ private:
 
     // Mouse
     glm::vec2 m_prevMousePos { glm::vec2(0.0f) };
+    bool Update_Tiles = false;          // 타일들의 상태 업데이트 함수 작동을 관리하는 스위치
 
 
     // Shaders
