@@ -69,11 +69,17 @@ bool Context::Init()
         block_index = glGetProgramResourceIndex(ComputeProgram->Get(), GL_SHADER_STORAGE_BUFFER, "OutputBuffer");
         glShaderStorageBlockBinding(ComputeProgram->Get(), block_index, output_binding);
 
+
         // Map Program => 타일 렌더링, 타일 데이터만 필요
         block_index = glGetProgramResourceIndex(MapProgram->Get(), GL_SHADER_STORAGE_BUFFER, "TileBuffer");
         glShaderStorageBlockBinding(MapProgram->Get(), block_index, tile_binding);
 
     
+        // Alpha Map Program => 타일 인덱스만으로 타일 데이터에 접근 => 타일 렌더링
+        block_index = glGetProgramResourceIndex(AlphaMapProgram->Get(), GL_SHADER_STORAGE_BUFFER, "TileBuffer");
+        glShaderStorageBlockBinding(AlphaMapProgram->Get(), block_index, tile_binding);
+
+
 
 
     // 메인 캐릭터
@@ -529,29 +535,38 @@ void Context::Render()
     /* 
         여기서 std map 을 새로 만들고
         
-        deque 을 iterate 하면서 
+        deque 을 iterate => deque 에 저장된 타일 인덱스를 확인
+        
+        CPU 에 저장된 Tile Array 의 데이터를 이용
         카메라 - 타일 사이 거리 체크, 
-        std map 에 거리를 key, ( 타일 위치 + 시간 정보 )를 value 로 해서 집어 넣는다
+            
+        std map 에
+            거리를 key, 타일 인덱스를 value 로 해서 집어 넣는다
             카메라~타일 거리가 먼 것 -> 가까운 것 순서로 정렬되게 한다
 
         이후 map 을 iterate 하면서
-        draw call 진행
+        순서대로 타일 인덱스를 넘겨 ~ 해당 인덱스 타일에 대해 draw call 진행
         멀리 있는 반투명 타일부터 draw 를 진행한다
      */
-    std::map<float, glm::vec4, std::greater<float>> AlphaTiles{};
+    std::map<float, std::pair<unsigned int, double>, std::greater<float>> AlphaTiles{};
     double curTime = glfwGetTime();
 
-                // deque<pair<unsigned int, double>>
+
+    /* 
+        deque<pair<unsigned int, double>> IndexQueue
+
+        타일 인덱스와 들어간 시간이 저장되어 있는 큐
+
+        타일의 위치는 변하지 않기 때문에, CPU 에 저장된 타일의 위치 데이터를 이용해도 된다
+     */
     for(auto i : IndexQueue)
     {
-        // 타일에 대한 정보             타일 위치                                                             타일이 사라지기 전까지 어느정도 시간이 남았는 지
-        glm::vec4 tileInfo = glm::vec4(tileArr[i.first].xpos, tileArr[i.first].ypos, tileArr[i.first].zpos, (float)(curTime - i.second) / LimitTime);
-
+        // i.first => 타일의 인덱스
         // 카메라와 타일 사이의 거리를 구한다
-        float len = glm::distance(MainCam->Position, glm::vec3(tileInfo.x, tileInfo.y, tileInfo.z));
+        float len = glm::distance(MainCam->Position, glm::vec3(tileArr[i.first].xpos, tileArr[i.first].ypos, tileArr[i.first].zpos));
 
-        // 카메라까지 거리를 key 로, Map 에 집어 넣는다
-        AlphaTiles[len] = tileInfo;
+        // 카메라까지 거리를 key 로, IndexQueue 에 들어있던 정보를 집어 넣는다
+        AlphaTiles[len] = i;
     }
 
 
@@ -565,8 +580,11 @@ void Context::Render()
         // 카메라 거리가 긴 타일 부터 draw call 시작
         for(auto i : AlphaTiles)
         {
-            AlphaMapProgram->SetUniform("TilePos", glm::vec3(i.second.x, i.second.y, i.second.z));
-            AlphaMapProgram->SetUniform("TimeRatio", i.second.w);
+            unsigned int TileIndex = i.second.first;
+            double StoredTime = i.second.second;
+
+            AlphaMapProgram->SetUniform("TileIndex", TileIndex);
+            AlphaMapProgram->SetUniform("TimeRatio", (float)((curTime - StoredTime) / LimitTime));
 
             TileMesh->Draw(AlphaMapProgram.get());
         }
