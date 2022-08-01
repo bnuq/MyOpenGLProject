@@ -23,15 +23,6 @@ struct Light
 };
 uniform Light light;
 
-struct Material
-{   
-    sampler2D diffuse;
-    sampler2D specular;   
-    float shininess;
-};
-uniform Material material;
-
-
 void main()
 {
     vec3 DiffuseColor = DiffColor;

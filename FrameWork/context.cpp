@@ -91,6 +91,7 @@ bool Context::Init()
 
 
     // Materials => 메쉬의 색을 나타내는 텍스처들
+    // 메인 캐릭터만 텍스처들을 가진다
     CharMat = Material::Create();
     CharMat->diffuse = Texture::CreateFromImage(Image::Load("./image/container2.png").get());
     CharMat->specular = Texture::CreateFromImage(Image::Load("./image/container2_specular.png").get());
@@ -98,57 +99,15 @@ bool Context::Init()
     CharMesh->SetMaterial(CharMat);
 
 
-    FloorMat = Material::Create();
-    FloorMat->diffuse = Texture::CreateFromImage(Image::Load("./image/container.jpg").get());
-    FloorMat->specular = Texture::CreateFromImage(
-                            Image::CreateSingleColorImage(
-                                FloorMat->diffuse->GetWidth(), FloorMat->diffuse->GetHeight(), glm::vec4(0.5f, 0.5f, 0.5f, 1.0f)).get()
-                        );
-    TileMesh->SetMaterial(FloorMat);
-
-
-
-
     
+    // 각 프로그램에서 한번만 정의되면 되는, Uniform Variables 를 정의한다
     // Compute Program 에 필요한 Uniform 변수 중, 한번만 정의되는 것을 한꺼번에 정의
     SetComputeUniformOnce();
-    
-    // Map Program 에 필요한 Uniform 변수
+    // Map Program 에서 한번만 필요한 Uniform 변수들
     SetMapUniformOnce();
-
+    // Alpha Program 에서 한번만 필요한 Uniform 변수들
     SetAlphaMapUniformOnce();
 
-
-
-
-
-
-    // 셰이더 테스트 용 프로그램
-    testShader = Shader::CreateFromFile("./shader/test.compute", GL_COMPUTE_SHADER);
-    testProgram = Program::Create({testShader});
-    testBuffer = Buffer::CreateWithData(GL_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW, NULL, sizeof(unsigned int), 32);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, testBuffer->Get());
-    block_index = glGetProgramResourceIndex(testProgram->Get(), GL_SHADER_STORAGE_BUFFER, "testBuffer");
-    glShaderStorageBlockBinding(testProgram->Get(), block_index, 7);
-
-    unsigned int temp = 0;
-
-    testProgram->Use();
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, testBuffer->Get());
-            glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(unsigned int), &(temp));
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
-
-        glDispatchCompute(1, 1, 1);
-        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, testBuffer->Get());
-            auto checkData = (unsigned int*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-                for(int i = 0; i < 11; i++)
-                    SPDLOG_INFO("{} th data is {}", i, checkData[i]);
-            glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-    glUseProgram(0);
 
 
 

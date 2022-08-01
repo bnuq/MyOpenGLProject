@@ -68,7 +68,7 @@ void main()
 
         // 타일의 높이에 따라서, 다른 색깔을 가지게 하자. 일단 최대 7개, 무지개 색깔을 준비
         vec3 tempColor = vec3(0, 0, 0);
-        switch(curTile.story)
+        switch(curTile.story % 7)
         {
             case 0:     // 빨
                 tempColor = vec3(1.0, 0.0, 0.0);

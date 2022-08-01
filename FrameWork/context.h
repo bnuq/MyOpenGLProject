@@ -78,7 +78,6 @@ private:
 
     // Materials
     MaterialPtr CharMat;
-    MaterialPtr FloorMat;
     
 
     // 카메라 객체
@@ -113,7 +112,7 @@ private:
     {
         unsigned int     COUNT    = 5;
         float            STRIDE   = 10;
-        unsigned int     STORY    = 4;
+        unsigned int     STORY    = 7;
     };
     const Map gameMap{};
     
@@ -174,18 +173,16 @@ private:
 
 
 
-
-    /*  Initializing  */
+    /* Initialize */
     void InitGameMap();                     // 전체 Game Map 을 이루는 타일 데이터를 초기화
     
- 
-
-    void SetComputeUniformOnce();
+    void SetComputeUniformOnce();           // 각 프로그램에서 한번만 초기화하면 되는 Uniform Variables 를 초기화
     void SetMapUniformOnce();
     void SetAlphaMapUniformOnce();
 
 
-    void UpdateTiles();
+    /* Update */
+    void UpdateTiles();                     // 매 프레임마다, 타일의 상태를 계산하고 업데이트
 
 
 
@@ -231,15 +228,6 @@ private:
     double LimitTime = 5.0;
 
 
-
-
-
-
-
-
-    ShaderPtr testShader;
-    ProgramUPtr testProgram;
-    BufferPtr testBuffer;
 };
 
 #endif // __CONTEXT_H__
