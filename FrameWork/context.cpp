@@ -400,14 +400,7 @@ void Context::Render()
 
 
 
-    MapProgram->SetUniform("viewPos", MainCam->Position);
-
-    MapProgram->SetUniform("light.position", m_light.position);
-    MapProgram->SetUniform("light.direction", m_light.direction);
-
-    MapProgram->SetUniform("light.ambient", m_light.ambient);
-    MapProgram->SetUniform("light.diffuse", m_light.diffuse);
-    MapProgram->SetUniform("light.specular", m_light.specular);
+    
 
 
 
@@ -521,8 +514,21 @@ void Context::Render()
     // Game Map Draw
     // 일단 tileBuffer 에 저장된 모든 데이터를 GPU Instancing 으로 그려내기
     MapProgram->Use();
-        transform = projection * view;
-        MapProgram->SetUniform("transform", transform);
+        // Vertex Shader
+            // 월드 좌표계 => 클립 좌표계 변환 넘김
+            transform = projection * view;
+            MapProgram->SetUniform("transform", transform);
+
+
+        // Fragment Shader
+            MapProgram->SetUniform("viewPos", MainCam->Position);
+
+            // Light Setting
+            MapProgram->SetUniform("light.position", m_light.position);
+            MapProgram->SetUniform("light.direction", m_light.direction);
+            MapProgram->SetUniform("light.ambient", m_light.ambient);
+            MapProgram->SetUniform("light.diffuse", m_light.diffuse);
+            MapProgram->SetUniform("light.specular", m_light.specular);
 
         TileMesh->GPUInstancingDraw(MapProgram.get(), tileArr.size());
     glUseProgram(0);

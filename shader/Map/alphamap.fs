@@ -10,5 +10,6 @@ uniform float TimeRatio;
 
 void main()
 {
-    fragColor = vec4(TileColor, 0.5 - TimeRatio * 0.5);
+    // 사라지는 순간 반투명이 갑자기 사라지게 하고 싶다 => 기본 알파값을 줘서, 있는 동안은 불투명한게 보이도록
+    fragColor = vec4(TileColor, 0.5 - TimeRatio * 0.5 + 0.2);
 }

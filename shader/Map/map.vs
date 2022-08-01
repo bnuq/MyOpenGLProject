@@ -50,10 +50,11 @@ void main()
     else
     {
         // 모델 변환 => 현재 타일의 위치로 이동하게 한다
+        // 살짝 작게 만들어 => 타일들이 너무 붙어있지 않게 한다
         mat4 modelTransform = mat4(
-            TileScale.x, 0.0, 0.0, 0.0,
-            0.0, TileScale.y, 0.0, 0.0,
-            0.0, 0.0, TileScale.z, 0.0,
+            TileScale.x * 0.95, 0.0, 0.0, 0.0,
+            0.0, TileScale.y * 0.95, 0.0, 0.0,
+            0.0, 0.0, TileScale.z * 0.95, 0.0,
             curTile.xpos, curTile.ypos, curTile.zpos, 1.0
         );
 

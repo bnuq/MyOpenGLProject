@@ -89,8 +89,8 @@ private:
 
         glm::vec3 direction{ glm::vec3(-1.0f, -1.0f, -1.0f) };
         
-        glm::vec3 ambient { glm::vec3(0.1f, 0.1f, 0.1f) };
-        glm::vec3 diffuse { glm::vec3(0.7f, 0.7f, 0.7f) };
+        glm::vec3 ambient { glm::vec3(0.4f, 0.4f, 0.4f) };
+        glm::vec3 diffuse { glm::vec3(0.8f, 0.8f, 0.8f) };
         glm::vec3 specular { glm::vec3(1.0f, 1.0f, 1.0f) };
     };
     Light m_light;
