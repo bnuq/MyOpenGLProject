@@ -116,6 +116,34 @@ bool Context::Init()
 
 
 
+void Context::InitGameMap()
+{
+    // CPU data => 맵을 구성하는 타일들의 위치를 초기화 한다
+    for(unsigned int story = 0; story < gameMap.STORY; story++)
+    {
+        float Height = (-1.0f) * (story) * gameMap.STRIDE * 2;
+        for(unsigned int row = 0; row < gameMap.COUNT; row++)
+        {
+            for(unsigned int col = 0; col < gameMap.COUNT; col++)
+            {
+                tileArr.push_back
+                (
+                    Tile
+                    {
+                        row * gameMap.STRIDE, Height, col * gameMap.STRIDE, 0.0f, story
+                    }
+                );
+            }
+        }
+    }
+
+
+    // 실행에 필요한 그룹 수 계산 => 무조건 널널하게 설정
+    ComputeGroupNum = ((gameMap.COUNT * gameMap.COUNT * gameMap.STORY) / 32) + 1;
+}
+
+
+
 // 변하지 않는 Uniform 변수를 미리 넣어두자
 void Context::SetComputeUniformOnce()
 {
@@ -148,40 +176,6 @@ void Context::SetAlphaMapUniformOnce()
 
 
 
-void Context::InitGameMap()
-{
-    // CPU data => 맵을 구성하는 타일들의 위치를 초기화 한다
-    for(unsigned int story = 0; story < gameMap.STORY; story++)
-    {
-        float Height = (-1.0f) * (story) * gameMap.STRIDE * 2;
-        for(unsigned int row = 0; row < gameMap.COUNT; row++)
-        {
-            for(unsigned int col = 0; col < gameMap.COUNT; col++)
-            {
-                tileArr.push_back
-                (
-                    Tile
-                    {
-                        row * gameMap.STRIDE, Height, col * gameMap.STRIDE, 0.0f, story
-                    }
-                    //glm::vec4(row * gameMap.STRIDE, Height, col * gameMap.STRIDE, 0.0f)
-                );
-            }
-        }
-    }
-
-
-    // 실행에 필요한 그룹 수 계산 => 무조건 널널하게 설정
-    ComputeGroupNum = ((gameMap.COUNT * gameMap.COUNT * gameMap.STORY) / 32) + 1;
-}
-
-
-
-
-
-
-
-// 60FPS 속도로 호출된다
 void Context::ProcessInput(GLFWwindow* window)
 {
     // 이번 프레임에서 키 입력이 있었는 지 체크
@@ -227,9 +221,8 @@ void Context::Reshape(int width, int height)
     m_width = width;
     m_height = height;
 
+    // 바뀐 위도우 크기만큼 viewport 를 재설정한다
     glViewport(0, 0, m_width, m_height);
-
-    //m_framebuffer = Framebuffer::Create(Texture::Create(m_width, m_height, GL_RGBA));
 }
 
 void Context::MouseMove(double x, double y)
@@ -239,19 +232,20 @@ void Context::MouseMove(double x, double y)
     auto pos = glm::vec2((float)x, (float)y);
     auto deltaPos = pos - m_prevMousePos;
 
+    // 마우스가 움직이는 만큼, 카메라가 회전한다
     MainCam->Rotate(deltaPos);
     m_prevMousePos = pos;
 }
 
+// 여기서는 마우스 클릭에 따른 동작이 없다
 void Context::MouseButton(int button, int action, double x, double y)
 {
-    if(m_cameraControl)
-        m_prevMousePos = glm::vec2((float) x, (float) y);
+
 }
 
 
 
-
+// 매 프레임마다 타일들의 상태를 확인하는 함수
 void Context::UpdateTiles()
 {
     // 현재 함수가 실행되는 시간
@@ -264,10 +258,10 @@ void Context::UpdateTiles()
         // 매 프레임마다 달라지는 메인 캐릭터의 위치를 입력한다
         ComputeProgram->SetUniform("MainCharPos", mainChar->Position);
 
-
-        // 실행하기 전에, output buffer 의 값을 초기화 한다
+        // CPU 와 GPU 사이에서 데이터를 주고 받는, output buffer 를 사용하기 위해서 SSBO 로 Bind 한다
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, outputBuffer->Get());
 
+            // Compute Program 실행 전, output data 를 초기화하기 위해 접근한다
             auto outputdata = (OutputData *)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
                 // 메인 캐릭터 충돌 유무 초기화
                 outputdata->HasCharCollision = -1.0f;
@@ -276,7 +270,7 @@ void Context::UpdateTiles()
 
             // compute shader 실행
             glDispatchCompute(ComputeGroupNum, 1, 1);
-            // 배리어 => 모든 스레드가 연산이 끝날 때까지 기다린다?
+            // 배리어 => 모든 스레드의 SSBO 접근이 끝날 때까지 기다린다
             glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 
@@ -284,19 +278,19 @@ void Context::UpdateTiles()
             outputdata = (OutputData *)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_WRITE);
                 
                 // 먼저 메인 캐릭터의 충돌유무를 확인한다
-                if(outputdata->HasCharCollision == +1.0f)
-                    mainChar->yStop();
+                if(outputdata->HasCharCollision == +1.0f)   // 메인 캐릭터 충돌 시
+                    mainChar->yStop();                      // y 축 방향으로 이동하지 않는다
                 else
-                    mainChar->OnAir();
+                    mainChar->OnAir();                      // 충돌하지 않은 경우, 낙하한다
 
                 
-                // 충돌을 감지한 타일이 있는 지 조사한다
+                // 이번 프레임에서 충돌을 감지한 타일이 있는 지 조사한다
                 if(outputdata->HasWriteColTile == +1.0f)
                 {
                     // 충돌한 것으로 추측되는 타일 인덱스를, 현재 시간과 함께 큐에 넣는다
-                    IndexQueue.push_back({outputdata->WriteColTile, curtime});
+                    IndexQueue.push_back( {outputdata->WriteColTile, curtime} );
 
-                        // 큐에 넣은 인덱스를 compute shader 에 알린다
+                        // output buffer 를 통해서, 큐에 넣은 인덱스를 compute shader 에 알린다
                         outputdata->HasInformColTile = +1.0f;
                         outputdata->InformColTile = outputdata->WriteColTile;
                         
@@ -304,7 +298,9 @@ void Context::UpdateTiles()
                     outputdata->HasWriteColTile = -1.0f;
                 }
 
+
                 // 큐에 들어간 타일들 중에서, 큐의 가장 앞에 있는 타일의 시간이 다 지났는 지 확인한다
+                // 순서대로 들어갔기 때문에, 반드시 큐의 앞에서부터 사라질 것이라는 판단
                 if(!IndexQueue.empty() && curtime - IndexQueue.front().second > LimitTime)
                 {
                     // shader 에 해당 타일이 사라졌다는 것을 알린다
@@ -312,6 +308,7 @@ void Context::UpdateTiles()
                     outputdata->InformDisTile = IndexQueue.front().first;
                     
                     // 큐에서 제거
+                    // 한번에 하나의 타일만 사라진다
                     IndexQueue.pop_front();
                 }
             
