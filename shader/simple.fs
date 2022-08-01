@@ -1,11 +1,10 @@
-#version 330 core
+#version 460 core
 
 uniform vec4 color;
-//uniform vec4 anoColor;
 
 out vec4 fragColor;
 
-void main() {
+void main()
+{
     fragColor = color;
-    //fragColor = anoColor;
 }

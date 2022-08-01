@@ -78,23 +78,20 @@ private:
 
     // 카메라 객체
     CameraPtr MainCam;
-    glm::vec3 m_cameraPos { glm::vec3(0.0f, 2.5f, 8.0f) };
     bool m_cameraControl { false };
 
 
-    // 광원
+    // 광원 => Directional Light 라 생각, 그게 제일 기존 게임하고 어울리는 거 같아
+    // 거리에 따른 감쇠도 넣지 말자
     struct Light
     {
         glm::vec3 position { glm::vec3(1.0f, 4.0f, 4.0f) };
 
         glm::vec3 direction{ glm::vec3(-1.0f, -1.0f, -1.0f) };
-        glm::vec2 cutoff { glm::vec2(120.0f, 5.0f) };
         
         glm::vec3 ambient { glm::vec3(0.1f, 0.1f, 0.1f) };
-        glm::vec3 diffuse { glm::vec3(0.5f, 0.5f, 0.5f) };
+        glm::vec3 diffuse { glm::vec3(0.7f, 0.7f, 0.7f) };
         glm::vec3 specular { glm::vec3(1.0f, 1.0f, 1.0f) };
-
-        float distance { 128.0f };
     };
     Light m_light;
 

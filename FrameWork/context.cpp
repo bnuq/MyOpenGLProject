@@ -377,11 +377,10 @@ void Context::Render()
         {
             ImGui::DragFloat3("l.position", glm::value_ptr(m_light.position), 0.01f);
             ImGui::DragFloat3("l.direction", glm::value_ptr(m_light.direction), 0.01f);
-            ImGui::DragFloat2("l.cutoff", glm::value_ptr(m_light.cutoff), 0.5f, 0.0f, 90.0f);
+
             ImGui::ColorEdit3("l.ambient", glm::value_ptr(m_light.ambient));
             ImGui::ColorEdit3("l.diffuse", glm::value_ptr(m_light.diffuse));
             ImGui::ColorEdit3("l.specular", glm::value_ptr(m_light.specular));
-            ImGui::DragFloat("l.distance", &m_light.distance, 0.5f, 0.0f, 3000.0f);
         }
 
         ImGui::Checkbox("Update_Tiles", &(Update_Tiles));
@@ -396,36 +395,19 @@ void Context::Render()
  
     
     
-    // Light Setting
-    {
-        CharProgram->SetUniform("viewPos", m_cameraPos);
 
-        CharProgram->SetUniform("light.position", m_light.position);
-        CharProgram->SetUniform("light.direction", m_light.direction);
-        CharProgram->SetUniform("light.cutoff", glm::vec2(
-                                                // Intensity 가 100% 인 각도
-                                                cosf(glm::radians(m_light.cutoff[0])),
-                                                // 약하더라도 조금 빛을 받을 수 있는 각도 범위
-                                                cosf(glm::radians(m_light.cutoff[0] + m_light.cutoff[1]))));
-        CharProgram->SetUniform("light.ambient", m_light.ambient);
-        CharProgram->SetUniform("light.diffuse", m_light.diffuse);
-        CharProgram->SetUniform("light.specular", m_light.specular);
-        CharProgram->SetUniform("light.attenuation", GetAttenuationCoeff(m_light.distance));
+    
 
 
-        MapProgram->SetUniform("viewPos", m_cameraPos);
 
-        MapProgram->SetUniform("light.position", m_light.position);
-        MapProgram->SetUniform("light.direction", m_light.direction);
-        MapProgram->SetUniform("light.cutoff", glm::vec2(
-                                            cosf(glm::radians(m_light.cutoff[0])),
-                                            cosf(glm::radians(m_light.cutoff[0] + m_light.cutoff[1]))));
-        MapProgram->SetUniform("light.ambient", m_light.ambient);
-        MapProgram->SetUniform("light.diffuse", m_light.diffuse);
-        MapProgram->SetUniform("light.specular", m_light.specular);
-        //MapProgram->SetUniform("light.attenuation", GetAttenuationCoeff(m_light.distance));
-    }
+    MapProgram->SetUniform("viewPos", MainCam->Position);
 
+    MapProgram->SetUniform("light.position", m_light.position);
+    MapProgram->SetUniform("light.direction", m_light.direction);
+
+    MapProgram->SetUniform("light.ambient", m_light.ambient);
+    MapProgram->SetUniform("light.diffuse", m_light.diffuse);
+    MapProgram->SetUniform("light.specular", m_light.specular);
 
 
 
@@ -496,19 +478,37 @@ void Context::Render()
 
 
     /***** Draw Call *****/
+    // 광원 그리기
+
+
+
+
 
     // Main Player Draw
     CharProgram->Use();
-        auto modelTransform = glm::translate(glm::mat4(1.0f), mainChar->Position) *
-                            glm::mat4(glm::vec4(mainChar->LeftVec, 0.0f), 
-                                        glm::vec4(mainChar->UpVec, 0.0f),
-                                        glm::vec4(mainChar->FrontVec, 0.0f), 
-                                        glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)) *
-                            glm::scale(glm::mat4(1.0f), glm::vec3(mainChar->xScale, mainChar->yScale, mainChar->zScale));
+        // Vertex Shader
+            auto modelTransform = glm::translate(glm::mat4(1.0f), mainChar->Position) *
+                                // 메인 캐릭터 좌표계가 되도록 회전하는, 회전 변환
+                                glm::mat4(glm::vec4(mainChar->LeftVec, 0.0f), 
+                                            glm::vec4(mainChar->UpVec, 0.0f),
+                                            glm::vec4(mainChar->FrontVec, 0.0f), 
+                                            glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)) *
+                                glm::scale(glm::mat4(1.0f), glm::vec3(mainChar->xScale, mainChar->yScale, mainChar->zScale));
+            
+            auto transform = projection * view * modelTransform;
+            CharProgram->SetUniform("transform", transform);
+            CharProgram->SetUniform("modelTransform", modelTransform);
+
         
-        auto transform = projection * view * modelTransform;
-        CharProgram->SetUniform("transform", transform);
-        CharProgram->SetUniform("modelTransform", modelTransform);
+        // Fragment Shader
+            CharProgram->SetUniform("viewPos", MainCam->Position);
+
+            // Light Setting
+            CharProgram->SetUniform("light.position", m_light.position);
+            CharProgram->SetUniform("light.direction", m_light.direction);
+            CharProgram->SetUniform("light.ambient", m_light.ambient);
+            CharProgram->SetUniform("light.diffuse", m_light.diffuse);
+            CharProgram->SetUniform("light.specular", m_light.specular);
 
         CharMesh->Draw(CharProgram.get());
     glUseProgram(0);
