@@ -15,6 +15,8 @@
 // My Code
 #include "../Src/Camera.h"
 #include "../Src/Character.h"
+#include "../Src/Light.h"
+
 
 
 CLASS_PTR(Context)
@@ -87,24 +89,8 @@ private:
     ShadowMapUPtr shadow_map_buffer{};         // shadow map 을 만드는 frame buffer
 
 
-
-
-
-
-
-    // 광원 => Directional Light 라 생각, 그게 제일 기존 게임하고 어울리는 거 같아
-    // 거리에 따른 감쇠도 넣지 말자
-    struct Light
-    {
-        glm::vec3 position { glm::vec3(-10.0f, 10.0f, -10.0f) };
-
-        glm::vec3 direction{ glm::vec3(1.0f, -1.0f, 1.0f) };
-        
-        glm::vec3 ambient { glm::vec3(0.4f, 0.4f, 0.4f) };
-        glm::vec3 diffuse { glm::vec3(0.8f, 0.8f, 0.8f) };
-        glm::vec3 specular { glm::vec3(1.0f, 1.0f, 1.0f) };
-    };
-    Light m_light;
+    // 광원
+    LightUPtr MainLight;
 
 
     // 플레이할 메인 캐릭터
@@ -200,23 +186,6 @@ private:
     std::deque<std::pair<unsigned int, double>> IndexQueue{};
     double LimitTime = 5.0;
 
-
-
-
-
-    // 빛 클립 공간 요소
-    struct LightOrtho
-    {
-        float minusX    = -50.0f;
-        float plusX     = +50.0f;
-        
-        float minusY    = -50.0f;
-        float plusY     = +50.0f;
-
-        float nearZ    = 10.0f;
-        float farZ     = 50.0f;
-    };
-    LightOrtho lightortho{};
 };
 
 #endif // __CONTEXT_H__

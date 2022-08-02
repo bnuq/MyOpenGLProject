@@ -35,6 +35,8 @@ uniform mat4 LightTransform;    // world -> 빛 클립 공간으로 변환
 // 공통 out
 out float IsVisible;            // 보이는 타일 instance 인지, 아닌 지를 판단
 
+out float curStory;              // 현재 타일의 층수
+
 out vec3 WorldNormal;
 out vec3 WorldPosition;
 out vec3 DiffColor;
@@ -61,6 +63,7 @@ void main()
         // 보이는 타일을 구성하는 정점이다
         IsVisible = 1.0;
 
+        curStory = curTile.story;
 
         // 모델 변환 => 현재 타일의 위치로 이동하게 한다
         // 살짝 작게 만들어 => 타일들이 너무 붙어있지 않게 한다

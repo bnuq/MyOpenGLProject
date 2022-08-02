@@ -2,6 +2,7 @@
 
 in vec4 LightClipPos;
 in vec3 TileColor;
+in float curStory;
 
 
 // 리턴되는 최종 프레그먼트 색깔
@@ -11,6 +12,8 @@ out vec4 fragColor;
 // 0 -> 1 로 바뀌면서 들어온다
 uniform float TimeRatio;
 uniform sampler2D shadowMap;        // 똑같이 광원 기준에서 그린 shadow map 을 받는다
+uniform uint charStory;
+
 
 
 float ShadowCalculation(vec4 fragPosLight)
@@ -42,7 +45,8 @@ void main()
     float shadow;
     
     // 앞면에 해당하는 fragment 에 대해서만 그림자를 계산한다
-    if(gl_FrontFacing)
+    // 캐릭터와 같은 층수에 있어야 그림자를 계산한다
+    if(gl_FrontFacing && uint(curStory) == charStory)
         shadow = ShadowCalculation(LightClipPos);
     else
         shadow = 0.0;

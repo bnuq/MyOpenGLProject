@@ -3,6 +3,8 @@
 // vertex shader 로 부터 들어오는 값들
 in float IsVisible;
 
+in float curStory;
+
 in vec3 WorldNormal;
 in vec3 WorldPosition;
 in vec3 DiffColor;
@@ -18,7 +20,7 @@ uniform float diffRatio;            // 기존 diffuse color 조절
 
 uniform sampler2D shadowMap;        // 광원 기준에서 그린 shadow map
 
-
+uniform uint charStory;
 
 // Directional Light 라 생각
 struct Light
@@ -116,8 +118,11 @@ void main()
 
 
     vec3 result = (ambient + diffuse + specular);
-    float shadow = ShadowCalculation(LightClipPos, pixelNorm, LightVec);
     
+    float shadow = 0.0;    
+    // 캐릭터와 같은 층에 있는 타일에 대해서만 그림자를 계산한다
+    if(uint(curStory) == charStory)
+        shadow = ShadowCalculation(LightClipPos, pixelNorm, LightVec);
 
     fragColor = vec4(result * (1.0 - shadow), 1.0);
 }

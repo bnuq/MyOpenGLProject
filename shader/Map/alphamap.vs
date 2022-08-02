@@ -38,12 +38,14 @@ uniform float TimeRatio;                // 사라지기 까지 남은 시간 비율
 
 
 out vec4 LightClipPos;                  // 빛 클립 공간에서의 좌표
-out vec3 TileColor;             // 층 수에 따라 결정되는 타일의 기본 색깔
-
+out vec3 TileColor;                     // 층 수에 따라 결정되는 타일의 기본 색깔
+out float curStory;
 
 
 void main()
 {
+    curStory = tileData[TileIndex].story;
+
     // TileIndex 로 넘겨받은 타일 데이터에 접근해서, 그림을 그린다
 
     // 모델 좌표계 => 월드 좌표계

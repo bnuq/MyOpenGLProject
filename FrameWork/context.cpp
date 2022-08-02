@@ -90,6 +90,10 @@ bool Context::Init()
 
     // 메인 캐릭터
     mainChar = CharacterPtr(new Character(glm::vec3(0.0f, 10.0f, 0.0f), 2.0f, 1.0f, 4.0f));
+
+
+    // 메인 광원
+    MainLight = LightUPtr(new Light());
     
     
     // 메인 카메라
@@ -386,12 +390,12 @@ void Context::Render()
         
         if (ImGui::CollapsingHeader("Light Setting", ImGuiTreeNodeFlags_DefaultOpen))
         {
-            ImGui::DragFloat3("l.position", glm::value_ptr(m_light.position), 0.01f);
-            ImGui::DragFloat3("l.direction", glm::value_ptr(m_light.direction), 0.01f);
+            ImGui::DragFloat3("l.position", glm::value_ptr(MainLight->Position), 0.01f);
+            ImGui::DragFloat3("l.direction", glm::value_ptr(MainLight->Direction), 0.01f);
 
-            ImGui::ColorEdit3("l.ambient", glm::value_ptr(m_light.ambient));
-            ImGui::ColorEdit3("l.diffuse", glm::value_ptr(m_light.diffuse));
-            ImGui::ColorEdit3("l.specular", glm::value_ptr(m_light.specular));
+            ImGui::ColorEdit3("l.ambient", glm::value_ptr(MainLight->ambient));
+            ImGui::ColorEdit3("l.diffuse", glm::value_ptr(MainLight->diffuse));
+            ImGui::ColorEdit3("l.specular", glm::value_ptr(MainLight->specular));
         }
 
         ImGui::Checkbox("Update_Tiles", &(Update_Tiles));
@@ -400,14 +404,14 @@ void Context::Render()
 
         if (ImGui::CollapsingHeader("Light Ortho Setting", ImGuiTreeNodeFlags_DefaultOpen))
         {
-            ImGui::DragFloat("light ortho minus x", &lightortho.minusX);
-            ImGui::DragFloat("light ortho plus x", &lightortho.plusX);
+            ImGui::DragFloat("light ortho minus x", &MainLight->minusX);
+            ImGui::DragFloat("light ortho plus x", &MainLight->plusX);
 
-            ImGui::DragFloat("light ortho minus y", &lightortho.minusY);
-            ImGui::DragFloat("light ortho plus y", &lightortho.plusY);
+            ImGui::DragFloat("light ortho minus y", &MainLight->minusY);
+            ImGui::DragFloat("light ortho plus y", &MainLight->plusY);
 
-            ImGui::DragFloat("light ortho near z", &lightortho.nearZ);
-            ImGui::DragFloat("light ortho far z", &lightortho.farZ);
+            ImGui::DragFloat("light ortho near z", &MainLight->nearZ);
+            ImGui::DragFloat("light ortho far z", &MainLight->farZ);
         }
 
 
@@ -489,15 +493,23 @@ void Context::Render()
     
 
 
+    /* 
+        광원을 그리기 전에, 광원의 위치를 갱신하다
+
+        광원이 캐릭터보다 위에 있는데, 캐릭터가 너무 밑으로 내려가는 경우
+     */
+    MainLight->SetPosition(mainChar->Position.y);
+
+
 
     // 일단 광원을 그린다
     SimpleProgram->Use();
-        auto modelTransform = glm::translate(glm::mat4(1.0f), m_light.position);
+        auto modelTransform = glm::translate(glm::mat4(1.0f), MainLight->Position);
         auto transform = projection * view * modelTransform;
         // vertex shader
             SimpleProgram->SetUniform("transform", transform);
         // fragment shader
-            SimpleProgram->SetUniform("MainColor", m_light.diffuse);
+            SimpleProgram->SetUniform("MainColor", MainLight->diffuse);
 
         CharMesh->Draw(SimpleProgram.get());
     glUseProgram(0);
@@ -520,13 +532,17 @@ void Context::Render()
     // 일단 광원 입장에서 보는 뷰 변환, 프로젝션 변환은 동일하다
     auto lightView = glm::lookAt
     (
-        m_light.position,
-        m_light.position + m_light.direction,
+        MainLight->Position,
+        MainLight->Position + MainLight->Direction,
         glm::vec3(0.0f, 1.0f, 0.0f)
     );
     
     // 나는 무조건 directiona light 라 생각
-    auto lightProjection = glm::ortho(lightortho.minusX, lightortho.plusX, lightortho.minusY, lightortho.plusY, lightortho.nearZ, lightortho.farZ);
+    auto lightProjection = glm::ortho(
+            MainLight->minusX, MainLight->plusX, 
+            MainLight->minusY, MainLight->plusY, 
+            MainLight->nearZ, MainLight->farZ
+        );
 
 
 
@@ -572,18 +588,6 @@ void Context::Render()
 
 
 
-    
-
-
-
-
-
-    /***** Draw Call *****/
-    // 광원 그리기
-
-
-
-
 
     // Main Player Draw
     CharProgram->Use();
@@ -606,11 +610,11 @@ void Context::Render()
             CharProgram->SetUniform("viewPos", MainCam->Position);
 
             // Light Setting
-            CharProgram->SetUniform("light.position", m_light.position);
-            CharProgram->SetUniform("light.direction", m_light.direction);
-            CharProgram->SetUniform("light.ambient", m_light.ambient);
-            CharProgram->SetUniform("light.diffuse", m_light.diffuse);
-            CharProgram->SetUniform("light.specular", m_light.specular);
+            CharProgram->SetUniform("light.position", MainLight->Position);
+            CharProgram->SetUniform("light.direction", MainLight->Direction);
+            CharProgram->SetUniform("light.ambient", MainLight->ambient);
+            CharProgram->SetUniform("light.diffuse", MainLight->diffuse);
+            CharProgram->SetUniform("light.specular", MainLight->specular);
 
             glActiveTexture(GL_TEXTURE4);
             shadow_map_buffer->GetShadowMap()->Bind();
@@ -620,10 +624,9 @@ void Context::Render()
     glUseProgram(0);
 
 
-
-
-
-    
+    // 현재 메인 캐릭터가 위치해 있는 층수
+    unsigned int charStory = (unsigned int)((-1.0f) * (mainChar->Position.y / (2 * gameMap.STRIDE)) + 0.7f);
+   
     // Game Map Draw
     // 일단 tileBuffer 에 저장된 모든 데이터를 GPU Instancing 으로 그려내기
     MapProgram->Use();
@@ -638,17 +641,19 @@ void Context::Render()
             MapProgram->SetUniform("viewPos", MainCam->Position);
 
             // Light Setting
-            MapProgram->SetUniform("light.position", m_light.position);
-            MapProgram->SetUniform("light.direction", m_light.direction);
-            MapProgram->SetUniform("light.ambient", m_light.ambient);
-            MapProgram->SetUniform("light.diffuse", m_light.diffuse);
-            MapProgram->SetUniform("light.specular", m_light.specular);
+            MapProgram->SetUniform("light.position", MainLight->Position);
+            MapProgram->SetUniform("light.direction", MainLight->Direction);
+            MapProgram->SetUniform("light.ambient", MainLight->ambient);
+            MapProgram->SetUniform("light.diffuse", MainLight->diffuse);
+            MapProgram->SetUniform("light.specular", MainLight->specular);
 
             MapProgram->SetUniform("diffRatio", 0.8f);
-
+            
             glActiveTexture(GL_TEXTURE4);
             shadow_map_buffer->GetShadowMap()->Bind();
             MapProgram->SetUniform("shadowMap", 4);
+
+            MapProgram->SetUniform("charStory", charStory);
 
         TileMesh->GPUInstancingDraw(MapProgram.get(), tileArr.size());
     glUseProgram(0);
@@ -709,6 +714,8 @@ void Context::Render()
             glActiveTexture(GL_TEXTURE4);
             shadow_map_buffer->GetShadowMap()->Bind();
             AlphaMapProgram->SetUniform("shadowMap", 4);
+
+            AlphaMapProgram->SetUniform("charStory", charStory);
         
         // 카메라 거리가 긴 타일 부터 draw call 시작
         for(auto i : AlphaTiles)
