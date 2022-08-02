@@ -47,9 +47,9 @@ void main()
     // ¸ðµ¨ ÁÂÇ¥°è => ¿ùµå ÁÂÇ¥°è
     mat4 modelTransform = mat4
     (
-        TileScale.x, 0.0, 0.0, 0.0,
-        0.0, TileScale.y, 0.0, 0.0,
-        0.0, 0.0, TileScale.z, 0.0,
+        TileScale.x * 0.95, 0.0, 0.0, 0.0,
+        0.0, TileScale.y * 0.95, 0.0, 0.0,
+        0.0, 0.0, TileScale.z * 0.95, 0.0,
         tileData[TileIndex].xpos, tileData[TileIndex].ypos, tileData[TileIndex].zpos, 1.0
     );
 

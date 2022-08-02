@@ -40,6 +40,12 @@ bool Context::Init()
         if(!AlphaMapProgram) return false;
 
 
+    // Simple Program
+        SimpleProgram = Program::Create("./shader/Simple/simple.vs", "./shader/Simple/simple.fs");
+        if(!SimpleProgram) return false;
+
+
+
 
 
     // 전체 게임 맵을 생성한다 ==> CPU 내의 데이터 초기화
@@ -114,6 +120,11 @@ bool Context::Init()
     // Alpha Program 에서 한번만 필요한 Uniform 변수들
     SetAlphaMapUniformOnce();
 
+
+
+
+    // shadow map 을 그리기 위한 frame buffer 와 그와 연결된 텍스처를 만들자
+    shadow_map_buffer = ShadowMap::Create(1024, 1024);      // shadow map 이 될 텍스처를 생성하고 프레임 버퍼에 연결
 
 
 
@@ -384,6 +395,21 @@ void Context::Render()
         }
 
         ImGui::Checkbox("Update_Tiles", &(Update_Tiles));
+        ImGui::Image((ImTextureID)shadow_map_buffer->GetShadowMap()->Get(), ImVec2(256, 256), ImVec2(0, 1), ImVec2(1, 0));
+
+
+        if (ImGui::CollapsingHeader("Light Ortho Setting", ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            ImGui::DragFloat("light ortho minus x", &lightortho.minusX);
+            ImGui::DragFloat("light ortho plus x", &lightortho.plusX);
+
+            ImGui::DragFloat("light ortho minus y", &lightortho.minusY);
+            ImGui::DragFloat("light ortho plus y", &lightortho.plusY);
+
+            ImGui::DragFloat("light ortho near z", &lightortho.nearZ);
+            ImGui::DragFloat("light ortho far z", &lightortho.farZ);
+        }
+
 
     }
     
@@ -445,11 +471,6 @@ void Context::Render()
 
     // 카메라가 캐릭터를 따라가게 한다
     MainCam->SetPosition();
-    
-
-
-
-
 
     // 카메라 설정, 위치 등을 확정
     auto projection = glm::perspective
@@ -465,6 +486,93 @@ void Context::Render()
         MainCam->Position + MainCam->Direction,
         glm::vec3(0.0f, 1.0f, 0.0f)
     );
+    
+
+
+
+    // 일단 광원을 그린다
+    SimpleProgram->Use();
+        auto modelTransform = glm::translate(glm::mat4(1.0f), m_light.position);
+        auto transform = projection * view * modelTransform;
+        // vertex shader
+            SimpleProgram->SetUniform("transform", transform);
+        // fragment shader
+            SimpleProgram->SetUniform("MainColor", m_light.diffuse);
+
+        CharMesh->Draw(SimpleProgram.get());
+    glUseProgram(0);
+
+
+
+
+
+    /* 
+        First Pass => 그림자를 만들기 위해 먼저 광원의 입장에서 렌더링을 진행
+
+        지금 궁금한건, 광원 입장에서 깊이 값만 렌더링할 때 그림자를 만드는 대상인 캐릭터만 렌더링하느냐, 아니면 타일들까지 같이 렌더링 하느냐
+            캐릭터에 의한 그림자는 만들고 싶지만
+            타일이 타일에 만드는 그림자는 만들고 싶지 않다
+
+        1. 우선 캐릭터만 광원에서 그려보고
+
+        2. 캐릭터 + 불투명한 타일 모두를 그려보자
+     */
+    // 일단 광원 입장에서 보는 뷰 변환, 프로젝션 변환은 동일하다
+    auto lightView = glm::lookAt
+    (
+        m_light.position,
+        m_light.position + m_light.direction,
+        glm::vec3(0.0f, 1.0f, 0.0f)
+    );
+    
+    // 나는 무조건 directiona light 라 생각
+    auto lightProjection = glm::ortho(lightortho.minusX, lightortho.plusX, lightortho.minusY, lightortho.plusY, lightortho.nearZ, lightortho.farZ);
+
+
+
+    // shadow map 이 그려질 프레임 버퍼를 사용
+    shadow_map_buffer->Bind();
+        glClear(GL_DEPTH_BUFFER_BIT);
+        glCullFace(GL_FRONT);   // 앞면을 컬링
+
+        glViewport
+        (
+            0, 
+            0,
+            shadow_map_buffer->GetShadowMap()->GetWidth(),
+            shadow_map_buffer->GetShadowMap()->GetHeight()
+        );
+
+        SimpleProgram->Use();
+
+            // Main Character Draw
+            // Vertex Shader
+                modelTransform = glm::translate(glm::mat4(1.0f), mainChar->Position) *
+                                    // 메인 캐릭터 좌표계가 되도록 회전하는, 회전 변환
+                                    glm::mat4(glm::vec4(mainChar->LeftVec, 0.0f), 
+                                                glm::vec4(mainChar->UpVec, 0.0f),
+                                                glm::vec4(mainChar->FrontVec, 0.0f), 
+                                                glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)) *
+                                    glm::scale(glm::mat4(1.0f), glm::vec3(mainChar->xScale, mainChar->yScale, mainChar->zScale));
+                
+                transform = lightProjection * lightView * modelTransform;
+                SimpleProgram->SetUniform("transform", transform);
+
+            // Fragment Shader
+                SimpleProgram->SetUniform("MainColor", glm::vec3(1,1,0));
+
+            CharMesh->Draw(SimpleProgram.get());
+        glUseProgram(0);
+
+        glCullFace(GL_BACK);
+    
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(0, 0, m_width, m_height);
+
+
+
+
+    
 
 
 
@@ -480,7 +588,7 @@ void Context::Render()
     // Main Player Draw
     CharProgram->Use();
         // Vertex Shader
-            auto modelTransform = glm::translate(glm::mat4(1.0f), mainChar->Position) *
+            modelTransform = glm::translate(glm::mat4(1.0f), mainChar->Position) *
                                 // 메인 캐릭터 좌표계가 되도록 회전하는, 회전 변환
                                 glm::mat4(glm::vec4(mainChar->LeftVec, 0.0f), 
                                             glm::vec4(mainChar->UpVec, 0.0f),
@@ -488,7 +596,7 @@ void Context::Render()
                                             glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)) *
                                 glm::scale(glm::mat4(1.0f), glm::vec3(mainChar->xScale, mainChar->yScale, mainChar->zScale));
             
-            auto transform = projection * view * modelTransform;
+            transform = projection * view * modelTransform;
             CharProgram->SetUniform("transform", transform);
             CharProgram->SetUniform("modelTransform", modelTransform);
 
@@ -529,6 +637,8 @@ void Context::Render()
             MapProgram->SetUniform("light.ambient", m_light.ambient);
             MapProgram->SetUniform("light.diffuse", m_light.diffuse);
             MapProgram->SetUniform("light.specular", m_light.specular);
+
+            MapProgram->SetUniform("diffRatio", 0.8f);
 
         TileMesh->GPUInstancingDraw(MapProgram.get(), tileArr.size());
     glUseProgram(0);

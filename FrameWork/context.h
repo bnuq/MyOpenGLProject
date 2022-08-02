@@ -10,7 +10,7 @@
 #include "common.h"
 #include "program.h"
 #include "mesh.h"
-#include "framebuffer.h"
+#include "shadow_map.h"
 
 // My Code
 #include "../Src/Camera.h"
@@ -66,6 +66,8 @@ private:
     int ComputeGroupNum;                // compute program 을 실행시킬 그룹의 개수
     ProgramUPtr AlphaMapProgram;        // 반투명한 타일들을 그리는 프로그램
 
+    ProgramUPtr SimpleProgram;          // 색깔을 내지 않고, 그냥 렌더링 파이프라인을 거치는 프로그램
+
 
     // Meshes
     MeshUPtr CharMesh;                  // 메인 캐릭터 Mesh
@@ -81,13 +83,22 @@ private:
     bool m_cameraControl { false };
 
 
+    // Frame Buffer
+    ShadowMapUPtr shadow_map_buffer{};         // shadow map 을 만드는 frame buffer
+
+
+
+
+
+
+
     // 광원 => Directional Light 라 생각, 그게 제일 기존 게임하고 어울리는 거 같아
     // 거리에 따른 감쇠도 넣지 말자
     struct Light
     {
-        glm::vec3 position { glm::vec3(1.0f, 4.0f, 4.0f) };
+        glm::vec3 position { glm::vec3(-10.0f, 10.0f, -10.0f) };
 
-        glm::vec3 direction{ glm::vec3(-1.0f, -1.0f, -1.0f) };
+        glm::vec3 direction{ glm::vec3(1.0f, -1.0f, 1.0f) };
         
         glm::vec3 ambient { glm::vec3(0.4f, 0.4f, 0.4f) };
         glm::vec3 diffuse { glm::vec3(0.8f, 0.8f, 0.8f) };
@@ -190,6 +201,22 @@ private:
     double LimitTime = 5.0;
 
 
+
+
+
+    // 빛 클립 공간 요소
+    struct LightOrtho
+    {
+        float minusX    = -50.0f;
+        float plusX     = +50.0f;
+        
+        float minusY    = -50.0f;
+        float plusY     = +50.0f;
+
+        float nearZ    = 10.0f;
+        float farZ     = 100.0f;
+    };
+    LightOrtho lightortho{};
 };
 
 #endif // __CONTEXT_H__

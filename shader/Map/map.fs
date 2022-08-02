@@ -8,8 +8,8 @@ in vec3 DiffColor;
 out vec4 fragColor;
 
 
-// 카메라의 월드 좌표
-uniform vec3 viewPos;
+uniform vec3 viewPos;               // 카메라의 월드 좌표
+uniform float diffRatio;            // 기존 diffuse color 조절
 
 
 // Directional Light 라 생각
@@ -30,7 +30,7 @@ void main()
 {
     // 1. Ambient Color, 기본적으로 가지는 색을 먼저 계산한다
 
-        vec3 ambient = DiffColor * light.ambient;
+        vec3 ambient = DiffColor * diffRatio * light.ambient;
 
 
     // 2. 이건 Directional Light => 모든 Fragment 가 같은 방향으로부터 빛을 받는다
@@ -42,7 +42,7 @@ void main()
 
         vec3 pixelNorm = normalize(WorldNormal);
         float LightAmount = max(dot(pixelNorm, LightVec), 0.0);
-        vec3 diffuse = LightAmount * DiffColor * light.diffuse;
+        vec3 diffuse = LightAmount * DiffColor * diffRatio * light.diffuse;
 
 
     // 4. Specular Color 결정 <= 프레그먼트에서 반사된 빛이 카메라로 얼마나 들어가느냐
