@@ -6,6 +6,7 @@ layout (location = 1) in vec3 aNormal;
 layout (location = 2) in vec2 aTexCoord;
 
 
+
 struct Tile
 {
     float xpos;
@@ -23,17 +24,22 @@ layout(std430, binding = 1) buffer TileBuffer
 
 
 // 한번만 들어오는 Uniform Variable
-uniform vec3 TileScale;
+uniform vec3 TileScale;         // 타일의 크기에 대한 정보
 
 
-// world -> clip space 변환
-uniform mat4 transform;
+uniform mat4 transform;         // world -> clip space 변환
+uniform mat4 LightTransform;    // world -> 빛 클립 공간으로 변환
 
+
+
+// 공통 out
+out float IsVisible;            // 보이는 타일 instance 인지, 아닌 지를 판단
 
 out vec3 WorldNormal;
 out vec3 WorldPosition;
 out vec3 DiffColor;
 
+out vec4 LightClipPos;          // 타일 정점에 대한, 빛 클립 공간에서의 좌표
 
 
 void main()
@@ -46,9 +52,16 @@ void main()
     {
         // 타일의 정점을, 무조건 클립 공간 내 원점으로 이동시켜 => 타일이 그려지지 않게 한다
         gl_Position = vec4(0, 0, 0, 0);
+        
+        // 보이지 않는 타일임을 알린다
+        IsVisible = 0.0;
     }
     else
     {
+        // 보이는 타일을 구성하는 정점이다
+        IsVisible = 1.0;
+
+
         // 모델 변환 => 현재 타일의 위치로 이동하게 한다
         // 살짝 작게 만들어 => 타일들이 너무 붙어있지 않게 한다
         mat4 modelTransform = mat4(
@@ -101,5 +114,10 @@ void main()
         }
 
         DiffColor = tempColor;
+
+
+
+        // 해당 타일의 정점을, 광원의 클립 공간으로 변환했을 때 좌표를 구한다
+        LightClipPos = LightTransform * vec4(WorldPosition, 1.0);
     }
 }

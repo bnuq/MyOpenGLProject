@@ -599,6 +599,7 @@ void Context::Render()
             transform = projection * view * modelTransform;
             CharProgram->SetUniform("transform", transform);
             CharProgram->SetUniform("modelTransform", modelTransform);
+            CharProgram->SetUniform("LightTransform", lightProjection * lightView);
 
         
         // Fragment Shader
@@ -610,6 +611,10 @@ void Context::Render()
             CharProgram->SetUniform("light.ambient", m_light.ambient);
             CharProgram->SetUniform("light.diffuse", m_light.diffuse);
             CharProgram->SetUniform("light.specular", m_light.specular);
+
+            glActiveTexture(GL_TEXTURE4);
+            shadow_map_buffer->GetShadowMap()->Bind();
+            CharProgram->SetUniform("shadowMap", 4);
 
         CharMesh->Draw(CharProgram.get());
     glUseProgram(0);
@@ -626,6 +631,7 @@ void Context::Render()
             // 월드 좌표계 => 클립 좌표계 변환 넘김
             transform = projection * view;
             MapProgram->SetUniform("transform", transform);
+            MapProgram->SetUniform("LightTransform", lightProjection * lightView);
 
 
         // Fragment Shader
@@ -639,6 +645,10 @@ void Context::Render()
             MapProgram->SetUniform("light.specular", m_light.specular);
 
             MapProgram->SetUniform("diffRatio", 0.8f);
+
+            glActiveTexture(GL_TEXTURE4);
+            shadow_map_buffer->GetShadowMap()->Bind();
+            MapProgram->SetUniform("shadowMap", 4);
 
         TileMesh->GPUInstancingDraw(MapProgram.get(), tileArr.size());
     glUseProgram(0);
@@ -691,7 +701,14 @@ void Context::Render()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     AlphaMapProgram->Use();
         transform = projection * view;  // 동일
-        AlphaMapProgram->SetUniform("transform", transform);
+        // vertex shader ~ 모든 타일에 동일
+            AlphaMapProgram->SetUniform("transform", transform);
+            AlphaMapProgram->SetUniform("LightTransform", lightProjection * lightView);
+
+        // fragment shader ~ 모든 타일에 동일
+            glActiveTexture(GL_TEXTURE4);
+            shadow_map_buffer->GetShadowMap()->Bind();
+            AlphaMapProgram->SetUniform("shadowMap", 4);
         
         // 카메라 거리가 긴 타일 부터 draw call 시작
         for(auto i : AlphaTiles)
@@ -699,8 +716,9 @@ void Context::Render()
             unsigned int TileIndex = i.second.first;
             double StoredTime = i.second.second;
 
-            AlphaMapProgram->SetUniform("TileIndex", TileIndex);
-            AlphaMapProgram->SetUniform("TimeRatio", (float)((curTime - StoredTime) / LimitTime));
+            // vertex shader + fragment shader ~ 타일마다 다른다
+                AlphaMapProgram->SetUniform("TileIndex", TileIndex);
+                AlphaMapProgram->SetUniform("TimeRatio", (float)((curTime - StoredTime) / LimitTime));
 
             TileMesh->Draw(AlphaMapProgram.get());
         }

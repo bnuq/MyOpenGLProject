@@ -5,6 +5,8 @@
 in vec2 texCoord;
 in vec3 WorldNormal;
 in vec3 WorldPosition;
+in vec4 LightClipPos;
+
 
 
 // 리턴되는 최종 프레그먼트 색깔
@@ -13,6 +15,9 @@ out vec4 fragColor;
 
 // Camera 의 월드 좌표
 uniform vec3 viewPos;
+
+uniform sampler2D shadowMap;
+
 
 
 // Directional Light 라 생각
@@ -34,6 +39,45 @@ struct Material
     float shininess;
 };
 uniform Material material;
+
+
+
+// 현재 fragment 가 그림자가 졌는 지, 그림자가 아닌 지 판단하는 함수
+// 0 = 그림자 아님, 1 = 그림자가 졌다
+float ShadowCalculation(vec4 fragPosLight, vec3 normal, vec3 lightDir)
+{
+    /* 
+        frag Pos Ligth => 프레그먼트에 해당하는 좌표의 빛~클립 공간에서의 좌표
+        클립 공간좌표 => w 로 나누면 => 빛 공간에서 NDC 좌표 = [-1, +1] 범위의 3차원 좌표를 얻을 수 있다
+     */
+    vec3 projCoords = fragPosLight.xyz / fragPosLight.w;
+
+
+    // transform to [0,1] range
+    // NDC 좌표를 [0,1] 로 변환
+    projCoords = projCoords * 0.5 + 0.5;
+
+
+    // get closest depth value from light’s perspective (using [0,1] range fragPosLight as coords)
+    // 위에서 구한 좌표를 텍스처 좌표처럼 사용, shadow map 에서 깊이 값을 읽어올 수 있다
+    // 현재 프레그먼트를 광원입장에서 그렸을 때, shadow map 에서 해당 위치에 그려졌을 것이란 가정하에
+    float closestDepth = texture(shadowMap, projCoords.xy).r;
+
+
+    // get depth of current fragment from light’s perspective
+    float currentDepth = projCoords.z;
+
+
+    // check whether current frag pos is in shadow
+    // 프레그먼트의 노멀벡터와 빛 벡터가 일치할수록 작은 bias 가 적용된다
+    float bias = max(0.02 * (1.0 - dot(normal, lightDir)), 0.001);
+    float shadow = 0.0;
+
+    if((currentDepth - bias) > closestDepth)
+        return 1;
+    else
+        return 0;
+}
 
 
 
@@ -71,6 +115,8 @@ void main()
 
 
 
+    vec3 result = ambient + diffuse + specular;
+    float shadow = ShadowCalculation(LightClipPos, pixelNorm, LightVec);
 
-    fragColor = vec4(ambient + diffuse + specular, 1.0);
+    fragColor = vec4(result * (1 - shadow), 1.0);
 }

@@ -9,11 +9,14 @@ layout (location = 2) in vec2 aTexCoord;
 
 uniform mat4 transform;
 uniform mat4 modelTransform;
+uniform mat4 LightTransform;            // 월들 -> 빛 클립 공간
 
 
 out vec2 texCoord;
 out vec3 WorldNormal;
 out vec3 WorldPosition;
+out vec4 LightClipPos;
+
 
 
 void main()
@@ -28,4 +31,6 @@ void main()
     WorldNormal = (transpose(inverse(modelTransform)) * vec4(aNormal, 0.0)).xyz;
     // 월드 공간에서 정점의 위치
     WorldPosition = (modelTransform * vec4(aPos, 1.0)).xyz;
+
+    LightClipPos = LightTransform * vec4(WorldPosition, 1.0);
 }

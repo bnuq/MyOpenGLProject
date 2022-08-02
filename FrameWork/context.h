@@ -214,7 +214,7 @@ private:
         float plusY     = +50.0f;
 
         float nearZ    = 10.0f;
-        float farZ     = 100.0f;
+        float farZ     = 50.0f;
     };
     LightOrtho lightortho{};
 };

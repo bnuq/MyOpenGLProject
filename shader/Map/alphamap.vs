@@ -26,18 +26,20 @@ layout(std430, binding = 1) buffer TileBuffer
 
 
 // 한번만 들어오는 Uniform Variable
-uniform vec3 TileScale;     // 모델 ~ 타일의 크기
+uniform vec3 TileScale;                 // 모델 ~ 타일의 크기
 
 
-uniform mat4 transform;     // 월드 -> 클립
-
-uniform uint TileIndex;
-uniform float TimeRatio;    // 사라지기 까지 남은 시간 비율
+uniform mat4 transform;                 // 월드 -> 클립 공간
+uniform mat4 LightTransform;            // 월들 -> 빛 클립 공간
 
 
+uniform uint TileIndex;                 // 이번에 그리는 반투명 타일의 인덱스
+uniform float TimeRatio;                // 사라지기 까지 남은 시간 비율
 
 
-out vec3 TileColor;         // 층 수에 따라 결정되는 타일의 기본 색깔
+out vec4 LightClipPos;                  // 빛 클립 공간에서의 좌표
+out vec3 TileColor;             // 층 수에 따라 결정되는 타일의 기본 색깔
+
 
 
 void main()
@@ -53,6 +55,7 @@ void main()
         tileData[TileIndex].xpos, tileData[TileIndex].ypos, tileData[TileIndex].zpos, 1.0
     );
 
+
     // 모델 좌표계 내 정중앙, (0, 0, 0) 으로 점들이 서서히 이동한다
     // 시간이 지나면서 조금씩 사라지는 것을 묘사
     mat3 localTransform = mat3
@@ -65,10 +68,16 @@ void main()
     vec3 TransApos = localTransform * aPos;
 
 
-    // 모델 좌표계에서 -> 클립 공간의 좌표로 이동시킨다
-    gl_Position = transform * modelTransform * vec4(TransApos, 1.0);
+    // 모델 좌표계에서 -> 월드 좌표계 좌표
+    vec4 WorldPosition = modelTransform * vec4(TransApos, 1.0);
 
+        // 월드 좌표계 -> 클립 공간 좌표
+        gl_Position = transform * WorldPosition;
 
+        // 월드 좌표계 -> 빛 클립 공간 좌표
+        LightClipPos = LightTransform * WorldPosition;
+
+        
 
     vec3 tempColor = vec3(0, 0, 0);
     switch(tileData[TileIndex].story % 7)
