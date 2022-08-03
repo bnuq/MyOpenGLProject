@@ -14,8 +14,11 @@ ContextUPtr Context::Create()
 
 bool Context::Init()
 {
-    // Clear Color
+    // Color Buffer => Clear Color 설정
     glClearColor(0.1f, 0.2f, 0.3f, 0.0f);
+    // Stencil Buffer => Clear 값 설정
+    glClearStencil(0);
+
 
 
     // Main Character 그리는 Program 생성
@@ -594,39 +597,7 @@ void Context::Render()
 
 
 
-    // Main Player Draw
-    CharProgram->Use();
-        // Vertex Shader
-            modelTransform = glm::translate(glm::mat4(1.0f), mainChar->Position) *
-                                // 메인 캐릭터 좌표계가 되도록 회전하는, 회전 변환
-                                glm::mat4(glm::vec4(mainChar->LeftVec, 0.0f), 
-                                            glm::vec4(mainChar->UpVec, 0.0f),
-                                            glm::vec4(mainChar->FrontVec, 0.0f), 
-                                            glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)) *
-                                glm::scale(glm::mat4(1.0f), glm::vec3(mainChar->xScale, mainChar->yScale, mainChar->zScale));
-            
-            transform = projection * view * modelTransform;
-            CharProgram->SetUniform("transform", transform);
-            CharProgram->SetUniform("modelTransform", modelTransform);
-            CharProgram->SetUniform("LightTransform", lightProjection * lightView);
 
-        
-        // Fragment Shader
-            CharProgram->SetUniform("viewPos", MainCam->Position);
-
-            // Light Setting
-            CharProgram->SetUniform("light.position", MainLight->Position);
-            CharProgram->SetUniform("light.direction", MainLight->Direction);
-            CharProgram->SetUniform("light.ambient", MainLight->ambient);
-            CharProgram->SetUniform("light.diffuse", MainLight->diffuse);
-            CharProgram->SetUniform("light.specular", MainLight->specular);
-
-            glActiveTexture(GL_TEXTURE4);
-            shadow_map_buffer->GetShadowMap()->Bind();
-            CharProgram->SetUniform("shadowMap", 4);
-
-        CharMesh->Draw(CharProgram.get());
-    glUseProgram(0);
 
 
     // 현재 메인 캐릭터가 위치해 있는 층수
@@ -662,6 +633,69 @@ void Context::Render()
 
         TileMesh->GPUInstancingDraw(MapProgram.get(), tileArr.size());
     glUseProgram(0);
+
+
+
+    // Main Player Draw
+    /* 
+        캐릭터를 가릴 수도 있는, 타일들을 먼저 렌더링한 뒤에 캐릭터를 그린다
+
+        메인 캐릭터를 그릴 때, stencil buffer test 를 활성화
+        
+        무조건 stencil test 는 통과하게 한다
+        이후 depth test 는 통과 못하는 경우
+            캐릭터가 그려지지 않는 픽셀
+            나중에 outline 으로 덮어씌울 것이다
+            stencil buffer 값을 0 으로 그대로 유지시킨다
+
+        이후 depth test 까지 통과해서 ~ 캐릭터의 fragment 가 그려지는 경우
+            픽셀 부분에 stencil buffer 값 1 을 저장
+            stencil buffer 를 통해서, 메인 캐릭터가 그려지는 픽셀 부분을 판단하도록 한다
+     */
+    glEnable(GL_STENCIL_TEST);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
+        glStencilMask(0xFF);                    // stencil buffer 값의 16 비트 모두 사용
+        glStencilFunc(GL_ALWAYS, 1, 0xFF);      // stencil test 에 사용되는 함수, 항상 테스트 통과, 1 값과 비교
+
+        CharProgram->Use();                     // stencil test 가 켜진 상태에서 메인 캐릭터를 렌더링한다
+            // Vertex Shader
+                modelTransform = glm::translate(glm::mat4(1.0f), mainChar->Position) *
+                                    // 메인 캐릭터 좌표계가 되도록 회전하는, 회전 변환
+                                    glm::mat4(glm::vec4(mainChar->LeftVec, 0.0f), 
+                                                glm::vec4(mainChar->UpVec, 0.0f),
+                                                glm::vec4(mainChar->FrontVec, 0.0f), 
+                                                glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)) *
+                                    glm::scale(glm::mat4(1.0f), glm::vec3(mainChar->xScale, mainChar->yScale, mainChar->zScale));
+                
+                transform = projection * view * modelTransform;
+                CharProgram->SetUniform("transform", transform);
+                CharProgram->SetUniform("modelTransform", modelTransform);
+                CharProgram->SetUniform("LightTransform", lightProjection * lightView);
+
+            
+            // Fragment Shader
+                CharProgram->SetUniform("viewPos", MainCam->Position);
+
+                // Light Setting
+                CharProgram->SetUniform("light.position", MainLight->Position);
+                CharProgram->SetUniform("light.direction", MainLight->Direction);
+                CharProgram->SetUniform("light.ambient", MainLight->ambient);
+                CharProgram->SetUniform("light.diffuse", MainLight->diffuse);
+                CharProgram->SetUniform("light.specular", MainLight->specular);
+
+                glActiveTexture(GL_TEXTURE4);
+                shadow_map_buffer->GetShadowMap()->Bind();
+                CharProgram->SetUniform("shadowMap", 4);
+
+            CharMesh->Draw(CharProgram.get());
+        glUseProgram(0);
+
+    // stencil test 를 종료한다
+    glDisable(GL_STENCIL_TEST);
+
+
+
 
 
 
@@ -736,5 +770,51 @@ void Context::Render()
         }
     glUseProgram(0);
     glDisable(GL_BLEND);
+
+
+
+
+
+    // 마지막으로 캐릭터 위에 박스를 그려, 캐릭터가 가려지는 경우 위치도 표시한다
+    // outline 그리니까 그림자가 가려서, 빡친다
+    /* 
+        stencil test 를 다시 활성화
+        stencil buffer 에 저장된 값을 읽어와서 1과 같은 지 확인한다
+            1 이라면 => 캐릭터가 그려지는 픽셀
+                outline 이 가리면 안되니까, 아무것도 하지 않는다
+                test fail 조건
+            
+            1 이 아니라면 => 캐릭터가 안 그려지는 픽셀
+                무조건 outline 을 그린다
+                depth test 와 관계없이 무조건 그림을 그린다
+                    depth test 를 끈다
+     */
+    glEnable(GL_STENCIL_TEST);                  // stencil test 는 켜고
+    glDisable(GL_DEPTH_TEST);                   // depth test 는 끈다
+
+        glStencilFunc(GL_NOTEQUAL, 1, 0xFF);    // stencil test 설정, 이 테스트를 통과해야 color buffer 에 색을 넣게 된다
+        
+        SimpleProgram->Use();                   // 단순히 색만 넣는 simple program 을 사용
+
+            // vertex shader
+                modelTransform = glm::translate(glm::mat4(1.0f), mainChar->Position) *
+                                        // 메인 캐릭터 좌표계가 되도록 회전하는, 회전 변환
+                                        glm::mat4(glm::vec4(mainChar->LeftVec, 0.0f), 
+                                                    glm::vec4(mainChar->UpVec, 0.0f),
+                                                    glm::vec4(mainChar->FrontVec, 0.0f), 
+                                                    glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)) *
+                                        glm::scale(glm::mat4(1.0f), glm::vec3(mainChar->xScale, mainChar->yScale, mainChar->zScale));
+
+                SimpleProgram->SetUniform("transform", projection * view * modelTransform);
+
+            // framgnet shader
+                SimpleProgram->SetUniform("MainColor", glm::vec3(0.2f, 0.2f, 0.2f));
+
+            CharMesh->Draw(SimpleProgram.get());
+
+        glUseProgram(0);
+
+    glDisable(GL_STENCIL_TEST);
+    glEnable(GL_DEPTH_TEST);
 
 }

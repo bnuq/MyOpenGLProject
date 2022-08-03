@@ -36,27 +36,41 @@ void Camera::Init(CharacterPtr player)
 // 카메라의 위치를 계산하는 함수 => 피벗의 위치를 메인 캐릭터에 맞춰서 이동
 void Camera::SetPosition()
 {
-    // 메인 캐릭터와 피벗 사이의 벡터
+    // xzDist, yDist 변화에 따른 카메라 위치를 먼저 변경한다
+    Position = CameraPivot + (-FrontVec) * xzDist + UpVec * yDist;
+
+
+    // 메인 캐릭터와 카메라 피벗 사이의 벡터
     auto PivotToChar = mainChar->Position - CameraPivot;
-    
-    // 카메라가 움직이지 않는 상태였고 &&
-    // 캐릭터 ~ 피벗 사이의 길이가 일정 이하면 움직이지 않는다
-    if(!CameraMove && glm::length(PivotToChar) < CamToCharMaxLimit)
-        return;
-    
 
 
-    // 움직이기로 결정했으면 ~ 캐릭터와 피벗 사이의 거리가 일정 이하가 될 때까지 카메라가 움직니다
-    CameraMove = true;
 
-    // 카메라 속도로 메인 카메라를 따라간다
-    CameraPivot += PivotToChar * CameraMoveSpeed;
-    Position += PivotToChar * CameraMoveSpeed;
-
-    // 일정 값 이하로 가까워지면, 다시 카메라를 고정시킨다
-    PivotToChar = mainChar->Position - CameraPivot;
-    if(glm::length(PivotToChar) < CamToCharMinLimit)
-        CameraMove = false;
+    // 만약 카메라가 움직이고 있었다면 ~ 이제 안움직여도 되는 지를 판단한다
+    if(CameraMove)
+    {
+        // 거리가 일정 기준보다 작아졌다
+        if(glm::length(PivotToChar) < CamToCharMinLimit)
+            CameraMove = false;
+        // 아니라면 계속 이동
+        else
+        {
+            CameraPivot += PivotToChar * CameraMoveSpeed;
+            Position += PivotToChar * CameraMoveSpeed;
+        }
+    }
+    // 카메라가 안 움직이고 있었다면 ~ 움직여야 하는 지를 판단한다
+    else
+    {
+        // 거리가 일정 기준을 넘었다
+        if(glm::length(PivotToChar) > CamToCharMaxLimit)
+        {
+            CameraMove = true;
+            
+            // 카메라 속도로 메인 카메라를 따라간다
+            CameraPivot += PivotToChar * CameraMoveSpeed;
+            Position += PivotToChar * CameraMoveSpeed;
+        }
+    }
 }
 
 
