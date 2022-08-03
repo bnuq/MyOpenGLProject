@@ -24,6 +24,12 @@ float ShadowCalculation(vec4 fragPosLight)
     // NDC 좌표를 [0,1] 로 변환
     projCoords = projCoords * 0.5 + 0.5;
 
+    // 변환된 좌표가 [0, 1] 범위를 벗어난다면, 그림자는 없다
+    if(projCoords.x < 0 || projCoords.x > 1 || projCoords.y < 0 || projCoords.y > 1)
+        return 0;
+
+
+
     // shadow map 에서 깊이 값 읽어오고
     float closestDepth = texture(shadowMap, projCoords.xy).r;
 

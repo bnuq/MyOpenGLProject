@@ -93,7 +93,7 @@ bool Context::Init()
 
 
     // 메인 광원
-    MainLight = LightUPtr(new Light());
+    MainLight = LightUPtr( new Light(mainChar->Position) );
     
     
     // 메인 카메라
@@ -359,25 +359,26 @@ void Context::Render()
     /****************************************************************/
     if(ImGui::Begin("ImGui"))
     {
-        ImGui::Checkbox("Camera Control", &(m_cameraControl));
-
-        if(ImGui::CollapsingHeader("Character Setting", ImGuiTreeNodeFlags_DefaultOpen))
+        if(ImGui::CollapsingHeader("Main Character", ImGuiTreeNodeFlags_DefaultOpen))
         {
             /* XZ 이동 */
             ImGui::DragFloat("Move Speed", &(mainChar->MoveSpeed), 0.01f, 0.0f);
-            ImGui::DragFloat("Yaw Angle Tick", &(mainChar->YawAngleTick), 0.01f, 0.0f);
             /* Y 축 이동 */
             ImGui::DragFloat("Gravity", &(mainChar->Gravity), 0.01f, 1.0f);
+            /* 회전 */
+            ImGui::DragFloat("Yaw Angle Tick", &(mainChar->YawAngleTick), 0.01f, 0.0f);
             /* 점프 */
             ImGui::DragFloat("Jump Power", &(mainChar->JumpPower), 0.01f, 0.0f);
         }
 
-        if(ImGui::CollapsingHeader("Camera Setting", ImGuiTreeNodeFlags_DefaultOpen))
+
+        if(ImGui::CollapsingHeader("Main Camera", ImGuiTreeNodeFlags_DefaultOpen))
         {
             /* 카메라 피벗 */
-            ImGui::DragFloat("Cam Pivot Min Limit", &(MainCam->CamToCharMinLimit), 0.01f);
-            ImGui::DragFloat("Cam Pivot Max Limit", &(MainCam->CamToCharMaxLimit), 0.01f);
+            ImGui::DragFloat("Cam Pivot Min Limit", &(MainCam->CamToCharMinLimit), 0.01f, 0.01f);
+            ImGui::DragFloat("Cam Pivot Max Limit", &(MainCam->CamToCharMaxLimit), 0.01f, 0.01f);
             /* 카메라 이동 */
+            ImGui::Checkbox("Camera Control", &(m_cameraControl));
             ImGui::DragFloat("Cam Move Speed", &(MainCam->CameraMoveSpeed), 0.01f);
             /* 카메라 회전 */
             ImGui::DragFloat("Yaw Rot Speed", &(MainCam->yawRotSpeed), 0.001f, 0.0f, 1.0f);
@@ -386,24 +387,23 @@ void Context::Render()
             /* 카메라 거리 */
             ImGui::DragFloat("XZ Distance", &(MainCam->xzDist), 0.01f);
             ImGui::DragFloat("Y Distance", &(MainCam->yDist), 0.01f);
+                    
         }
         
-        if (ImGui::CollapsingHeader("Light Setting", ImGuiTreeNodeFlags_DefaultOpen))
+        
+        if (ImGui::CollapsingHeader("Main Light", ImGuiTreeNodeFlags_DefaultOpen))
         {
-            ImGui::DragFloat3("l.position", glm::value_ptr(MainLight->Position), 0.01f);
-            ImGui::DragFloat3("l.direction", glm::value_ptr(MainLight->Direction), 0.01f);
-
-            ImGui::ColorEdit3("l.ambient", glm::value_ptr(MainLight->ambient));
-            ImGui::ColorEdit3("l.diffuse", glm::value_ptr(MainLight->diffuse));
-            ImGui::ColorEdit3("l.specular", glm::value_ptr(MainLight->specular));
-        }
-
-        ImGui::Checkbox("Update_Tiles", &(Update_Tiles));
-        ImGui::Image((ImTextureID)shadow_map_buffer->GetShadowMap()->Get(), ImVec2(256, 256), ImVec2(0, 1), ImVec2(1, 0));
-
-
-        if (ImGui::CollapsingHeader("Light Ortho Setting", ImGuiTreeNodeFlags_DefaultOpen))
-        {
+            /* 광원의 초기 위치 */
+            ImGui::DragFloat3("light position", glm::value_ptr(MainLight->Position), 0.01f);
+            /* 광원의 방향 */
+            ImGui::DragFloat3("light direction", glm::value_ptr(MainLight->Direction), 0.01f);
+            /* 광원 이동 */
+            ImGui::DragFloat("light move speed", &MainLight->LightMoveSpeed, 0.01f, 0.0f);
+            /* 광원 색깔 */
+            ImGui::ColorEdit3("light ambient", glm::value_ptr(MainLight->ambient));
+            ImGui::ColorEdit3("light diffuse", glm::value_ptr(MainLight->diffuse));
+            ImGui::ColorEdit3("light specular", glm::value_ptr(MainLight->specular));
+            /* 광원 클립 공간 */
             ImGui::DragFloat("light ortho minus x", &MainLight->minusX);
             ImGui::DragFloat("light ortho plus x", &MainLight->plusX);
 
@@ -414,6 +414,11 @@ void Context::Render()
             ImGui::DragFloat("light ortho far z", &MainLight->farZ);
         }
 
+        // 타일 계산 여부 확인
+        ImGui::Checkbox("Update_Tiles", &(Update_Tiles));
+
+        // 깊이 맵 확인
+        ImGui::Image((ImTextureID)shadow_map_buffer->GetShadowMap()->Get(), ImVec2(256, 256), ImVec2(0, 1), ImVec2(1, 0));
 
     }
     
@@ -498,7 +503,7 @@ void Context::Render()
 
         광원이 캐릭터보다 위에 있는데, 캐릭터가 너무 밑으로 내려가는 경우
      */
-    MainLight->SetPosition(mainChar->Position.y);
+    MainLight->SetPosition(mainChar->Position);
 
 
 

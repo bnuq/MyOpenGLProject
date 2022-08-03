@@ -17,8 +17,11 @@ public:
         bool CameraMove = false;                                // 카메라가 움직이고 있는 지 ~ 상태
 
     
+    // 카메라 이동
     float CameraMoveSpeed = 0.01f;
 
+    
+    // 카메라 회전
     float yawRotSpeed { 0.1f };
     float pitchRotSpeed { 0.1f };
         glm::vec2 pitchRotLimit { glm::vec2{-10.0f, 30.0f} };

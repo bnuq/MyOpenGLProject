@@ -52,6 +52,12 @@ float ShadowCalculation(vec4 fragPosLight, vec3 normal, vec3 lightDir)
     projCoords = projCoords * 0.5 + 0.5;
 
 
+    // 해당 tile fragment 의 빛 NDC 좌표를 변환한 결과가 [0,1] 을 벗어난다면, 빛 클립 공간을 벗어난 점이라는 뜻
+    // 그림자는 없다
+    if(projCoords.x < 0 || projCoords.x > 1 || projCoords.y < 0 || projCoords.y > 1)
+        return 0;
+
+
     // get closest depth value from light’s perspective (using [0,1] range fragPosLight as coords)
     // 위에서 구한 좌표를 텍스처 좌표처럼 사용, shadow map 에서 깊이 값을 읽어올 수 있다
     // 현재 프레그먼트를 광원입장에서 그렸을 때, shadow map 에서 해당 위치에 그려졌을 것이란 가정하에

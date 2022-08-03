@@ -51,10 +51,10 @@ add_executable(
     FrameWork/shadow_map.cpp         FrameWork/shadow_map.h
 
 
-    Src/Camera.cpp              Src/Camera.h
-    Src/Character.cpp           Src/Character.h
+    Src/Camera.cpp                    Src/Camera.h
+    Src/Character.cpp                Src/Character.h
 
-    Src/Light.cpp           Src/Light.h
+    Src/Light.cpp                     Src/Light.h
 )
 
 
