@@ -10,6 +10,9 @@ class Character
 public:
     // 위치
     glm::vec3 Position;
+
+    // 캐릭터가 닿을 것으로 추정하는 바닥
+    unsigned int CharStory = 0;
     
     // 캐릭터는 Box 형태를 가진다 => 각 방향별 scale 값 존재
     float xScale;

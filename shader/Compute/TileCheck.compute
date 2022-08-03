@@ -52,6 +52,7 @@ uniform vec3 TileScale;
 uniform vec3 CharScale;
 
 uniform vec3 MainCharPos;
+uniform uint CharStory;
 
 
 
@@ -107,6 +108,17 @@ void main()
             return;
         }
 
+
+
+                
+        // 이미 캐릭터가 해당 타일의 층을 지났다면, 절대 캐릭터와 충돌이 일어나지 않는다
+        // 따라서 바로 함수를 종료한다
+        if(curTile.story < CharStory)
+        {
+            tileData[Index] = curTile;
+            
+            return;
+        }
 
 
 

@@ -5,7 +5,8 @@
 // XZ 평면 상 이동 방향을 구하는 함수 <= 입력된 키에 따라서 방향이 추가된다
 void Character::GetXZDir(glm::vec3 dir)
 {
-    xzDir = glm::normalize(xzDir + dir);
+    //xzDir = glm::normalize(xzDir + dir);
+    xzDir += dir;
     xzMoving = true;
 }
 
@@ -21,6 +22,11 @@ void Character::Move()
     // XZ 평면 상에서 이동 확인, xz 평면 상 이동 키 입력을 받았다면
     if(xzMoving)
     {
+        // xzDir 이 0 벡터가 아닌 경우에, 정규화한다
+        if(glm::length(xzDir) != 0)
+            xzDir = glm::normalize(xzDir);
+            
+
         // 일단 xz 방향으로 이동한다
         velocity += xzDir * MoveSpeed * MoveSpeedRatio;
 

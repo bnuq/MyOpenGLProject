@@ -287,6 +287,10 @@ void Context::UpdateTiles()
         // 매 프레임마다 달라지는 메인 캐릭터의 위치를 입력한다
         ComputeProgram->SetUniform("MainCharPos", mainChar->Position);
 
+        // 이전에 계산된 캐릭터 ~ 닿을 것으로 추정되는 바닥 층수를 넘긴다
+        ComputeProgram->SetUniform("CharStory", mainChar->CharStory);
+
+
         // CPU 와 GPU 사이에서 데이터를 주고 받는, output buffer 를 사용하기 위해서 SSBO 로 Bind 한다
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, outputBuffer->Get());
 
@@ -364,6 +368,8 @@ void Context::Render()
     {
         if(ImGui::CollapsingHeader("Main Character", ImGuiTreeNodeFlags_DefaultOpen))
         {
+            /* 위치 확인용 */
+            ImGui::DragFloat3("mainChar position", glm::value_ptr(mainChar->Position), 0.01f);
             /* XZ 이동 */
             ImGui::DragFloat("Move Speed", &(mainChar->MoveSpeed), 0.01f, 0.0f);
             /* Y 축 이동 */
@@ -477,9 +483,17 @@ void Context::Render()
     // 메인 캐릭터는 이동시키고 => XZ 이동 + Y 이동( 점프  or 대쉬 )
     mainChar->Move();
 
+
     // 그에 따른 타일들의 상태를 갱신한다
     // 타일 상태에 따라서 캐릭터의 y 축 움직임이 결정된다
     UpdateTiles();
+
+
+    // Update 된 캐릭터 위치를 바탕으로, 캐릭터가 닿을 것으로 예상되는 층수를 업데이트한다
+    mainChar->CharStory = (unsigned int)((-1.0f) * (mainChar->Position.y / (2 * gameMap.STRIDE)) + 0.5f);
+    //SPDLOG_INFO("{}", mainChar->LandStory);
+
+
 
     // 카메라가 캐릭터를 따라가게 한다
     MainCam->SetPosition();
@@ -600,9 +614,7 @@ void Context::Render()
 
 
 
-    // 현재 메인 캐릭터가 위치해 있는 층수
-    unsigned int charStory = (unsigned int)((-1.0f) * (mainChar->Position.y / (2 * gameMap.STRIDE)) + 0.7f);
-   
+
     // Game Map Draw
     // 일단 tileBuffer 에 저장된 모든 데이터를 GPU Instancing 으로 그려내기
     MapProgram->Use();
@@ -629,7 +641,7 @@ void Context::Render()
             shadow_map_buffer->GetShadowMap()->Bind();
             MapProgram->SetUniform("shadowMap", 4);
 
-            MapProgram->SetUniform("charStory", charStory);
+            MapProgram->SetUniform("charStory", mainChar->CharStory);
 
         TileMesh->GPUInstancingDraw(MapProgram.get(), tileArr.size());
     glUseProgram(0);
@@ -754,7 +766,7 @@ void Context::Render()
             shadow_map_buffer->GetShadowMap()->Bind();
             AlphaMapProgram->SetUniform("shadowMap", 4);
 
-            AlphaMapProgram->SetUniform("charStory", charStory);
+            AlphaMapProgram->SetUniform("charStory", mainChar->CharStory);
         
         // 카메라 거리가 긴 타일 부터 draw call 시작
         for(auto i : AlphaTiles)
