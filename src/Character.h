@@ -41,7 +41,7 @@ public:
     // 키 입력에 따른 움직임
     void Move();
         /* XZ 평면 이동 관련 */
-        float MoveSpeed = 0.8f;
+        float MoveSpeed = 1.5f;
         const float MoveSpeedRatio = 0.1f;
 
         /* Y 축 이동 관련 */

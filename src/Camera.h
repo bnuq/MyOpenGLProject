@@ -18,7 +18,7 @@ public:
 
     
     // 카메라 이동
-    float CameraMoveSpeed = 0.01f;
+    float CameraMoveSpeed = 0.05f;
 
     
     // 카메라 회전
@@ -44,8 +44,8 @@ public:
     // 카메라가 따라다니는 캐릭터
     CharacterPtr mainChar;
         // 카메라가 캐릭터로 부터 떨어진 거리 
-        float xzDist = 40.0f;
-        float yDist = 30.0f;
+        float xzDist = 60.0f;
+        float yDist = 70.0f;
 
 
     // 생성 및 초기화
