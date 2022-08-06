@@ -127,7 +127,7 @@ void main()
     
     float shadow = 0.0;    
     // 캐릭터와 같은 층에 있는 타일에 대해서만 그림자를 계산한다
-    //if(uint(curStory) == charStory)
+    if(uint(curStory + 0.5) == charStory)
         shadow = ShadowCalculation(LightClipPos, pixelNorm, LightVec);
 
     fragColor = vec4(result * (1.0 - shadow), 1.0);

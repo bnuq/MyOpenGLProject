@@ -44,8 +44,8 @@ public:
     // 카메라가 따라다니는 캐릭터
     CharacterPtr mainChar;
         // 카메라가 캐릭터로 부터 떨어진 거리 
-        float xzDist = 60.0f;
-        float yDist = 70.0f;
+        float xzDist = 20.0f;
+        float yDist = 20.0f;
 
 
     // 생성 및 초기화

@@ -52,7 +52,7 @@ void main()
     
     // 앞면에 해당하는 fragment 에 대해서만 그림자를 계산한다
     // 캐릭터와 같은 층수에 있어야 그림자를 계산한다
-    if(gl_FrontFacing && uint(curStory) == charStory)
+    if(gl_FrontFacing && uint(curStory + 0.5) == charStory)
         shadow = ShadowCalculation(LightClipPos);
     else
         shadow = 0.0;

@@ -394,8 +394,8 @@ void Context::Render()
             ImGui::DragFloat("Pitch Rot Speed", &(MainCam->pitchRotSpeed), 0.001f, 0.0f, 1.0f);
             ImGui::DragFloat2("Pitch Rot Limit", glm::value_ptr(MainCam->pitchRotLimit), 0.001f);
             /* 카메라 거리 */
-            ImGui::DragFloat("XZ Distance", &(MainCam->xzDist), 0.01f);
-            ImGui::DragFloat("Y Distance", &(MainCam->yDist), 0.01f);
+            ImGui::DragFloat("XZ Distance", &(MainCam->xzDist));
+            ImGui::DragFloat("Y Distance", &(MainCam->yDist));
                     
         }
         
