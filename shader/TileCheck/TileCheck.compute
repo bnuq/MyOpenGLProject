@@ -13,7 +13,7 @@ struct Tile
         1 = 충돌
         2 = 사라짐
      */
-    float state;
+    uint state;
     uint story;
 };
 
@@ -79,7 +79,7 @@ void main()
             if(outputdata.InformColTile == Index)
             {
                 // 이제 충돌 상태
-                curTile.state = 1.0f;
+                curTile.state = 1;
 
                 // 갱신하는 스레드가 output 버퍼를 초기화 시킨다
                 outputdata.HasInformColTile = -1.0f;
@@ -93,7 +93,7 @@ void main()
             if(outputdata.InformDisTile == Index)
             {
                 // 이제 사라진 상태
-                curTile.state = 2.0f;
+                curTile.state = 2;
 
                 outputdata.HasInformDisTile = -1.0f;
             }
@@ -102,7 +102,7 @@ void main()
         
         // 사라진 타일이라면 더이상 진행하지 않는다
         // 사라진 타일의 상태는 더이상 업데이트 하지 않는다
-        if(curTile.state == 2.0f)
+        if(curTile.state == 2)
         {
             tileData[Index] = curTile;
             return;
@@ -144,7 +144,7 @@ void main()
             outputdata.HasCharCollision = +1.0f;
 
             // 이미 충돌 상태의 타일이라면, 업데이트할 내용이 없다, 바깥에 알리지 않는다
-            if(curTile.state == 1.0f)
+            if(curTile.state == 1)
             {
                 tileData[Index] = curTile;
                 return;

@@ -12,7 +12,7 @@ struct Tile
     float xpos;
     float ypos;
     float zpos;
-    float state;
+    uint state;
     uint story;
 };
 // SSBO
@@ -50,7 +50,7 @@ void main()
     Tile curTile = tileData[gl_InstanceID];
 
     // state 가 0 이 아니다 => 반투명 상태거나, 사라진 타일이다 => GPU Instancing 의 대상이 아니다
-    if(curTile.state != 0.0f)
+    if(curTile.state != 0)
     {
         // 타일의 정점을, 무조건 클립 공간 내 원점으로 이동시켜 => 타일이 그려지지 않게 한다
         gl_Position = vec4(0, 0, 0, 0);

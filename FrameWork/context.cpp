@@ -33,13 +33,13 @@ bool Context::Init()
 
     // Compute Program 생성
         // compute shader 를 직접 먼저 생성한 다음, 붙인다
-        ComputeShader = Shader::CreateFromFile("./shader/Compute/TileCheck.compute", GL_COMPUTE_SHADER);
+        ComputeShader = Shader::CreateFromFile("./shader/TileCheck/TileCheck.compute", GL_COMPUTE_SHADER);
         ComputeProgram = Program::Create({ComputeShader});
         if(!ComputeProgram) return false;
 
 
     // 반투명한 Map 을 그리는 Program 생성
-        AlphaMapProgram = Program::Create("./shader/Map/alphamap.vs", "./shader/Map/alphamap.fs");
+        AlphaMapProgram = Program::Create("./shader/AlphaMap/alphamap.vs", "./shader/AlphaMap/alphamap.fs");
         if(!AlphaMapProgram) return false;
 
 
@@ -154,7 +154,7 @@ void Context::InitGameMap()
                 (
                     Tile
                     {
-                        row * gameMap.STRIDE, Height, col * gameMap.STRIDE, 0.0f, story
+                        row * gameMap.STRIDE, Height, col * gameMap.STRIDE, 0, story
                     }
                 );
             }

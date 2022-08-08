@@ -14,7 +14,7 @@ struct Tile
     float xpos;
     float ypos;
     float zpos;
-    float state;
+    uint state;
     uint story;
 };
 // SSBO

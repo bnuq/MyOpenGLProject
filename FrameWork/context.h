@@ -109,16 +109,16 @@ private:
 
     /* 
         바닥을 이루는 타일 데이터
-        state   = 0.0f = 초기 상태
-                = 1.0f = 충돌 상태
-                = 2.0f = 사라진 상태
+        state   = 0 = 초기 상태
+                = 1 = 충돌 상태
+                = 2 = 사라진 상태
      */
     struct Tile
     {
         float xpos;
         float ypos;
         float zpos;
-        float state;
+        unsigned int state;
         unsigned int story;
     };
     std::vector<Tile> tileArr{};
