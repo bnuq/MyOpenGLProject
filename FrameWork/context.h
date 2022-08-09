@@ -184,7 +184,7 @@ private:
         반투명하게 렌더링한다
      */
     std::deque<std::pair<unsigned int, double>> IndexQueue{};
-    double LimitTime = 5.0;
+    double LimitTime = 2.0;
 
 };
 

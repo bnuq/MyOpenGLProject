@@ -542,14 +542,6 @@ void Context::Render()
 
     /* 
         First Pass => 그림자를 만들기 위해 먼저 광원의 입장에서 렌더링을 진행
-
-        지금 궁금한건, 광원 입장에서 깊이 값만 렌더링할 때 그림자를 만드는 대상인 캐릭터만 렌더링하느냐, 아니면 타일들까지 같이 렌더링 하느냐
-            캐릭터에 의한 그림자는 만들고 싶지만
-            타일이 타일에 만드는 그림자는 만들고 싶지 않다
-
-        1. 우선 캐릭터만 광원에서 그려보고
-
-        2. 캐릭터 + 불투명한 타일 모두를 그려보자
      */
     // 일단 광원 입장에서 보는 뷰 변환, 프로젝션 변환은 동일하다
     auto lightView = glm::lookAt
@@ -689,7 +681,7 @@ void Context::Render()
             // Fragment Shader
                 CharProgram->SetUniform("viewPos", MainCam->Position);
 
-                // Light Setting
+            // Light Setting
                 CharProgram->SetUniform("light.position", MainLight->Position);
                 CharProgram->SetUniform("light.direction", MainLight->Direction);
                 CharProgram->SetUniform("light.ambient", MainLight->ambient);
