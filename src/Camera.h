@@ -12,8 +12,8 @@ class Camera
 public:
     // 피벗 = 카메라가 바라보는 점이자 회전의 중심
     glm::vec3 CameraPivot;
-        float CamToCharMaxLimit = 0.1f;                         // 카메라 피벗이 움직이게 하는 거리
-        float CamToCharMinLimit = 0.01f;                        // 카메라 피벗이 더이상 움직이지 않게 하는 거리
+        float CamToCharMaxLimit = 1.0f;                         // 카메라 피벗이 움직이게 하는 거리
+        float CamToCharMinLimit = 0.1f;                         // 카메라 피벗이 더이상 움직이지 않게 하는 거리
         bool CameraMove = false;                                // 카메라가 움직이고 있는 지 ~ 상태
 
     
@@ -44,8 +44,8 @@ public:
     // 카메라가 따라다니는 캐릭터
     CharacterPtr mainChar;
         // 카메라가 캐릭터로 부터 떨어진 거리 
-        float xzDist = 20.0f;
-        float yDist = 20.0f;
+        float xzDist = 30.0f;
+        float yDist = 30.0f;
 
 
     // 생성 및 초기화

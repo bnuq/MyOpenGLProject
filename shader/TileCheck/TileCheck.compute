@@ -131,9 +131,9 @@ void main()
 
         // 캐릭터와 타일 모두 직육면체 모양, 따라서 서로 충돌한다면 x,y,z 모든 방향에서 충돌이 일어날 것이다
         // x, y, z 축 중 하나라도 떨어져 있다면 충돌 상황이 아니다
-             if(abs(MainCharPos.x - curTile.xpos) > (CharScale.x * 0.5f + TileScale.x * 0.5f)) result = false;
-        else if(abs(MainCharPos.y - curTile.ypos) > (CharScale.y * 0.5f + TileScale.y * 0.5f)) result = false;
-        else if(abs(MainCharPos.z - curTile.zpos) > (CharScale.z * 0.5f + TileScale.z * 0.5f)) result = false;
+             if(abs(MainCharPos.x - curTile.xpos) > (CharScale.x * 0.5 + TileScale.x * 0.5)) result = false;
+        else if(abs(MainCharPos.y - curTile.ypos) > (CharScale.y * 0.5 + TileScale.y * 0.5)) result = false;
+        else if(abs(MainCharPos.z - curTile.zpos) > (CharScale.z * 0.5 + TileScale.z * 0.5)) result = false;
 
 
 

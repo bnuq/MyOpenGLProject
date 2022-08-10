@@ -59,7 +59,7 @@ public:
 
     // 캐릭터가 움직이는 방향에 맞게, 캐릭터를 회전
     void Rotate();
-        float YawAngleTick  = 1.0f;
+        float YawAngleTick  = 3.0f;
         const float YawAngleTickRatio = 1.0f;
         float YawMinValue = 0.01f;
 

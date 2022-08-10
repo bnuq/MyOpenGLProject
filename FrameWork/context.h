@@ -100,7 +100,7 @@ private:
     // 전체 Game Map 에 대한 정보
     struct Map
     {
-        unsigned int     COUNT    = 10;
+        unsigned int     COUNT    = 20;
         float            STRIDE   = 10.0f;
         unsigned int     STORY    = 7;
     };
