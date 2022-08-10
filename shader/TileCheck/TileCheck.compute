@@ -126,14 +126,27 @@ void main()
         // 일단 무조건 충돌이 발생했다고 생각
         bool result = true;
 
-        // 캐릭터가 밑에 있다면 밟는 상황이 아니다
-        if(MainCharPos.y < curTile.ypos) result = false;
-
-        // 캐릭터와 타일 모두 직육면체 모양, 따라서 서로 충돌한다면 x,y,z 모든 방향에서 충돌이 일어날 것이다
-        // x, y, z 축 중 하나라도 떨어져 있다면 충돌 상황이 아니다
-             if(abs(MainCharPos.x - curTile.xpos) > (CharScale.x * 0.5 + TileScale.x * 0.5)) result = false;
-        else if(abs(MainCharPos.y - curTile.ypos) > (CharScale.y * 0.5 + TileScale.y * 0.5)) result = false;
-        else if(abs(MainCharPos.z - curTile.zpos) > (CharScale.z * 0.5 + TileScale.z * 0.5)) result = false;
+        // 캐릭터가 밑에 있는 경우
+        // 혹시 캐릭터가 타일을 뚫고 갔을 수도 있으니까, 캐릭터가 타일의 밑에 아주 가깝게 있는 경우를 고려
+        if(MainCharPos.y < curTile.ypos)
+        {
+            // 일단 x, z 방향은 동일하게 확인
+            // y 축 방향의 경우, 타일을 구성하는 scale 보다 좀 더 검색을 한다
+            if(abs(MainCharPos.x - curTile.xpos) > (CharScale.x * 0.5 + TileScale.x * 0.5)) result = false;
+            else if(abs(MainCharPos.y - curTile.ypos) > (CharScale.y * 0.5 + TileScale.y * 1.5)) result = false;
+            else if(abs(MainCharPos.z - curTile.zpos) > (CharScale.z * 0.5 + TileScale.z * 0.5)) result = false;    
+        }
+        // 캐릭터가 위에 있는 경우는, 캐릭터가 타일에 닿는 경우만 생각
+        else
+        {
+            // 캐릭터와 타일 모두 직육면체 모양, 따라서 서로 충돌한다면 x,y,z 모든 방향에서 충돌이 일어날 것이다
+            // x, y, z 축 중 하나라도 떨어져 있다면 충돌 상황이 아니다
+                if(abs(MainCharPos.x - curTile.xpos) > (CharScale.x * 0.5 + TileScale.x * 0.5)) result = false;
+            else if(abs(MainCharPos.y - curTile.ypos) > (CharScale.y * 0.5 + TileScale.y * 0.5)) result = false;
+            else if(abs(MainCharPos.z - curTile.zpos) > (CharScale.z * 0.5 + TileScale.z * 0.5)) result = false;   
+        }
+ 
+        
 
 
 

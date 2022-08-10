@@ -100,9 +100,10 @@ private:
     // 전체 Game Map 에 대한 정보
     struct Map
     {
-        unsigned int     COUNT    = 20;
+        unsigned int     COUNT    = 4;
         float            STRIDE   = 10.0f;
         unsigned int     STORY    = 7;
+        unsigned int     Y_NUM    = 10;
     };
     const Map gameMap{};
     

@@ -145,7 +145,7 @@ void Context::InitGameMap()
     // CPU data => 맵을 구성하는 타일들의 위치를 초기화 한다
     for(unsigned int story = 0; story < gameMap.STORY; story++)
     {
-        float Height = (-1.0f) * (story) * gameMap.STRIDE * 2;
+        float Height = (-1.0f) * (story) * gameMap.STRIDE * gameMap.Y_NUM;
         for(unsigned int row = 0; row < gameMap.COUNT; row++)
         {
             for(unsigned int col = 0; col < gameMap.COUNT; col++)
@@ -490,7 +490,7 @@ void Context::Render()
 
 
     // Update 된 캐릭터 위치를 바탕으로, 캐릭터가 닿을 것으로 예상되는 층수를 업데이트한다
-    mainChar->CharStory = (unsigned int)((-1.0f) * (mainChar->Position.y / (2 * gameMap.STRIDE)) + 0.5f);
+    mainChar->CharStory = (unsigned int)((-1.0f) * (mainChar->Position.y / (gameMap.Y_NUM * gameMap.STRIDE)) + 0.5f);
     //SPDLOG_INFO("{}", mainChar->LandStory);
 
 
